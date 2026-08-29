@@ -12,9 +12,11 @@ import java.util.Optional;
 public class AuthController {
 
     private final UserRepository userRepository;
+    private final com.skillverse.repository.WorkerProfileRepository workerProfileRepository;
 
-    public AuthController(UserRepository userRepository) {
+    public AuthController(UserRepository userRepository, com.skillverse.repository.WorkerProfileRepository workerProfileRepository) {
         this.userRepository = userRepository;
+        this.workerProfileRepository = workerProfileRepository;
     }
 
     @PostMapping("/register")
@@ -23,6 +25,18 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Error: Email is already in use!");
         }
         User saved = userRepository.save(user);
+        if ("WORKER".equals(saved.getRole())) {
+            com.skillverse.model.WorkerProfile profile = new com.skillverse.model.WorkerProfile(
+                saved, 
+                "Electrical, Plumbing", 
+                1, 
+                "Dhaka North (Gulshan, Banani, Uttara)", 
+                "Bronze", 
+                350.0
+            );
+            profile.setAvailable(true);
+            workerProfileRepository.save(profile);
+        }
         return ResponseEntity.ok(saved);
     }
 

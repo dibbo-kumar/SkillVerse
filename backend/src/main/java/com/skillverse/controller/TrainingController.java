@@ -21,4 +21,15 @@ public class TrainingController {
     public ResponseEntity<List<Course>> getCourses() {
         return ResponseEntity.ok(courseRepository.findAll());
     }
+
+    @PostMapping("/courses")
+    public ResponseEntity<Course> addCourse(@RequestBody Course course) {
+        return ResponseEntity.ok(courseRepository.save(course));
+    }
+
+    @DeleteMapping("/courses/{id}")
+    public ResponseEntity<?> deleteCourse(@PathVariable Long id) {
+        courseRepository.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
 }

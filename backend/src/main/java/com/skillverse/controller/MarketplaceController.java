@@ -26,4 +26,15 @@ public class MarketplaceController {
     public ResponseEntity<List<MarketplaceItem>> getItemsByType(@RequestParam String type) {
         return ResponseEntity.ok(marketplaceRepository.findByType(type));
     }
+
+    @PostMapping
+    public ResponseEntity<MarketplaceItem> addItem(@RequestBody MarketplaceItem item) {
+        return ResponseEntity.ok(marketplaceRepository.save(item));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteItem(@PathVariable Long id) {
+        marketplaceRepository.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -71,6 +71,17 @@ public class BookingController {
                 }).orElse(ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/{id}/counter-offer")
+    public ResponseEntity<?> counterOffer(@PathVariable Long id, @RequestParam Double price, @RequestParam String status) {
+        return bookingRepository.findById(id)
+                .map(booking -> {
+                    booking.setEstimatedCost(price);
+                    booking.setStatus(status);
+                    bookingRepository.save(booking);
+                    return ResponseEntity.ok(booking);
+                }).orElse(ResponseEntity.notFound().build());
+    }
+
     @PutMapping("/{id}/upload-before")
     public ResponseEntity<?> uploadBefore(@PathVariable Long id, @RequestParam String photoUrl) {
         return bookingRepository.findById(id)
