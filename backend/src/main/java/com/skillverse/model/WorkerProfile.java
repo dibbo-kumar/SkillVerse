@@ -20,6 +20,8 @@ public class WorkerProfile {
     private String careerLevel; // Beginner, Bronze, Silver, Gold, Platinum, Master
     private Double hourlyRate;
     private boolean isAvailable;
+    private Double latitude = 23.8720;
+    private Double longitude = 90.3810;
 
     public WorkerProfile() {}
 
@@ -56,4 +58,10 @@ public class WorkerProfile {
 
     public boolean isAvailable() { return isAvailable; }
     public void setAvailable(boolean available) { isAvailable = available; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }

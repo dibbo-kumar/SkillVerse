@@ -32,7 +32,9 @@ public class ServiceBooking {
     private String beforePhoto;
     private String afterPhoto;
 
-    public ServiceBooking() {}
+    public ServiceBooking() {
+        generateVerificationCodes();
+    }
 
     public ServiceBooking(User customer, User worker, String serviceType, LocalDateTime scheduledTime, Double estimatedCost, String description) {
         this.customer = customer;
@@ -42,6 +44,21 @@ public class ServiceBooking {
         this.estimatedCost = estimatedCost;
         this.description = description;
         this.status = "PENDING";
+        generateVerificationCodes();
+    }
+
+    @PrePersist
+    public void generateVerificationCodes() {
+        java.util.Random random = new java.util.Random();
+        if (this.startVerificationCode == null || this.startVerificationCode.trim().isEmpty()) {
+            this.startVerificationCode = String.format("%04d", random.nextInt(10000));
+        }
+        if (this.completionVerificationCode == null || this.completionVerificationCode.trim().isEmpty()) {
+            this.completionVerificationCode = String.format("%04d", random.nextInt(10000));
+        }
+        if (this.liveLocation == null || this.liveLocation.trim().isEmpty()) {
+            this.liveLocation = "23.8103, 90.4125";
+        }
     }
 
     public Long getId() { return id; }

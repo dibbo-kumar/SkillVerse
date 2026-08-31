@@ -56,4 +56,21 @@ public class AuthController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @PutMapping("/users/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User profile) {
+        return userRepository.findById(id)
+                .map(user -> {
+                    if (profile.getName() != null) user.setName(profile.getName());
+                    if (profile.getEmail() != null) user.setEmail(profile.getEmail());
+                    if (profile.getPhone() != null) user.setPhone(profile.getPhone());
+                    if (profile.getNidNumber() != null) user.setNidNumber(profile.getNidNumber());
+                    if (profile.getProfilePicture() != null) user.setProfilePicture(profile.getProfilePicture());
+                    if (profile.getAddress() != null) user.setAddress(profile.getAddress());
+                    if (profile.getLatitude() != null) user.setLatitude(profile.getLatitude());
+                    if (profile.getLongitude() != null) user.setLongitude(profile.getLongitude());
+                    userRepository.save(user);
+                    return ResponseEntity.ok(user);
+                }).orElse(ResponseEntity.notFound().build());
+    }
 }

@@ -48,11 +48,44 @@ public class WorkerController {
     public ResponseEntity<?> updateProfile(@PathVariable Long id, @RequestBody WorkerProfile updatedProfile) {
         return workerProfileRepository.findByUserId(id)
                 .map(profile -> {
-                    profile.setSkills(updatedProfile.getSkills());
-                    profile.setExperienceYears(updatedProfile.getExperienceYears());
-                    profile.setServiceArea(updatedProfile.getServiceArea());
-                    profile.setHourlyRate(updatedProfile.getHourlyRate());
+                    if (updatedProfile.getSkills() != null) profile.setSkills(updatedProfile.getSkills());
+                    if (updatedProfile.getExperienceYears() != null) profile.setExperienceYears(updatedProfile.getExperienceYears());
+                    if (updatedProfile.getServiceArea() != null) profile.setServiceArea(updatedProfile.getServiceArea());
+                    if (updatedProfile.getHourlyRate() != null) profile.setHourlyRate(updatedProfile.getHourlyRate());
                     profile.setAvailable(updatedProfile.isAvailable());
+                    if (updatedProfile.getLatitude() != null) profile.setLatitude(updatedProfile.getLatitude());
+                    if (updatedProfile.getLongitude() != null) profile.setLongitude(updatedProfile.getLongitude());
+
+                    // Sync user location
+                    User user = profile.getUser();
+                    if (user != null) {
+                        if (updatedProfile.getLatitude() != null) user.setLatitude(updatedProfile.getLatitude());
+                        if (updatedProfile.getLongitude() != null) user.setLongitude(updatedProfile.getLongitude());
+                        if (updatedProfile.getServiceArea() != null) user.setAddress(updatedProfile.getServiceArea());
+                        userRepository.save(user);
+                    }
+
+                    workerProfileRepository.save(profile);
+                    return ResponseEntity.ok(profile);
+                }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}/location")
+    public ResponseEntity<?> updateLocation(@PathVariable Long id, @RequestParam Double lat, @RequestParam Double lon, @RequestParam(required = false) String area) {
+        return workerProfileRepository.findByUserId(id)
+                .map(profile -> {
+                    profile.setLatitude(lat);
+                    profile.setLongitude(lon);
+                    if (area != null && !area.isEmpty()) {
+                        profile.setServiceArea(area);
+                    }
+                    User user = profile.getUser();
+                    if (user != null) {
+                        user.setLatitude(lat);
+                        user.setLongitude(lon);
+                        if (area != null && !area.isEmpty()) user.setAddress(area);
+                        userRepository.save(user);
+                    }
                     workerProfileRepository.save(profile);
                     return ResponseEntity.ok(profile);
                 }).orElse(ResponseEntity.notFound().build());

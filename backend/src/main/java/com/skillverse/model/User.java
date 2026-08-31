@@ -18,6 +18,9 @@ public class User {
     private boolean isVerified;
     private String profilePicture;
     private Double rating = 5.0;
+    private Double latitude = 23.8759; // Default Uttara Dhaka
+    private Double longitude = 90.3795;
+    private String address = "House 14, Road 4, Sector 12, Uttara, Dhaka";
 
     public User() {}
 
@@ -55,4 +58,13 @@ public class User {
 
     public Double getRating() { return rating; }
     public void setRating(Double rating) { this.rating = rating; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 }
