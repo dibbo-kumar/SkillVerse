@@ -1,32 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ShieldCheck, 
-  MapPin, 
-  Clock, 
-  Award, 
-  Search, 
-  SlidersHorizontal, 
-  Plus, 
-  Calendar, 
-  Zap, 
-  BookOpen, 
-  ShoppingBag, 
-  ArrowRight, 
-  MessageSquare, 
-  Sparkles, 
-  CheckCircle2, 
-  Compass, 
-  FileText, 
-  Briefcase, 
-  Key, 
-  Database, 
-  Lock, 
-  LogOut, 
-  Mail, 
-  User, 
-  Trash2, 
-  TrendingUp, 
-  Heart, 
+import {
+  ShieldCheck,
+  MapPin,
+  Clock,
+  Award,
+  Search,
+  SlidersHorizontal,
+  Plus,
+  Calendar,
+  Zap,
+  BookOpen,
+  ShoppingBag,
+  ArrowRight,
+  MessageSquare,
+  Sparkles,
+  CheckCircle2,
+  Compass,
+  FileText,
+  Briefcase,
+  Key,
+  Database,
+  Lock,
+  LogOut,
+  Mail,
+  User,
+  Trash2,
+  TrendingUp,
+  Heart,
   Navigation
 } from 'lucide-react';
 import CustomerProfileHub from './components/customer/CustomerProfileHub';
@@ -355,22 +355,39 @@ const INITIAL_WORKERS = [
 ];
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // Logged in user state persisted in localStorage
+  const [currentUser, setCurrentUser] = useState(() => {
+    const savedUser = localStorage.getItem('fixconnect_user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return !!localStorage.getItem('fixconnect_user');
+  });
+
   const [authMode, setAuthMode] = useState('login'); // login, signup
   const [loginRole, setLoginRole] = useState('CUSTOMER'); // CUSTOMER, WORKER, ADMIN
-  
+
   // Credentials
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [nidNumber, setNidNumber] = useState('');
-  
-  // Logged in user state
-  const [currentUser, setCurrentUser] = useState(null);
-  
-  const [activeTab, setActiveTab] = useState('customer'); // customer, my-bookings, my-services, worker, courses, marketplace, profile, admin
-  
+
+  const [activeTab, setActiveTab] = useState(() => {
+    const savedTab = localStorage.getItem('fixconnect_active_tab');
+    if (savedTab) return savedTab;
+    const savedUser = localStorage.getItem('fixconnect_user');
+    if (savedUser) {
+      try {
+        const u = JSON.parse(savedUser);
+        return u.role === 'ADMIN' ? 'admin' : u.role === 'WORKER' ? 'worker' : 'customer';
+      } catch (e) { }
+    }
+    return 'customer';
+  });
+
   // App data states
   const [workers, setWorkers] = useState(INITIAL_WORKERS);
   const [bookings, setBookings] = useState([]);
@@ -433,18 +450,58 @@ function App() {
   useEffect(() => {
     localStorage.setItem('fixconnect_rewards', JSON.stringify(rewards));
   }, [rewards]);
-  
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('fixconnect_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('fixconnect_user');
+    }
+  }, [currentUser]);
+  useEffect(() => {
+    if (activeTab) {
+      localStorage.setItem('fixconnect_active_tab', activeTab);
+    }
+  }, [activeTab]);
+
   // AI Estimator state
   const [issueDesc, setIssueDesc] = useState('');
   const [aiEstimate, setAiEstimate] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
-  
-  // AI Chat state
+
+  // Per-user AI Chat state & isolation
+  const getChatKey = (u) => u ? `fixconnect_chat_${u.id || u.email}` : 'fixconnect_chat_guest';
   const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState([
-    { sender: 'ai', text: 'Salam! I am your SkillVerse AI Assistant. How can I help you today?' }
-  ]);
-  
+  const [chatMessages, setChatMessages] = useState(() => {
+    const savedUser = localStorage.getItem('fixconnect_user');
+    const u = savedUser ? JSON.parse(savedUser) : null;
+    const key = getChatKey(u);
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : [
+      { sender: 'ai', text: 'Salam! I am your SkillVerse AI Assistant. How can I help you today?' }
+    ];
+  });
+
+  // Load chat messages when currentUser changes
+  useEffect(() => {
+    const key = getChatKey(currentUser);
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        setChatMessages(JSON.parse(saved));
+      } catch (e) {
+        setChatMessages([{ sender: 'ai', text: 'Salam! I am your SkillVerse AI Assistant. How can I help you today?' }]);
+      }
+    } else {
+      setChatMessages([{ sender: 'ai', text: 'Salam! I am your SkillVerse AI Assistant. How can I help you today?' }]);
+    }
+  }, [currentUser?.id, currentUser?.email]);
+
+  // Persist chat messages to current user's local key
+  useEffect(() => {
+    const key = getChatKey(currentUser);
+    localStorage.setItem(key, JSON.stringify(chatMessages));
+  }, [chatMessages, currentUser?.id, currentUser?.email]);
+
   // Booking modal states
   const [selectedWorker, setSelectedWorker] = useState(null);
   const [bookingDesc, setBookingDesc] = useState('');
@@ -476,16 +533,16 @@ function App() {
 
   // Counter-offer state (Worker)
   const [counterPrices, setCounterPrices] = useState({}); // { bookingId: price }
-  
+
   // OTP Verification State
   const [otpInputs, setOtpInputs] = useState({}); // { bookingId: enteredOtp }
   const [otpErrors, setOtpErrors] = useState({}); // { bookingId: errorMsg }
-  
+
   // Payment Sheet Modal State
   const [payingBooking, setPayingBooking] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('bkash'); // bkash, bank, cash
   const [walletNumber, setWalletNumber] = useState('');
-  
+
   // Admin Item creation forms
   const [newCourseTitle, setNewCourseTitle] = useState('');
   const [newCourseDesc, setNewCourseDesc] = useState('');
@@ -630,8 +687,8 @@ function App() {
           role: loginRole,
           nidNumber: nidNumber || "N/A",
           verified: loginRole === 'CUSTOMER' ? true : false,
-          profilePicture: loginRole === 'CUSTOMER' 
-            ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" 
+          profilePicture: loginRole === 'CUSTOMER'
+            ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
             : "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150"
         })
       });
@@ -702,17 +759,17 @@ function App() {
     setTimeout(() => {
       // Direct mock login
       const isVerified = emailStr !== 'sajid@gmail.com';
-      const mockUser = { 
-        id: emailStr === 'admin@skillverse.com' ? 1 : emailStr === 'anis@gmail.com' ? 2 : emailStr === 'kamrul@gmail.com' ? 3 : 5, 
-        name: emailStr === 'admin@skillverse.com' ? "System Admin" : emailStr === 'anis@gmail.com' ? "Anisur Rahman" : emailStr === 'kamrul@gmail.com' ? "Kamrul Islam" : "Sajid Hasan", 
-        email: emailStr, 
-        role: role, 
-        profilePicture: emailStr === 'admin@skillverse.com' 
-          ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" 
-          : emailStr === 'anis@gmail.com' 
-            ? "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" 
-            : "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=150", 
-        verified: isVerified 
+      const mockUser = {
+        id: emailStr === 'admin@skillverse.com' ? 1 : emailStr === 'anis@gmail.com' ? 2 : emailStr === 'kamrul@gmail.com' ? 3 : 5,
+        name: emailStr === 'admin@skillverse.com' ? "System Admin" : emailStr === 'anis@gmail.com' ? "Anisur Rahman" : emailStr === 'kamrul@gmail.com' ? "Kamrul Islam" : "Sajid Hasan",
+        email: emailStr,
+        role: role,
+        profilePicture: emailStr === 'admin@skillverse.com'
+          ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
+          : emailStr === 'anis@gmail.com'
+            ? "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150"
+            : "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=150",
+        verified: isVerified
       };
       setCurrentUser(mockUser);
       setIsLoggedIn(true);
@@ -726,6 +783,8 @@ function App() {
     setEmail('');
     setPassword('');
     setAiEstimate(null);
+    localStorage.removeItem('fixconnect_user');
+    localStorage.removeItem('fixconnect_active_tab');
   };
 
   // Submit Work Application
@@ -1072,7 +1131,7 @@ function App() {
       if (res.ok) {
         const created = await res.json();
         created.address = chosenAddress;
-        
+
         // Upload photo url if selected
         if (photoToSend) {
           await fetch(`${API_BASE}/bookings/${created.id}/upload-before?photoUrl=${encodeURIComponent(photoToSend)}`, {
@@ -1331,7 +1390,7 @@ function App() {
           <ShieldCheck size={28} color="#10b981" />
           <span>SkillVerse</span>
         </div>
-        
+
         {/* Navigation Tabs based on role */}
         {isLoggedIn && (
           <div className="nav-links">
@@ -1351,7 +1410,7 @@ function App() {
                 </span>
               </>
             )}
-            
+
             {currentUser.role === 'WORKER' && (
               <>
                 <span className={`nav-link ${activeTab === 'worker' ? 'active' : ''}`} onClick={() => setActiveTab('worker')}>
@@ -1385,9 +1444,9 @@ function App() {
               <div style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{currentUser.name}</div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Role: {currentUser.role}</div>
             </div>
-            <img 
-              src={currentUser.profilePicture} 
-              alt="User avatar" 
+            <img
+              src={currentUser.profilePicture}
+              alt="User avatar"
               style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)', cursor: 'pointer' }}
               onClick={() => setActiveTab('profile')}
               title="Go to Profile & Settings"
@@ -1420,18 +1479,18 @@ function App() {
 
             {/* Auth mode toggle tabs */}
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-              <button 
-                type="button" 
-                className={`btn ${authMode === 'login' ? 'btn-primary' : 'btn-secondary'}`} 
-                style={{ flex: 1, justifyContent: 'center' }} 
+              <button
+                type="button"
+                className={`btn ${authMode === 'login' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ flex: 1, justifyContent: 'center' }}
                 onClick={() => setAuthMode('login')}
               >
                 Login
               </button>
-              <button 
-                type="button" 
-                className={`btn ${authMode === 'signup' ? 'btn-primary' : 'btn-secondary'}`} 
-                style={{ flex: 1, justifyContent: 'center' }} 
+              <button
+                type="button"
+                className={`btn ${authMode === 'signup' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ flex: 1, justifyContent: 'center' }}
                 onClick={() => setAuthMode('signup')}
               >
                 Create Account
@@ -1444,11 +1503,11 @@ function App() {
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {authMode === 'signup' ? (
                   ['CUSTOMER', 'WORKER'].map(role => (
-                    <button 
-                      key={role} 
-                      type="button" 
-                      className={`btn ${loginRole === role ? 'btn-primary' : 'btn-secondary'}`} 
-                      style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem', justifyContent: 'center' }} 
+                    <button
+                      key={role}
+                      type="button"
+                      className={`btn ${loginRole === role ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem', justifyContent: 'center' }}
                       onClick={() => setLoginRole(role)}
                     >
                       {role === 'CUSTOMER' ? 'Customer' : 'Technician / Worker'}
@@ -1456,11 +1515,11 @@ function App() {
                   ))
                 ) : (
                   ['CUSTOMER', 'WORKER', 'ADMIN'].map(role => (
-                    <button 
-                      key={role} 
-                      type="button" 
-                      className={`btn ${loginRole === role ? 'btn-primary' : 'btn-secondary'}`} 
-                      style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem', justifyContent: 'center' }} 
+                    <button
+                      key={role}
+                      type="button"
+                      className={`btn ${loginRole === role ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem', justifyContent: 'center' }}
                       onClick={() => setLoginRole(role)}
                     >
                       {role.charAt(0) + role.slice(1).toLowerCase()}
@@ -1476,14 +1535,14 @@ function App() {
                   <label className="form-label">Full Name</label>
                   <div style={{ position: 'relative' }}>
                     <User size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-muted)' }} />
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      style={{ paddingLeft: '2.5rem' }} 
-                      placeholder="Anisur Rahman" 
-                      value={name} 
-                      onChange={e => setName(e.target.value)} 
-                      required 
+                    <input
+                      type="text"
+                      className="form-input"
+                      style={{ paddingLeft: '2.5rem' }}
+                      placeholder="Anisur Rahman"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      required
                     />
                   </div>
                 </div>
@@ -1493,9 +1552,9 @@ function App() {
                 <label className="form-label">Email Address</label>
                 <div style={{ position: 'relative' }}>
                   <Mail size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-muted)' }} />
-                  <input 
+                  <input
                     type="email"
-                    className="form-input" 
+                    className="form-input"
                     style={{ paddingLeft: '2.5rem' }}
                     placeholder="name@email.com"
                     value={email}
@@ -1508,13 +1567,13 @@ function App() {
               {authMode === 'signup' && (
                 <div style={{ marginBottom: '1rem' }}>
                   <label className="form-label">Phone Number</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="017xxxxxxxx" 
-                    value={phone} 
-                    onChange={e => setPhone(e.target.value)} 
-                    required 
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="017xxxxxxxx"
+                    value={phone}
+                    onChange={e => setPhone(e.target.value)}
+                    required
                   />
                 </div>
               )}
@@ -1522,13 +1581,13 @@ function App() {
               {authMode === 'signup' && loginRole === 'WORKER' && (
                 <div style={{ marginBottom: '1rem' }}>
                   <label className="form-label">National NID Number</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="e.g. 19932612954712365" 
-                    value={nidNumber} 
-                    onChange={e => setNidNumber(e.target.value)} 
-                    required 
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. 19932612954712365"
+                    value={nidNumber}
+                    onChange={e => setNidNumber(e.target.value)}
+                    required
                   />
                 </div>
               )}
@@ -1537,9 +1596,9 @@ function App() {
                 <label className="form-label">Password</label>
                 <div style={{ position: 'relative' }}>
                   <Lock size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-muted)' }} />
-                  <input 
+                  <input
                     type="password"
-                    className="form-input" 
+                    className="form-input"
                     style={{ paddingLeft: '2.5rem' }}
                     placeholder="••••••••"
                     value={password}
@@ -1596,10 +1655,10 @@ function App() {
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
                   AI-powered pricing estimation, verified identity tracking, and escrow payments for hassle-free home maintenance.
                 </p>
-                
+
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                  <input 
-                    className="form-input" 
+                  <input
+                    className="form-input"
                     placeholder="Describe your issue (e.g. AC not cooling, bathroom pipe leak, broken circuit breaker)"
                     value={issueDesc}
                     onChange={(e) => setIssueDesc(e.target.value)}
@@ -1608,7 +1667,7 @@ function App() {
                     <Sparkles size={16} /> {aiLoading ? 'Analyzing...' : 'Verdict Price'}
                   </button>
                 </div>
-                
+
                 {aiEstimate && (
                   <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -1644,7 +1703,7 @@ function App() {
                 </div>
                 <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
                   {chatMessages.map((m, idx) => (
-                    <div key={idx} style={{ 
+                    <div key={idx} style={{
                       alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start',
                       background: m.sender === 'user' ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
                       color: m.sender === 'user' ? '#0b0f19' : 'var(--text-primary)',
@@ -1658,10 +1717,10 @@ function App() {
                   ))}
                 </div>
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  <input 
-                    className="form-input" 
+                  <input
+                    className="form-input"
                     style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                    placeholder="Ask AI assistant..." 
+                    placeholder="Ask AI assistant..."
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
@@ -1787,74 +1846,74 @@ function App() {
                         return true;
                       })
                       .map(w => {
-                  const isSaved = savedWorkerIds.includes(w.id || w.user?.id);
-                  const wLat = w.latitude || w.user?.latitude || 23.8720;
-                  const wLon = w.longitude || w.user?.longitude || 90.3810;
-                  const distKm = calculateDistanceKm(customerLocation.lat, customerLocation.lon, wLat, wLon);
-                  return (
-                    <div key={w.id} className="glass-card">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                        <div style={{ position: 'relative' }}>
-                          <img 
-                            src={w.user.profilePicture} 
-                            alt={w.user.name} 
-                            style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(16,185,129,0.3)' }}
-                          />
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <button 
-                            className="technician-card-heart-btn"
-                            title={isSaved ? "Saved in Profile" : "Save Technician to Profile"}
-                            onClick={() => handleToggleSaveWorker(w.id || w.user?.id)}
-                          >
-                            <Heart size={16} color={isSaved ? "var(--accent-rose)" : "var(--text-muted)"} fill={isSaved ? "var(--accent-rose)" : "transparent"} />
-                          </button>
-                          <span className="badge badge-verified">Verified Worker</span>
-                        </div>
+                        const isSaved = savedWorkerIds.includes(w.id || w.user?.id);
+                        const wLat = w.latitude || w.user?.latitude || 23.8720;
+                        const wLon = w.longitude || w.user?.longitude || 90.3810;
+                        const distKm = calculateDistanceKm(customerLocation.lat, customerLocation.lon, wLat, wLon);
+                        return (
+                          <div key={w.id} className="glass-card">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                              <div style={{ position: 'relative' }}>
+                                <img
+                                  src={w.user.profilePicture}
+                                  alt={w.user.name}
+                                  style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(16,185,129,0.3)' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <button
+                                  className="technician-card-heart-btn"
+                                  title={isSaved ? "Saved in Profile" : "Save Technician to Profile"}
+                                  onClick={() => handleToggleSaveWorker(w.id || w.user?.id)}
+                                >
+                                  <Heart size={16} color={isSaved ? "var(--accent-rose)" : "var(--text-muted)"} fill={isSaved ? "var(--accent-rose)" : "transparent"} />
+                                </button>
+                                <span className="badge badge-verified">Verified Worker</span>
+                              </div>
+                            </div>
+                            <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{w.user.name}</h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: 'var(--accent-gold)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                              <Award size={14} />
+                              <span>Rating: {w.user.rating} ({w.careerLevel} Rank)</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>
+                              <MapPin size={13} />
+                              <span style={{ fontWeight: 'bold' }}>{formatDistanceString(distKm)}</span>
+                              <span style={{ color: 'var(--text-muted)' }}>• {w.serviceArea}</span>
+                            </div>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                              <strong>Skills:</strong> {w.skills}
+                            </p>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                              <strong>Base Rate:</strong> BDT {w.hourlyRate}/hr
+                            </p>
+                            <button
+                              className="btn btn-primary"
+                              style={{ width: '100%', justifyContent: 'center' }}
+                              onClick={() => {
+                                handleOpenBookingModalWithOptions({
+                                  worker: w,
+                                  serviceType: w.skills.split(',')[0],
+                                  suggestedCost: w.hourlyRate * 3
+                                });
+                              }}
+                            >
+                              Select & Book Service
+                            </button>
+                          </div>
+                        );
+                      })}
+                    {filteredSearchWorkers.length === 0 && (
+                      <div className="glass-card" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', gridColumn: '1 / -1' }}>
+                        <Search size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+                        <div>No technicians found matching "{skillSearchQuery || selectedCategory}" within {selectedRadius < 900 ? (selectedRadius < 1 ? `${selectedRadius * 1000}m` : `${selectedRadius}km`) : 'all areas'}.</div>
+                        <div style={{ fontSize: '0.8rem', marginTop: '0.3rem' }}>Try expanding your search radius or changing the skill keyword.</div>
                       </div>
-                      <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{w.user.name}</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: 'var(--accent-gold)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
-                        <Award size={14} />
-                        <span>Rating: {w.user.rating} ({w.careerLevel} Rank)</span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>
-                        <MapPin size={13} />
-                        <span style={{ fontWeight: 'bold' }}>{formatDistanceString(distKm)}</span>
-                        <span style={{ color: 'var(--text-muted)' }}>• {w.serviceArea}</span>
-                      </div>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                        <strong>Skills:</strong> {w.skills}
-                      </p>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                        <strong>Base Rate:</strong> BDT {w.hourlyRate}/hr
-                      </p>
-                      <button 
-                        className="btn btn-primary" 
-                        style={{ width: '100%', justifyContent: 'center' }}
-                        onClick={() => {
-                          handleOpenBookingModalWithOptions({
-                            worker: w,
-                            serviceType: w.skills.split(',')[0],
-                            suggestedCost: w.hourlyRate * 3
-                          });
-                        }}
-                      >
-                        Select & Book Service
-                      </button>
-                    </div>
-                  );
-                })}
-              {filteredSearchWorkers.length === 0 && (
-                <div className="glass-card" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', gridColumn: '1 / -1' }}>
-                  <Search size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
-                  <div>No technicians found matching "{skillSearchQuery || selectedCategory}" within {selectedRadius < 900 ? (selectedRadius < 1 ? `${selectedRadius * 1000}m` : `${selectedRadius}km`) : 'all areas'}.</div>
-                  <div style={{ fontSize: '0.8rem', marginTop: '0.3rem' }}>Try expanding your search radius or changing the skill keyword.</div>
-                </div>
-              )}
-            </div>
-          </>
-        );
-      })()}
+                    )}
+                  </div>
+                </>
+              );
+            })()}
 
             {/* Customer Bookings Status Tracker */}
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -2086,7 +2145,7 @@ function App() {
                           <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>BDT {wb.estimatedCost}</div>
                         </div>
                       </div>
-                      
+
                       <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', margin: '1rem 0' }}>
                         <div style={{ flex: '1 1 300px' }}>
                           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -2109,10 +2168,10 @@ function App() {
                             </button>
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>or offer counter price:</span>
                             <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
-                              <input 
-                                type="number" 
-                                className="form-input" 
-                                style={{ width: '120px', padding: '0.4rem' }} 
+                              <input
+                                type="number"
+                                className="form-input"
+                                style={{ width: '120px', padding: '0.4rem' }}
                                 placeholder="Counter BDT"
                                 value={counterPrices[wb.id] || ''}
                                 onChange={e => setCounterPrices({ ...counterPrices, [wb.id]: Number(e.target.value) })}
@@ -2265,8 +2324,21 @@ function App() {
         </div>
       )}
 
-      {/* --- CUSTOMER PERSONAL SERVICE MANAGEMENT HUB (Profile, My Bookings) --- */}
-      {isLoggedIn && ['profile', 'my-bookings'].includes(activeTab) && currentUser.role === 'CUSTOMER' && (
+      {/* --- CUSTOMER STANDALONE MY PROFILE PAGE --- */}
+      {isLoggedIn && activeTab === 'profile' && currentUser.role === 'CUSTOMER' && (
+        <div style={{ padding: '2rem' }}>
+          <CustomerSettings
+            user={currentUser}
+            workerProfile={workerProfile}
+            onUpdateProfile={handleUpdateProfile}
+            onUpdateWorkerLocation={handleUpdateWorkerLocation}
+            onLogout={handleLogout}
+          />
+        </div>
+      )}
+
+      {/* --- CUSTOMER MY BOOKINGS & HUB --- */}
+      {isLoggedIn && activeTab === 'my-bookings' && currentUser.role === 'CUSTOMER' && (
         <CustomerProfileHub
           user={currentUser}
           bookings={bookings}
@@ -2278,7 +2350,7 @@ function App() {
           transactions={transactions}
           reviews={reviews}
           rewards={rewards}
-          initialSubTab={activeTab === 'my-bookings' ? 'bookings' : 'overview'}
+          initialSubTab="bookings"
           onNavigateTab={(tab) => {
             if (tab === 'customer') setActiveTab('customer');
             else if (tab === 'my-bookings') setActiveTab('my-bookings');
@@ -2350,7 +2422,7 @@ function App() {
                 Weekly Earnings Performance (BDT)
               </h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>Interactive visualization of financial flow stats.</p>
-              
+
               <div className="chart-container">
                 <svg viewBox="0 0 500 200" style={{ width: '100%', height: 'auto' }}>
                   <line x1="50" y1="170" x2="480" y2="170" stroke="rgba(255,255,255,0.15)" />
@@ -2400,7 +2472,7 @@ function App() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', marginBottom: '3rem' }}>
-            
+
             {/* Verification Panel */}
             <div className="glass-card" style={{ gridColumn: 'span 2' }}>
               <h2 style={{ fontSize: '1.3rem', marginBottom: '1.2rem', color: 'var(--primary)' }}>Pending Worker Verifications ({pendingApplications.length})</h2>
@@ -2459,11 +2531,11 @@ function App() {
 
           {/* Catalog Editor Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
-            
+
             {/* Courses Management */}
             <div className="glass-card">
               <h2 style={{ fontSize: '1.25rem', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><BookOpen size={20} color="var(--primary)" /> Academy Courses ({courses.length})</h2>
-              
+
               <form onSubmit={handleAdminAddCourse} style={{ marginBottom: '1.5rem' }}>
                 <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '0.8rem' }}>
                   <input className="form-input" style={{ fontSize: '0.8rem', padding: '0.4rem' }} placeholder="Course Title" value={newCourseTitle} onChange={e => setNewCourseTitle(e.target.value)} required />
@@ -2492,7 +2564,7 @@ function App() {
             {/* Tools Catalog Management */}
             <div className="glass-card">
               <h2 style={{ fontSize: '1.25rem', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ShoppingBag size={20} color="var(--accent-blue)" /> Tool Store Catalog ({marketplaceItems.length})</h2>
-              
+
               <form onSubmit={handleAdminAddTool} style={{ marginBottom: '1.5rem' }}>
                 <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '0.8rem' }}>
                   <input className="form-input" style={{ fontSize: '0.8rem', padding: '0.4rem' }} placeholder="Tool Title" value={newToolTitle} onChange={e => setNewToolTitle(e.target.value)} required />
@@ -2552,12 +2624,12 @@ function App() {
             {/* Custom pricing offer option */}
             <div style={{ marginBottom: '1rem' }}>
               <label className="form-label">Offer Your Price (Optional BDT)</label>
-              <input 
-                type="number" 
-                className="form-input" 
-                placeholder={`e.g. ${bookingCost}`} 
-                value={offeredPrice} 
-                onChange={e => setOfferedPrice(e.target.value)} 
+              <input
+                type="number"
+                className="form-input"
+                placeholder={`e.g. ${bookingCost}`}
+                value={offeredPrice}
+                onChange={e => setOfferedPrice(e.target.value)}
               />
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Technician can review and counter-offer this pricing suggestion.</span>
             </div>
@@ -2567,7 +2639,7 @@ function App() {
               <label className="form-label">Select Service Address</label>
               {addresses.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <select 
+                  <select
                     className="form-select"
                     value={bookingAddress}
                     onChange={(e) => setBookingAddress(e.target.value)}
@@ -2579,19 +2651,19 @@ function App() {
                       </option>
                     ))}
                   </select>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="Or enter specific flat/house/road details..." 
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Or enter specific flat/house/road details..."
                     value={bookingAddress}
                     onChange={(e) => setBookingAddress(e.target.value)}
                   />
                 </div>
               ) : (
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  placeholder="Enter house, road, and area (e.g. House 14, Road 4, Sector 12, Uttara)" 
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Enter house, road, and area (e.g. House 14, Road 4, Sector 12, Uttara)"
                   value={bookingAddress}
                   onChange={(e) => setBookingAddress(e.target.value)}
                   required
@@ -2603,7 +2675,7 @@ function App() {
             {properties.length > 0 && (
               <div style={{ marginBottom: '1rem' }}>
                 <label className="form-label">Link to Registered Appliance (Optional)</label>
-                <select 
+                <select
                   className="form-select"
                   value={selectedApplianceId}
                   onChange={(e) => {
@@ -2631,9 +2703,9 @@ function App() {
 
             <div style={{ marginBottom: '1rem' }}>
               <label className="form-label">Describe the problem</label>
-              <textarea 
-                className="form-textarea" 
-                rows="2" 
+              <textarea
+                className="form-textarea"
+                rows="2"
                 placeholder="Describe specific fixes needed (e.g. compressor oil leak, broken safety valve)"
                 value={bookingDesc}
                 onChange={(e) => setBookingDesc(e.target.value)}
@@ -2645,8 +2717,8 @@ function App() {
               <label className="form-label">Attach Diagnostic Photo (Optional)</label>
               <div className="photo-preset-grid">
                 {MOCK_PHOTOS.map(photo => (
-                  <div 
-                    key={photo.id} 
+                  <div
+                    key={photo.id}
                     className={`photo-preset-item ${selectedPhotoPreset?.id === photo.id ? 'selected' : ''}`}
                     onClick={() => {
                       setSelectedPhotoPreset(photo);
@@ -2662,11 +2734,11 @@ function App() {
               </div>
               <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: 0 }}>Select Image from Device</label>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="form-input" 
-                  style={{ fontSize: '0.8rem', padding: '0.3rem' }} 
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="form-input"
+                  style={{ fontSize: '0.8rem', padding: '0.3rem' }}
                   onChange={e => {
                     const file = e.target.files[0];
                     if (file) {
@@ -2677,15 +2749,15 @@ function App() {
                       };
                       reader.readAsDataURL(file);
                     }
-                  }} 
+                  }}
                 />
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Or enter custom image URL:</div>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  style={{ fontSize: '0.8rem', padding: '0.4rem' }} 
-                  placeholder="http://example.com/photo.jpg" 
-                  value={customPhotoUrl && !customPhotoUrl.startsWith('data:') ? customPhotoUrl : ''} 
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ fontSize: '0.8rem', padding: '0.4rem' }}
+                  placeholder="http://example.com/photo.jpg"
+                  value={customPhotoUrl && !customPhotoUrl.startsWith('data:') ? customPhotoUrl : ''}
                   onChange={e => {
                     setCustomPhotoUrl(e.target.value);
                     setSelectedPhotoPreset(null);
@@ -2716,7 +2788,7 @@ function App() {
             <h2 style={{ fontSize: '1.30rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.8rem' }}>
               💳 Secure Direct Payment Gateways
             </h2>
-            
+
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
               Verify contract completion for <strong>{payingBooking.serviceType}</strong>. Funds will be directly disbursed to worker wallet.
             </p>
@@ -2730,21 +2802,21 @@ function App() {
             <div style={{ marginBottom: '1.5rem' }}>
               <label className="form-label">Select Payment Channel</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
-                <button 
+                <button
                   className={`btn ${paymentMethod === 'bkash' ? 'btn-primary' : 'btn-secondary'}`}
                   style={{ justifyContent: 'center', fontSize: '0.8rem', padding: '0.5rem' }}
                   onClick={() => setPaymentMethod('bkash')}
                 >
                   bKash / Nagad
                 </button>
-                <button 
+                <button
                   className={`btn ${paymentMethod === 'bank' ? 'btn-primary' : 'btn-secondary'}`}
                   style={{ justifyContent: 'center', fontSize: '0.8rem', padding: '0.5rem' }}
                   onClick={() => setPaymentMethod('bank')}
                 >
                   Card / Bank
                 </button>
-                <button 
+                <button
                   className={`btn ${paymentMethod === 'cash' ? 'btn-primary' : 'btn-secondary'}`}
                   style={{ justifyContent: 'center', fontSize: '0.8rem', padding: '0.5rem' }}
                   onClick={() => setPaymentMethod('cash')}
@@ -2759,10 +2831,10 @@ function App() {
                 <label className="form-label">
                   {paymentMethod === 'bkash' ? 'bKash / Nagad Mobile Wallet Number' : 'Bank Account / Card Number'}
                 </label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  placeholder={paymentMethod === 'bkash' ? 'e.g. 01811223344' : 'e.g. 1234-5678-9012'} 
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder={paymentMethod === 'bkash' ? 'e.g. 01811223344' : 'e.g. 1234-5678-9012'}
                   value={walletNumber}
                   onChange={e => setWalletNumber(e.target.value)}
                 />

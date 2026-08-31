@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { 
-  User, 
-  Calendar, 
-  FileText, 
-  Building, 
-  Heart, 
-  MapPin, 
-  CreditCard, 
-  Star, 
-  Gift, 
-  Settings, 
+import {
+  User,
+  Calendar,
+  FileText,
+  Building,
+  Heart,
+  MapPin,
+  CreditCard,
+  Star,
+  Gift,
+  Settings,
   ShieldCheck,
   Zap,
   CheckCircle2,
@@ -46,7 +46,7 @@ export default function CustomerProfileHub({
   rewards = { points: 450, tier: 'Gold Tier Member', referralCode: 'FIX-ANIS-8821' },
   workerProfile = null,
   initialSubTab = 'overview',
-  
+
   // Actions
   onNavigateTab,
   onAcceptCounterOffer,
@@ -78,7 +78,7 @@ export default function CustomerProfileHub({
   const [reviewComment, setReviewComment] = useState('');
   const [reviewTags, setReviewTags] = useState(['Punctual & Polite', 'Great Work Quality']);
 
-  const activeBookingsCount = bookings.filter(b => 
+  const activeBookingsCount = bookings.filter(b =>
     ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'COUNTERED'].includes(b.status)
   ).length;
 
@@ -126,13 +126,20 @@ export default function CustomerProfileHub({
       <div className="customer-hub-nav-bar">
         <div className="hub-tabs-scrollable">
           <button 
-            className={`hub-nav-tab ${subTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setSubTab('overview')}
+            className={`hub-nav-tab ${['profile', 'settings'].includes(subTab) ? 'active' : ''}`}
+            onClick={() => setSubTab('profile')}
           >
-            <User size={16} /> Overview
+            <User size={16} /> My Profile
           </button>
 
           <button 
+            className={`hub-nav-tab ${subTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setSubTab('overview')}
+          >
+            <Sparkles size={16} /> Overview
+          </button>
+
+          <button
             className={`hub-nav-tab ${subTab === 'bookings' ? 'active' : ''}`}
             onClick={() => setSubTab('bookings')}
           >
@@ -140,42 +147,42 @@ export default function CustomerProfileHub({
             {activeBookingsCount > 0 && <span className="hub-tab-badge-pulse">{activeBookingsCount}</span>}
           </button>
 
-          <button 
+          <button
             className={`hub-nav-tab ${subTab === 'history' ? 'active' : ''}`}
             onClick={() => setSubTab('history')}
           >
             <FileText size={16} /> Service History & Invoices
           </button>
 
-          <button 
+          <button
             className={`hub-nav-tab ${subTab === 'properties' ? 'active' : ''}`}
             onClick={() => setSubTab('properties')}
           >
             <Building size={16} /> My Properties ({properties.length})
           </button>
 
-          <button 
+          <button
             className={`hub-nav-tab ${subTab === 'saved-technicians' ? 'active' : ''}`}
             onClick={() => setSubTab('saved-technicians')}
           >
             <Heart size={16} color={savedWorkerIds.length > 0 ? 'var(--accent-rose)' : 'inherit'} /> Saved Technicians ({savedWorkerIds.length})
           </button>
 
-          <button 
+          <button
             className={`hub-nav-tab ${subTab === 'addresses' ? 'active' : ''}`}
             onClick={() => setSubTab('addresses')}
           >
             <MapPin size={16} /> Addresses ({addresses.length})
           </button>
 
-          <button 
+          <button
             className={`hub-nav-tab ${subTab === 'payments' ? 'active' : ''}`}
             onClick={() => setSubTab('payments')}
           >
             <CreditCard size={16} /> Payments & Transactions
           </button>
 
-          <button 
+          <button
             className={`hub-nav-tab ${subTab === 'reviews' ? 'active' : ''}`}
             onClick={() => setSubTab('reviews')}
           >
@@ -183,14 +190,14 @@ export default function CustomerProfileHub({
             {unreviewedCount > 0 && <span className="hub-tab-badge-gold">{unreviewedCount}</span>}
           </button>
 
-          <button 
+          <button
             className={`hub-nav-tab ${subTab === 'rewards' ? 'active' : ''}`}
             onClick={() => setSubTab('rewards')}
           >
             <Gift size={16} /> Rewards & Referral
           </button>
 
-          <button 
+          <button
             className={`hub-nav-tab ${subTab === 'settings' ? 'active' : ''}`}
             onClick={() => setSubTab('settings')}
           >
@@ -324,7 +331,7 @@ export default function CustomerProfileHub({
           />
         )}
 
-        {subTab === 'settings' && (
+        {['profile', 'settings'].includes(subTab) && (
           <CustomerSettings
             user={user}
             workerProfile={workerProfile}
@@ -467,25 +474,25 @@ export default function CustomerProfileHub({
               <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <button 
+                    <button
                       key={star}
                       type="button"
                       className="star-pick-btn"
                       onClick={() => setReviewRating(star)}
                     >
-                      <Star 
-                        size={32} 
-                        color={star <= reviewRating ? 'var(--accent-gold)' : 'var(--text-muted)'} 
-                        fill={star <= reviewRating ? 'var(--accent-gold)' : 'transparent'} 
+                      <Star
+                        size={32}
+                        color={star <= reviewRating ? 'var(--accent-gold)' : 'var(--text-muted)'}
+                        fill={star <= reviewRating ? 'var(--accent-gold)' : 'transparent'}
                       />
                     </button>
                   ))}
                 </div>
                 <div style={{ fontWeight: 'bold', color: 'var(--accent-gold)' }}>
                   {reviewRating === 5 ? '⭐⭐⭐⭐⭐ Exceptional (5/5)' :
-                   reviewRating === 4 ? '⭐⭐⭐⭐ Great Service (4/5)' :
-                   reviewRating === 3 ? '⭐⭐⭐ Average (3/5)' :
-                   reviewRating === 2 ? '⭐⭐ Needs Improvement (2/5)' : '⭐ Unsatisfactory (1/5)'}
+                    reviewRating === 4 ? '⭐⭐⭐⭐ Great Service (4/5)' :
+                      reviewRating === 3 ? '⭐⭐⭐ Average (3/5)' :
+                        reviewRating === 2 ? '⭐⭐ Needs Improvement (2/5)' : '⭐ Unsatisfactory (1/5)'}
                 </div>
               </div>
 
@@ -508,7 +515,7 @@ export default function CustomerProfileHub({
 
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label">Written Feedback</label>
-                <textarea 
+                <textarea
                   className="form-textarea"
                   rows="3"
                   placeholder="Describe the technician's punctuality, quality of work, cleanliness, and overall satisfaction..."

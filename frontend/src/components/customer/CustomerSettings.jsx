@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
-import { 
-  Settings, 
-  User, 
-  Lock, 
-  Bell, 
-  Globe, 
-  ShieldCheck, 
-  HelpCircle, 
-  LogOut, 
-  Check, 
-  AlertCircle, 
-  ChevronDown, 
-  ChevronUp, 
-  MessageSquare, 
-  PhoneCall, 
+import {
+  Settings,
+  User,
+  Lock,
+  Bell,
+  Globe,
+  ShieldCheck,
+  HelpCircle,
+  LogOut,
+  Check,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
+  PhoneCall,
   Camera,
   Mail,
   MapPin,
@@ -172,43 +172,43 @@ export default function CustomerSettings({
       <div className="settings-layout-grid">
         {/* Settings Sub-navigation List */}
         <div className="glass-card settings-nav-card">
-          <button 
+          <button
             className={`settings-nav-item ${activeTab === 'personal' ? 'active' : ''}`}
             onClick={() => setActiveTab('personal')}
           >
             <User size={18} /> Personal Details
           </button>
-          <button 
+          <button
             className={`settings-nav-item ${activeTab === 'location' ? 'active' : ''}`}
             onClick={() => setActiveTab('location')}
           >
             <MapPin size={18} /> Location & GPS Map
           </button>
-          <button 
+          <button
             className={`settings-nav-item ${activeTab === 'security' ? 'active' : ''}`}
             onClick={() => setActiveTab('security')}
           >
             <Lock size={18} /> Password & Security
           </button>
-          <button 
+          <button
             className={`settings-nav-item ${activeTab === 'notifications' ? 'active' : ''}`}
             onClick={() => setActiveTab('notifications')}
           >
             <Bell size={18} /> Notifications
           </button>
-          <button 
+          <button
             className={`settings-nav-item ${activeTab === 'language' ? 'active' : ''}`}
             onClick={() => setActiveTab('language')}
           >
             <Globe size={18} /> Language & Region
           </button>
-          <button 
+          <button
             className={`settings-nav-item ${activeTab === 'privacy' ? 'active' : ''}`}
             onClick={() => setActiveTab('privacy')}
           >
             <ShieldCheck size={18} /> Privacy & Safety
           </button>
-          <button 
+          <button
             className={`settings-nav-item ${activeTab === 'help' ? 'active' : ''}`}
             onClick={() => setActiveTab('help')}
           >
@@ -217,7 +217,7 @@ export default function CustomerSettings({
 
           <div style={{ borderTop: '1px solid var(--border-color)', margin: '1rem 0 0.5rem' }}></div>
 
-          <button 
+          <button
             className="settings-nav-item logout-nav-item"
             onClick={onLogout}
           >
@@ -246,9 +246,9 @@ export default function CustomerSettings({
                   <img src={avatarUrl} alt="Avatar" className="avatar-edit-preview" />
                   <div>
                     <label className="form-label" style={{ fontSize: '0.8rem' }}>Profile Picture URL</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       style={{ fontSize: '0.85rem' }}
                       value={avatarUrl}
                       onChange={(e) => setAvatarUrl(e.target.value)}
@@ -258,9 +258,9 @@ export default function CustomerSettings({
 
                 <div className="form-group" style={{ marginBottom: '1rem' }}>
                   <label className="form-label">Full Name</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    className="form-input"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -270,9 +270,9 @@ export default function CustomerSettings({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                   <div>
                     <label className="form-label">Email Address</label>
-                    <input 
-                      type="email" 
-                      className="form-input" 
+                    <input
+                      type="email"
+                      className="form-input"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -280,9 +280,9 @@ export default function CustomerSettings({
                   </div>
                   <div>
                     <label className="form-label">Mobile Number</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       required
@@ -293,9 +293,9 @@ export default function CustomerSettings({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                   <div>
                     <label className="form-label">National ID (NID Number)</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={nidNumber}
                       onChange={(e) => setNidNumber(e.target.value)}
                       placeholder="e.g. 19942618954712365"
@@ -303,9 +303,9 @@ export default function CustomerSettings({
                   </div>
                   <div>
                     <label className="form-label">Default Street Address</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                     />
@@ -316,9 +316,9 @@ export default function CustomerSettings({
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem', background: 'rgba(16, 185, 129, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                     <div>
                       <label className="form-label">Specialty Skills (Comma Separated)</label>
-                      <input 
-                        type="text" 
-                        className="form-input" 
+                      <input
+                        type="text"
+                        className="form-input"
                         value={skills}
                         onChange={(e) => setSkills(e.target.value)}
                         placeholder="e.g. AC Repair, Electrical, Smart Home"
@@ -326,9 +326,9 @@ export default function CustomerSettings({
                     </div>
                     <div>
                       <label className="form-label">Hourly Service Rate (BDT/hr)</label>
-                      <input 
-                        type="number" 
-                        className="form-input" 
+                      <input
+                        type="number"
+                        className="form-input"
                         value={hourlyRate}
                         onChange={(e) => setHourlyRate(e.target.value)}
                       />
@@ -350,8 +350,8 @@ export default function CustomerSettings({
                 <MapPin size={20} color="var(--primary)" /> Live GPS Location & Radius Search Sync
               </h3>
               <p className="settings-tab-desc">
-                {isWorker 
-                  ? 'Set your exact dispatch coordinates so nearby customers can discover you on the radius map.' 
+                {isWorker
+                  ? 'Set your exact dispatch coordinates so nearby customers can discover you on the radius map.'
                   : 'Manage your primary location coordinates for technician matching & map radius filtering.'}
               </p>
 
@@ -364,9 +364,9 @@ export default function CustomerSettings({
               <form onSubmit={handleSaveLocation}>
                 <div className="form-group" style={{ marginBottom: '1rem' }}>
                   <label className="form-label">Area / Location Name</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    className="form-input"
                     value={serviceArea}
                     onChange={(e) => setServiceArea(e.target.value)}
                     placeholder="e.g. Sector 12, Uttara, Dhaka"
@@ -377,10 +377,10 @@ export default function CustomerSettings({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
                   <div>
                     <label className="form-label">GPS Latitude</label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       step="0.0001"
-                      className="form-input" 
+                      className="form-input"
                       value={latitude}
                       onChange={(e) => setLatitude(e.target.value)}
                       required
@@ -388,10 +388,10 @@ export default function CustomerSettings({
                   </div>
                   <div>
                     <label className="form-label">GPS Longitude</label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       step="0.0001"
-                      className="form-input" 
+                      className="form-input"
                       value={longitude}
                       onChange={(e) => setLongitude(e.target.value)}
                       required
@@ -402,9 +402,9 @@ export default function CustomerSettings({
                 <div style={{ background: 'rgba(59, 130, 246, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <strong style={{ color: 'var(--accent-blue)' }}>📍 Preset Coordinates & Real Device GPS:</strong>
-                    <button 
-                      type="button" 
-                      className="btn btn-primary" 
+                    <button
+                      type="button"
+                      className="btn btn-primary"
                       style={{ fontSize: '0.75rem', padding: '0.3rem 0.7rem' }}
                       onClick={handleGetBrowserLocation}
                     >
@@ -451,9 +451,9 @@ export default function CustomerSettings({
               <form onSubmit={handleSavePassword} style={{ marginBottom: '2rem' }}>
                 <div className="form-group" style={{ marginBottom: '1rem' }}>
                   <label className="form-label">Current Password</label>
-                  <input 
-                    type="password" 
-                    className="form-input" 
+                  <input
+                    type="password"
+                    className="form-input"
                     value={currentPass}
                     onChange={(e) => setCurrentPass(e.target.value)}
                     placeholder="••••••••"
@@ -463,9 +463,9 @@ export default function CustomerSettings({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
                   <div>
                     <label className="form-label">New Password</label>
-                    <input 
-                      type="password" 
-                      className="form-input" 
+                    <input
+                      type="password"
+                      className="form-input"
                       value={newPass}
                       onChange={(e) => setNewPass(e.target.value)}
                       placeholder="••••••••"
@@ -473,9 +473,9 @@ export default function CustomerSettings({
                   </div>
                   <div>
                     <label className="form-label">Confirm New Password</label>
-                    <input 
-                      type="password" 
-                      className="form-input" 
+                    <input
+                      type="password"
+                      className="form-input"
                       value={confirmPass}
                       onChange={(e) => setConfirmPass(e.target.value)}
                       placeholder="••••••••"
@@ -493,8 +493,8 @@ export default function CustomerSettings({
                   <strong>Two-Factor Security Authentication</strong>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Send OTP to {phone} when signing in from unrecognized browsers.</p>
                 </div>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={twoFactor}
                   onChange={(e) => setTwoFactor(e.target.checked)}
                   style={{ width: 18, height: 18 }}
@@ -556,7 +556,7 @@ export default function CustomerSettings({
               <p className="settings-tab-desc">Select your preferred interface language for FixConnect.</p>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}>
-                <div 
+                <div
                   className={`language-option-card ${selectedLang === 'en' ? 'active' : ''}`}
                   onClick={() => setSelectedLang('en')}
                 >
@@ -564,7 +564,7 @@ export default function CustomerSettings({
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Standard commercial English interface</div>
                 </div>
 
-                <div 
+                <div
                   className={`language-option-card ${selectedLang === 'bn' ? 'active' : ''}`}
                   onClick={() => setSelectedLang('bn')}
                 >
@@ -626,7 +626,7 @@ export default function CustomerSettings({
               <div className="faq-accordion-list">
                 {faqs.map((faq, idx) => (
                   <div key={idx} className="faq-item">
-                    <button 
+                    <button
                       className="faq-question-btn"
                       onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
                     >
