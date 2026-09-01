@@ -173,6 +173,111 @@ public class DbInitializer implements CommandLineRunner {
         profile8.setLongitude(90.4040);
         workerProfileRepository.save(profile8);
 
+        // Worker 9: Farhan Ahmed (Washing Machine & Refrigerator Specialist - Bashundhara R/A)
+        User worker9 = new User("Farhan Ahmed", "farhan@gmail.com", "01722334455", "WORKER");
+        worker9.setVerified(true);
+        worker9.setRating(4.88);
+        worker9.setLatitude(23.8155);
+        worker9.setLongitude(90.4250);
+        worker9.setAddress("Block C, Bashundhara R/A, Dhaka");
+        worker9.setProfilePicture("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop");
+        userRepository.save(worker9);
+
+        WorkerProfile profile9 = new WorkerProfile(worker9, "Washing Machine Repair, Refrigerator Gas Top-up, Inverter PCB", 8, "Bashundhara, Baridhara, Kuril", "Master", 520.0);
+        profile9.setLatitude(23.8155);
+        profile9.setLongitude(90.4250);
+        workerProfileRepository.save(profile9);
+
+        // Worker 10: Imtiaz Chowdhury (Master Electrician & CCTV Specialist - Badda)
+        User worker10 = new User("Imtiaz Chowdhury", "imtiaz@gmail.com", "01833445566", "WORKER");
+        worker10.setVerified(true);
+        worker10.setRating(4.75);
+        worker10.setLatitude(23.7850);
+        worker10.setLongitude(90.4270);
+        worker10.setAddress("Middle Badda, Dhaka");
+        worker10.setProfilePicture("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop");
+        userRepository.save(worker10);
+
+        WorkerProfile profile10 = new WorkerProfile(worker10, "Electrical, CCTV Camera Installation, IPS & UPS Repair", 6, "Badda, Rampura, Khilgaon", "Gold", 420.0);
+        profile10.setLatitude(23.7850);
+        profile10.setLongitude(90.4270);
+        workerProfileRepository.save(profile10);
+
+        // Worker 11: Zubaer Rahman (Gas Stove & Water Purifier Technician - Mohammadpur)
+        User worker11 = new User("Zubaer Rahman", "zubaer@gmail.com", "01944556677", "WORKER");
+        worker11.setVerified(true);
+        worker11.setRating(4.82);
+        worker11.setLatitude(23.7590);
+        worker11.setLongitude(90.3620);
+        worker11.setAddress("Kazi Nazrul Islam Road, Mohammadpur, Dhaka");
+        worker11.setProfilePicture("https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop");
+        userRepository.save(worker11);
+
+        WorkerProfile profile11 = new WorkerProfile(worker11, "Gas Stove Burner Fitting, RO Water Purifier Servicing, Kitchen Geyser", 5, "Mohammadpur, Dhanmondi, Lalmatia", "Gold", 400.0);
+        profile11.setLatitude(23.7590);
+        profile11.setLongitude(90.3620);
+        workerProfileRepository.save(profile11);
+
+        // Worker 12: Ariful Islam (House Cleaning & Water Tank Cleaning Specialist - Khilgaon)
+        User worker12 = new User("Ariful Islam", "arif@gmail.com", "01555667788", "WORKER");
+        worker12.setVerified(true);
+        worker12.setRating(4.90);
+        worker12.setLatitude(23.7520);
+        worker12.setLongitude(90.4210);
+        worker12.setAddress("Tamtola, Khilgaon, Dhaka");
+        worker12.setProfilePicture("https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop");
+        userRepository.save(worker12);
+
+        WorkerProfile profile12 = new WorkerProfile(worker12, "Deep House Cleaning, Overhead Water Tank Jet Wash, Sofa Cleaning", 7, "Khilgaon, Malibagh, Basabo", "Platinum", 380.0);
+        profile12.setLatitude(23.7520);
+        profile12.setLongitude(90.4210);
+        workerProfileRepository.save(profile12);
+
+        // Worker 13: Hasan Mahmud (Roof Waterproofing & Masonry Repair - Old Dhaka / Lalbagh)
+        User worker13 = new User("Hasan Mahmud", "hasan@gmail.com", "01666778899", "WORKER");
+        worker13.setVerified(true);
+        worker13.setRating(4.70);
+        worker13.setLatitude(23.7180);
+        worker13.setLongitude(90.3880);
+        worker13.setAddress("Lalbagh Fort Road, Old Dhaka, Dhaka");
+        worker13.setProfilePicture("https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop");
+        userRepository.save(worker13);
+
+        WorkerProfile profile13 = new WorkerProfile(worker13, "Roof Damp Leak Proofing, Tile Fitting, Masonry Work", 11, "Old Dhaka, Lalbagh, Motijheel, Sadarghat", "Master", 450.0);
+        profile13.setLatitude(23.7180);
+        profile13.setLongitude(90.3880);
+        workerProfileRepository.save(profile13);
+
+        // Worker 14: Nazmul Huda (AC & Chiller Specialist - Tongi / Uttara Extension)
+        User worker14 = new User("Nazmul Huda", "nazmul@gmail.com", "01777889900", "WORKER");
+        worker14.setVerified(true);
+        worker14.setRating(4.92);
+        worker14.setLatitude(23.8920);
+        worker14.setLongitude(90.3950);
+        worker14.setAddress("Sector 18, Uttara, Dhaka");
+        worker14.setProfilePicture("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop");
+        userRepository.save(worker14);
+
+        WorkerProfile profile14 = new WorkerProfile(worker14, "AC Repair, Inverter Compressor Replacement, Gas Top-up", 9, "Uttara, Tongi, Gazipur", "Platinum", 550.0);
+        profile14.setLatitude(23.8920);
+        profile14.setLongitude(90.3950);
+        workerProfileRepository.save(profile14);
+
+        // Worker 15: Biplob Hossain (Sanitary Fitting & Sewer Line Unclogging - Mirpur 2)
+        User worker15 = new User("Biplob Hossain", "biplob@gmail.com", "01888990011", "WORKER");
+        worker15.setVerified(true);
+        worker15.setRating(4.80);
+        worker15.setLatitude(23.8080);
+        worker15.setLongitude(90.3610);
+        worker15.setAddress("Stadium Road, Mirpur 2, Dhaka");
+        worker15.setProfilePicture("https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop");
+        userRepository.save(worker15);
+
+        WorkerProfile profile15 = new WorkerProfile(worker15, "Plumbing, Sewer Line Unclogging, High Pressure Drain Wash", 8, "Mirpur, Pallabi, Kafrul", "Gold", 460.0);
+        profile15.setLatitude(23.8080);
+        profile15.setLongitude(90.3610);
+        workerProfileRepository.save(profile15);
+
         // Pre-populate bookings
         ServiceBooking booking1 = new ServiceBooking(customer, worker1, "AC Repair & Servicing", LocalDateTime.now().plusDays(1), 1500.0, "AC unit not cooling effectively and makes noise.");
         booking1.setStartVerificationCode("4829");
