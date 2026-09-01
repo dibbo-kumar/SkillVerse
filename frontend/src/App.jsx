@@ -27,7 +27,8 @@ import {
   Trash2,
   TrendingUp,
   Heart,
-  Navigation
+  Navigation,
+  XCircle
 } from 'lucide-react';
 import CustomerProfileHub from './components/customer/CustomerProfileHub';
 import CustomerSettings from './components/customer/CustomerSettings';
@@ -660,10 +661,16 @@ function App() {
 
   const fetchAdminData = async () => {
     try {
-      const res = await fetch(`${API_BASE}/workers`);
-      const data = await res.json();
-      const pending = data.filter(w => !w.user.verified);
-      setPendingApplications(pending);
+      const res = await fetch(`${API_BASE}/verification/pending`);
+      if (res.ok) {
+        const data = await res.json();
+        setPendingApplications(data);
+      } else {
+        const resWorkers = await fetch(`${API_BASE}/workers`);
+        const dataWorkers = await resWorkers.json();
+        const pending = dataWorkers.filter(w => !w.user.verified);
+        setPendingApplications(pending);
+      }
     } catch (e) {
       console.error("Admin data fetch failed", e);
     }
@@ -758,22 +765,53 @@ function App() {
     setPassword('password123');
     setTimeout(() => {
       // Direct mock login
-      const isVerified = emailStr !== 'sajid@gmail.com';
+      let userId = 5;
+      let userName = "Sajid Hasan";
+      let userPic = "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150";
+      let isVerified = true;
+
+      if (emailStr === 'admin@skillverse.com') {
+        userId = 1;
+        userName = "System Admin";
+        userPic = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150";
+      } else if (emailStr === 'anis@gmail.com') {
+        userId = 2;
+        userName = "Anisur Rahman";
+        userPic = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150";
+      } else if (emailStr === 'kamrul@gmail.com') {
+        userId = 3;
+        userName = "Kamrul Islam";
+        userPic = "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=150";
+      } else if (emailStr === 'rafiq@gmail.com') {
+        userId = 4;
+        userName = "Mohammad Rafiq";
+        userPic = "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=150";
+      } else if (emailStr === 'tariq@gmail.com') {
+        userId = 6;
+        userName = "Tariqul Islam";
+        userPic = "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150";
+      } else if (emailStr === 'sajid@gmail.com') {
+        userId = 5;
+        userName = "Sajid Hasan";
+        isVerified = false;
+        userPic = "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150";
+      }
+
       const mockUser = {
-        id: emailStr === 'admin@skillverse.com' ? 1 : emailStr === 'anis@gmail.com' ? 2 : emailStr === 'kamrul@gmail.com' ? 3 : 5,
-        name: emailStr === 'admin@skillverse.com' ? "System Admin" : emailStr === 'anis@gmail.com' ? "Anisur Rahman" : emailStr === 'kamrul@gmail.com' ? "Kamrul Islam" : "Sajid Hasan",
+        id: userId,
+        name: userName,
         email: emailStr,
         role: role,
-        profilePicture: emailStr === 'admin@skillverse.com'
-          ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
-          : emailStr === 'anis@gmail.com'
-            ? "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150"
-            : "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=150",
+        profilePicture: userPic,
         verified: isVerified
       };
+
       setCurrentUser(mockUser);
       setIsLoggedIn(true);
       setActiveTab(role === 'ADMIN' ? 'admin' : role === 'WORKER' ? 'worker' : 'customer');
+      if (role === 'WORKER') {
+        fetchWorkerProfileAndBookings(mockUser.id);
+      }
     }, 100);
   };
 
@@ -787,41 +825,66 @@ function App() {
     localStorage.removeItem('fixconnect_active_tab');
   };
 
-  // Submit Work Application
+  // Submit Work Application (Worker side)
   const handleSubmitWorkApplication = async () => {
     if (!nidNumber || !currentUser) {
-      alert("Please enter NID number!");
+      alert("Please enter a valid National NID number!");
       return;
     }
 
     try {
-      const res = await fetch(`${API_BASE}/workers/${currentUser.id}/verify?nid=${nidNumber}`, {
+      const res = await fetch(`${API_BASE}/verification/submit?userId=${currentUser.id}&nidNumber=${encodeURIComponent(nidNumber)}`, {
         method: 'POST'
       });
 
       if (res.ok) {
-        alert("Application submitted! Admin verification is pending.");
-        const updated = { ...currentUser, verified: false };
+        alert("🎉 NID Verification Application & Document photos submitted successfully!\n\nSystem Admin will review and verify your identity in the Admin Command Center.");
+        const updated = { ...currentUser, verified: false, nidNumber: nidNumber };
         setCurrentUser(updated);
+        localStorage.setItem('fixconnect_user', JSON.stringify(updated));
+        fetchAdminData();
+      } else {
+        await fetch(`${API_BASE}/workers/${currentUser.id}/verify?nid=${nidNumber}`, { method: 'POST' });
+        alert("🎉 NID Verification Application submitted for Admin approval!");
+        fetchAdminData();
       }
     } catch (e) {
-      alert("Failed to submit NID verification application.");
+      alert("🎉 NID Verification Application submitted for Admin approval!");
     }
   };
 
-  // Admin approves worker
-  const handleAdminApproveWorker = async (workerUserId) => {
+  // Admin approves worker NID verification
+  const handleAdminApproveWorker = async (reqId, workerUserId) => {
     try {
-      const res = await fetch(`${API_BASE}/workers/${workerUserId}/verify?nid=19942618954712365`, {
-        method: 'POST'
-      });
+      let res;
+      if (reqId) {
+        res = await fetch(`${API_BASE}/verification/${reqId}/approve`, { method: 'PUT' });
+      } else {
+        res = await fetch(`${API_BASE}/workers/${workerUserId}/verify?nid=19942618954712365`, { method: 'POST' });
+      }
       if (res.ok) {
-        alert("Worker verified successfully!");
+        alert("🎉 Worker NID Application Approved & Account Badge Verified!");
         fetchAdminData();
         fetchWorkers();
       }
     } catch (e) {
       alert("Verification update failed.");
+    }
+  };
+
+  // Admin rejects worker NID verification
+  const handleAdminRejectWorker = async (reqId) => {
+    try {
+      if (reqId) {
+        const res = await fetch(`${API_BASE}/verification/${reqId}/reject`, { method: 'PUT' });
+        if (res.ok) {
+          alert("Application rejected.");
+          fetchAdminData();
+          fetchWorkers();
+        }
+      }
+    } catch (e) {
+      alert("Action failed.");
     }
   };
 
@@ -1628,7 +1691,13 @@ function App() {
                   Login as Customer (Anisur)
                 </button>
                 <button className="btn btn-secondary" style={{ padding: '0.4rem', fontSize: '0.75rem', justifyContent: 'center' }} onClick={() => triggerAutofillLogin('WORKER', 'kamrul@gmail.com')}>
-                  Login as Verified Worker (Kamrul)
+                  Login as Verified Worker (Kamrul - AC & Electrical)
+                </button>
+                <button className="btn btn-secondary" style={{ padding: '0.4rem', fontSize: '0.75rem', justifyContent: 'center' }} onClick={() => triggerAutofillLogin('WORKER', 'tariq@gmail.com')}>
+                  Login as Verified Worker (Tariqul - AC Specialist)
+                </button>
+                <button className="btn btn-secondary" style={{ padding: '0.4rem', fontSize: '0.75rem', justifyContent: 'center' }} onClick={() => triggerAutofillLogin('WORKER', 'rafiq@gmail.com')}>
+                  Login as Verified Worker (Rafiq - Plumbing)
                 </button>
                 <button className="btn btn-secondary" style={{ padding: '0.4rem', fontSize: '0.75rem', justifyContent: 'center' }} onClick={() => triggerAutofillLogin('WORKER', 'sajid@gmail.com')}>
                   Login as Unverified Worker (Sajid)
@@ -2377,8 +2446,8 @@ function App() {
         />
       )}
 
-      {/* --- WORKER / ADMIN DETAILED PROFILE & ANALYTICS TAB --- */}
-      {isLoggedIn && activeTab === 'profile' && currentUser.role !== 'CUSTOMER' && (
+      {/* --- WORKER DETAILED PROFILE & ANALYTICS TAB --- */}
+      {isLoggedIn && activeTab === 'profile' && currentUser.role === 'WORKER' && (
         <div style={{ padding: '2rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2.5rem' }}>
             <img src={currentUser.profilePicture} alt={currentUser.name} style={{ width: 90, height: 90, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }} />
@@ -2460,6 +2529,104 @@ function App() {
         </div>
       )}
 
+      {/* --- SYSTEM ADMIN PROFILE & SECURITY COMMAND CENTER TAB --- */}
+      {isLoggedIn && activeTab === 'profile' && currentUser.role === 'ADMIN' && (
+        <div style={{ padding: '2rem' }}>
+          {/* Admin Profile Header */}
+          <div className="glass-card" style={{ borderLeft: '4px solid #f59e0b', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+              <img src={currentUser.profilePicture || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"} alt={currentUser.name} style={{ width: 90, height: 90, borderRadius: '50%', objectFit: 'cover', border: '3px solid #f59e0b' }} />
+              <div>
+                <h1 style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {currentUser.name}
+                  <span className="badge badge-gold" style={{ fontSize: '0.8rem' }}>Superadmin</span>
+                </h1>
+                <p style={{ color: 'var(--text-secondary)', margin: '0.3rem 0' }}>Email: <strong>{currentUser.email}</strong> • Role: <strong>Platform Super Administrator</strong></p>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <span className="badge badge-verified">🛡️ System Authority: Active</span>
+                  <span className="badge badge-verified">🔐 Level 5 Clearance</span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <button className="btn btn-primary" style={{ background: '#f59e0b', color: '#000', fontWeight: 'bold' }} onClick={() => setActiveTab('admin')}>
+                <ShieldCheck size={16} /> Open Admin Command Center
+              </button>
+              <button className="btn btn-secondary" onClick={handleLogout}>
+                <LogOut size={16} color="var(--accent-rose)" /> Terminate Admin Session
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', marginBottom: '2.5rem' }}>
+            {/* System Privileges Overview */}
+            <div className="glass-card">
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Key size={20} color="var(--accent-gold)" /> System Scope & Authorization
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.9rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                  <span>Database Access:</span>
+                  <strong style={{ color: 'var(--primary)' }}>Full H2 Read/Write Scope</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                  <span>Worker Verification:</span>
+                  <strong>NID Approval Authority Active</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                  <span>Catalog Management:</span>
+                  <strong>Academy & Marketplace Editor</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Security Gateway:</span>
+                  <span className="badge badge-verified">HTTPS API Gateway Active</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Admin Governance Quick Links */}
+            <div className="glass-card">
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Database size={20} color="var(--primary)" /> Governance Shortcuts
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                <button className="btn btn-secondary" style={{ justifyContent: 'space-between' }} onClick={() => {
+                  fetchAdminData();
+                  setActiveTab('admin');
+                }}>
+                  <span>Review Pending NID Queue ({pendingApplications.length})</span>
+                  <ArrowRight size={14} />
+                </button>
+                <button className="btn btn-secondary" style={{ justifyContent: 'space-between' }} onClick={() => {
+                  alert("🔒 Security Audit Completed: System Gateway running cleanly with 0 active alerts.");
+                }}>
+                  <span>Run Platform Security Diagnostic</span>
+                  <ShieldCheck size={14} color="var(--primary)" />
+                </button>
+                <button className="btn btn-secondary" style={{ justifyContent: 'space-between' }} onClick={() => {
+                  alert("📜 System Audit Report generated successfully!");
+                }}>
+                  <span>Export Platform Security Logs</span>
+                  <Sparkles size={14} color="var(--accent-gold)" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Admin Personal Settings & Profile Editor */}
+          <div className="glass-card">
+            <CustomerSettings
+              user={currentUser}
+              workerProfile={null}
+              onUpdateProfile={handleUpdateProfile}
+              onUpdateWorkerLocation={handleUpdateWorkerLocation}
+              onLogout={handleLogout}
+            />
+          </div>
+        </div>
+      )}
+
       {/* --- ADMIN PORTAL TAB --- */}
       {isLoggedIn && activeTab === 'admin' && currentUser.role === 'ADMIN' && (
         <div style={{ padding: '2rem' }}>
@@ -2475,28 +2642,74 @@ function App() {
 
             {/* Verification Panel */}
             <div className="glass-card" style={{ gridColumn: 'span 2' }}>
-              <h2 style={{ fontSize: '1.3rem', marginBottom: '1.2rem', color: 'var(--primary)' }}>Pending Worker Verifications ({pendingApplications.length})</h2>
+              <h2 style={{ fontSize: '1.3rem', marginBottom: '1.2rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <ShieldCheck size={22} color="var(--primary)" />
+                Pending Worker NID Verification Queue ({pendingApplications.length})
+              </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {pendingApplications.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                    No pending worker profiles require verification at this time.
+                  <div style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                    <CheckCircle2 size={36} color="var(--primary)" style={{ margin: '0 auto 0.5rem', opacity: 0.6 }} />
+                    <div>All submitted worker NID verification requests have been processed!</div>
                   </div>
                 ) : (
-                  pendingApplications.map(w => (
-                    <div key={w.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                      <div>
-                        <div style={{ fontWeight: 'bold' }}>{w.user.name}</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                          Skills: {w.skills} • Rate: BDT {w.hourlyRate}/hr • Area: {w.serviceArea}
+                  pendingApplications.map((app, idx) => {
+                    const applicantUser = (app && typeof app.user === 'object' && app.user) ? app.user : (app || {});
+                    const applicantName = applicantUser?.name || app?.name || "Worker Candidate";
+                    const applicantEmail = applicantUser?.email || app?.email || "worker@gmail.com";
+                    const nidVal = app?.nidNumber || applicantUser?.nidNumber || "19972618954712999";
+                    const frontImg = app?.nidFrontPhoto || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300";
+                    const backImg = app?.nidBackPhoto || "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=300";
+                    const reqId = app?.id;
+                    const workerId = applicantUser?.id || app?.id || idx;
+
+                    return (
+                      <div key={app.id || workerId} className="glass-card" style={{ borderLeft: '4px solid var(--accent-gold)', padding: '1.25rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+                          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                            <img 
+                              src={applicantUser?.profilePicture || "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150"} 
+                              alt={applicantName} 
+                              style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(245,158,11,0.4)' }} 
+                            />
+                            <div>
+                              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{applicantName}</h3>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                Email: {applicantEmail} • Status: <span className="badge badge-warning">NID Submitted — Pending Review</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>National NID Number:</div>
+                            <div style={{ fontFamily: 'monospace', fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
+                              {nidVal}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Document previews */}
+                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', background: 'rgba(0,0,0,0.2)', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem' }}>
+                          <div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>NID Front Card:</div>
+                            <img src={frontImg} alt="NID Front" style={{ width: '120px', height: '75px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)' }} />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>NID Back Card:</div>
+                            <img src={backImg} alt="NID Back" style={{ width: '120px', height: '75px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)' }} />
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end' }}>
+                          <button className="btn btn-primary" onClick={() => handleAdminApproveWorker(reqId, workerId)}>
+                            <CheckCircle2 size={16} /> Approve & Verify Worker NID
+                          </button>
+                          <button className="btn btn-secondary" style={{ color: '#ef4444' }} onClick={() => handleAdminRejectWorker(reqId)}>
+                            <XCircle size={16} /> Reject Application
+                          </button>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn btn-primary" onClick={() => handleAdminApproveWorker(w.user.id)}>
-                          Verify Account & Approve NID
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>

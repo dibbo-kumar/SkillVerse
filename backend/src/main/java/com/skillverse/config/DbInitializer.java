@@ -14,15 +14,18 @@ public class DbInitializer implements CommandLineRunner {
     private final ServiceBookingRepository bookingRepository;
     private final CourseRepository courseRepository;
     private final MarketplaceItemRepository marketplaceRepository;
+    private final VerificationRequestRepository verificationRequestRepository;
 
     public DbInitializer(UserRepository userRepository, WorkerProfileRepository workerProfileRepository,
                          ServiceBookingRepository bookingRepository, CourseRepository courseRepository,
-                         MarketplaceItemRepository marketplaceRepository) {
+                         MarketplaceItemRepository marketplaceRepository,
+                         VerificationRequestRepository verificationRequestRepository) {
         this.userRepository = userRepository;
         this.workerProfileRepository = workerProfileRepository;
         this.bookingRepository = bookingRepository;
         this.courseRepository = courseRepository;
         this.marketplaceRepository = marketplaceRepository;
+        this.verificationRequestRepository = verificationRequestRepository;
     }
 
     @Override
@@ -76,7 +79,8 @@ public class DbInitializer implements CommandLineRunner {
         workerProfileRepository.save(profile2);
 
         User worker3 = new User("Sajid Hasan", "sajid@gmail.com", "01611223344", "WORKER");
-        worker3.setVerified(true);
+        worker3.setVerified(false);
+        worker3.setNidNumber("19972618954712999");
         worker3.setRating(4.5);
         worker3.setLatitude(23.8050);
         worker3.setLongitude(90.3680);
@@ -88,6 +92,11 @@ public class DbInitializer implements CommandLineRunner {
         profile3.setLatitude(23.8050);
         profile3.setLongitude(90.3680);
         workerProfileRepository.save(profile3);
+
+        VerificationRequest req1 = new VerificationRequest(worker3, "19972618954712999", 
+            "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300", 
+            "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=300");
+        verificationRequestRepository.save(req1);
 
         // Worker 4: Tariqul Islam (AC Repair Specialist - Uttara Sector 13 ~350m)
         User worker4 = new User("Tariqul Islam", "tariq@gmail.com", "01712345678", "WORKER");

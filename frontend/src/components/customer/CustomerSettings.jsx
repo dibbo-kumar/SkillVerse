@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Settings,
   User,
@@ -33,12 +33,12 @@ export default function CustomerSettings({
   const isWorker = user?.role === 'WORKER';
 
   // Personal Info Form
-  const [name, setName] = useState(user?.name || 'Anisur Rahman');
-  const [email, setEmail] = useState(user?.email || 'anis@gmail.com');
-  const [phone, setPhone] = useState(user?.phone || '01811223344');
+  const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [phone, setPhone] = useState(user?.phone || '');
   const [nidNumber, setNidNumber] = useState(user?.nidNumber || '');
   const [avatarUrl, setAvatarUrl] = useState(user?.profilePicture || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150');
-  const [address, setAddress] = useState(user?.address || 'House 14, Road 4, Sector 12, Uttara, Dhaka');
+  const [address, setAddress] = useState(user?.address || '');
   const [skills, setSkills] = useState(workerProfile?.skills || 'Electrical, AC Repair');
   const [hourlyRate, setHourlyRate] = useState(workerProfile?.hourlyRate || 450);
   const [profileSaved, setProfileSaved] = useState(false);
@@ -48,6 +48,27 @@ export default function CustomerSettings({
   const [longitude, setLongitude] = useState(user?.longitude || (isWorker ? 90.3810 : 90.3795));
   const [serviceArea, setServiceArea] = useState(workerProfile?.serviceArea || user?.address || 'Sector 12, Uttara, Dhaka');
   const [locationSaved, setLocationSaved] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setEmail(user.email || '');
+      setPhone(user.phone || '');
+      setNidNumber(user.nidNumber || '');
+      setAvatarUrl(user.profilePicture || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150');
+      setAddress(user.address || '');
+      setLatitude(user.latitude || (user.role === 'WORKER' ? 23.8720 : 23.8759));
+      setLongitude(user.longitude || (user.role === 'WORKER' ? 90.3810 : 90.3795));
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (workerProfile) {
+      setSkills(workerProfile.skills || '');
+      setHourlyRate(workerProfile.hourlyRate || 450);
+      setServiceArea(workerProfile.serviceArea || '');
+    }
+  }, [workerProfile]);
 
   // Security Form
   const [currentPass, setCurrentPass] = useState('');

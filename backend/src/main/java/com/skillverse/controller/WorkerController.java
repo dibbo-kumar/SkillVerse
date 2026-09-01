@@ -2,8 +2,10 @@ package com.skillverse.controller;
 
 import com.skillverse.model.User;
 import com.skillverse.model.WorkerProfile;
+import com.skillverse.model.VerificationRequest;
 import com.skillverse.repository.UserRepository;
 import com.skillverse.repository.WorkerProfileRepository;
+import com.skillverse.repository.VerificationRequestRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -15,10 +17,13 @@ public class WorkerController {
 
     private final WorkerProfileRepository workerProfileRepository;
     private final UserRepository userRepository;
+    private final VerificationRequestRepository verificationRequestRepository;
 
-    public WorkerController(WorkerProfileRepository workerProfileRepository, UserRepository userRepository) {
+    public WorkerController(WorkerProfileRepository workerProfileRepository, UserRepository userRepository,
+                            VerificationRequestRepository verificationRequestRepository) {
         this.workerProfileRepository = workerProfileRepository;
         this.userRepository = userRepository;
+        this.verificationRequestRepository = verificationRequestRepository;
     }
 
     @GetMapping
@@ -34,13 +39,25 @@ public class WorkerController {
     }
 
     @PostMapping("/{id}/verify")
-    public ResponseEntity<?> verifyWorker(@PathVariable Long id, @RequestParam String nid) {
+    public ResponseEntity<?> verifyWorker(@PathVariable Long id, @RequestParam String nid, @RequestParam(required = false) String frontPhoto) {
         return userRepository.findById(id)
                 .map(user -> {
-                    user.setVerified(true);
                     user.setNidNumber(nid);
                     userRepository.save(user);
-                    return ResponseEntity.ok("Worker verified successfully");
+
+                    VerificationRequest existing = verificationRequestRepository.findByUserIdAndStatus(id, "PENDING").orElse(null);
+                    if (existing != null) {
+                        existing.setNidNumber(nid);
+                        if (frontPhoto != null && !frontPhoto.isEmpty()) existing.setNidFrontPhoto(frontPhoto);
+                        verificationRequestRepository.save(existing);
+                        return ResponseEntity.ok(existing);
+                    }
+
+                    VerificationRequest req = new VerificationRequest(user, nid, 
+                        (frontPhoto != null && !frontPhoto.isEmpty()) ? frontPhoto : "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300", 
+                        "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=300");
+                    verificationRequestRepository.save(req);
+                    return ResponseEntity.ok(req);
                 }).orElse(ResponseEntity.notFound().build());
     }
 
