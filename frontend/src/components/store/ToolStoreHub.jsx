@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import {
-  ShoppingBag, Search, Filter, Heart, Star, CheckCircle, ShieldCheck,
-  Truck, ArrowRight, XCircle, Plus, Minus, CreditCard, ChevronRight,
+import { 
+  ShoppingBag, Search, Filter, Heart, Star, CheckCircle, ShieldCheck, 
+  Truck, ArrowRight, XCircle, Plus, Minus, CreditCard, ChevronRight, 
   Package, Clock, AlertCircle, Wrench, RefreshCw, Zap, Award, ThumbsUp, Tag,
-  Camera, Image, X, AlertTriangle, ArrowUpRight
+  Camera, ImageIcon, X, AlertTriangle, ArrowUpRight, Upload
 } from 'lucide-react';
 
 const API_BASE = "http://localhost:8089/api/store";
@@ -46,6 +46,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
   // Modals & Selected Views State
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const [instantBuyProduct, setInstantBuyProduct] = useState(null); // Direct buy product
   const [placedOrder, setPlacedOrder] = useState(null);
   const [userOrders, setUserOrders] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -55,7 +56,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
   const [reviewModalProduct, setReviewModalProduct] = useState(null);
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [newReviewComment, setNewReviewComment] = useState('');
-  const [newReviewPhotoUrl, setNewReviewPhotoUrl] = useState('');
+  const [newReviewBase64Photo, setNewReviewBase64Photo] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   // Checkout Form State
@@ -158,8 +159,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
     setCart(prevCart => {
       const existing = prevCart.find(item => item.product.id === product.id);
       if (existing) {
-        const maxLimit = product.stockQuantity > 0 ? product.stockQuantity : 99;
-        const newQty = Math.min(existing.quantity + qty, maxLimit);
+        const newQty = existing.quantity + qty;
         return prevCart.map(item => item.product.id === product.id ? { ...item, quantity: newQty } : item);
       }
       return [...prevCart, { product, quantity: qty }];
@@ -210,23 +210,46 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
     fetchProductReviews(product.id);
   };
 
-  // Instant Buy Button Click
+  // Direct Buy Button Handler (Opens checkout payment popup directly, does NOT touch cart)
   const handleInstantBuy = (product) => {
     if (product.stockQuantity <= 0) {
-      onShowToast && onShowToast("Out of Stock", "This product is currently out of stock for instant buy.", "error");
+      onShowToast && onShowToast("Out of Stock", "This product is currently out of stock for instant purchase.", "error");
       return;
     }
-    // Add to cart and open checkout overlay
-    addToCart(product, 1);
+    setInstantBuyProduct(product);
     setSelectedProduct(null);
     setCheckoutModalOpen(true);
   };
 
+  // Device File Upload Handler (Base64 conversion)
+  const handleImageFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      onShowToast && onShowToast("File Too Large", "Please select an image smaller than 5MB.", "error");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewReviewBase64Photo(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleCheckoutSubmit = async (e) => {
     e.preventDefault();
-    if (cart.length === 0) return;
     setPaymentProcessing(true);
+
     try {
+      const itemsPayload = instantBuyProduct 
+        ? [{ productId: instantBuyProduct.id, quantity: 1 }]
+        : cart.map(item => ({ productId: item.product.id, quantity: item.quantity }));
+
+      if (itemsPayload.length === 0) {
+        setPaymentProcessing(false);
+        return;
+      }
+
       const orderPayload = {
         userId: currentUser.id,
         serviceBookingId: contextualBooking ? contextualBooking.id : null,
@@ -239,10 +262,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
         postalCode: deliveryForm.postalCode,
         deliveryInstructions: deliveryForm.deliveryInstructions,
         paymentMethod: deliveryForm.paymentMethod,
-        items: cart.map(item => ({
-          productId: item.product.id,
-          quantity: item.quantity
-        }))
+        items: itemsPayload
       };
 
       const res = await fetch(`${API_BASE}/orders`, {
@@ -266,7 +286,11 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
         }
 
         setPlacedOrder(orderData);
-        clearCart();
+        if (instantBuyProduct) {
+          setInstantBuyProduct(null);
+        } else {
+          clearCart();
+        }
         setCheckoutModalOpen(false);
         fetchUserOrders();
         fetchProducts();
@@ -312,7 +336,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
           userId: currentUser.id,
           rating: newReviewRating,
           comment: newReviewComment,
-          photoUrl: newReviewPhotoUrl
+          photoUrl: newReviewBase64Photo
         })
       });
 
@@ -321,7 +345,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
         setReviewModalOrder(null);
         setReviewModalProduct(null);
         setNewReviewComment('');
-        setNewReviewPhotoUrl('');
+        setNewReviewBase64Photo('');
         fetchUserOrders();
         fetchProducts();
       } else {
@@ -338,10 +362,15 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
   // Check if current user has a DELIVERED order containing this product
   const userHasDeliveredProduct = (productId) => {
     if (!currentUser || !currentUser.id) return false;
-    return userOrders.some(o =>
-      o.orderStatus === 'DELIVERED' &&
+    return userOrders.some(o => 
+      o.orderStatus === 'DELIVERED' && 
       o.items.some(item => (item.product?.id === productId || item.product_id === productId))
     );
+  };
+
+  // Check if user already submitted a review for this product
+  const userAlreadyReviewedProduct = (productId) => {
+    return reviews.some(r => r.user?.id === currentUser?.id || r.user_id === currentUser?.id);
   };
 
   // Filter My Orders Sub-Tabs
@@ -349,9 +378,9 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
   const deliveredOrdersList = userOrders.filter(o => o.orderStatus === 'DELIVERED');
   const cancelledOrdersList = userOrders.filter(o => o.orderStatus === 'CANCELLED');
 
-  // Render Order Timeline Steps
-  const renderOrderTimeline = (status) => {
-    const steps = [
+  // Render Order Status Visual Timeline Steps (EXCLUDES PAYMENT_CONFIRMED for Cash on Delivery!)
+  const renderOrderTimeline = (status, paymentMethod) => {
+    let steps = [
       { key: 'ORDER_PLACED', label: 'Order Placed' },
       { key: 'PAYMENT_CONFIRMED', label: 'Payment Confirmed' },
       { key: 'PROCESSING', label: 'Processing' },
@@ -360,6 +389,12 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
       { key: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
       { key: 'DELIVERED', label: 'Delivered' }
     ];
+
+    // Hide PAYMENT_CONFIRMED for Cash on Delivery!
+    const isCOD = paymentMethod && (paymentMethod.toUpperCase().includes('CASH') || paymentMethod.toUpperCase().includes('COD'));
+    if (isCOD) {
+      steps = steps.filter(s => s.key !== 'PAYMENT_CONFIRMED');
+    }
 
     const currentIdx = steps.findIndex(s => s.key === status);
     const activeIndex = currentIdx === -1 ? 0 : currentIdx;
@@ -441,14 +476,14 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
 
         {/* Action Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
-          <button
+          <button 
             className={`btn ${activeTab === 'browse' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setActiveTab('browse')}
           >
             Browse Store
           </button>
 
-          <button
+          <button 
             className={`btn ${activeTab === 'orders' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => { setActiveTab('orders'); fetchUserOrders(); }}
             style={{ position: 'relative' }}
@@ -462,7 +497,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
           </button>
 
           {currentUser?.role === 'WORKER' && (
-            <button
+            <button 
               className={`btn ${activeTab === 'my-tools' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setActiveTab('my-tools')}
             >
@@ -470,8 +505,8 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
             </button>
           )}
 
-          <button
-            className="btn btn-secondary"
+          <button 
+            className="btn btn-secondary" 
             onClick={() => setActiveTab('wishlist')}
             style={{ position: 'relative' }}
             title="Wishlist"
@@ -484,8 +519,8 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
             )}
           </button>
 
-          <button
-            className="btn btn-primary"
+          <button 
+            className="btn btn-primary" 
             onClick={() => setActiveTab('cart')}
             style={{ position: 'relative', padding: '0.5rem 1.2rem', background: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)' }}
           >
@@ -499,23 +534,23 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
         </div>
       </div>
 
-      {/* --- SLEEK SEARCH & CATEGORY FILTERS UI --- */}
+      {/* --- SLEEK SEARCH & CATEGORY FILTERS UI WITH HIGH CONTRAST & ROUNDED CORNERS --- */}
       {activeTab === 'browse' && (
         <>
-          <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', background: 'linear-gradient(135deg, rgba(14, 21, 38, 0.8) 0%, rgba(20, 30, 55, 0.8) 100%)', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-
+          <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', background: 'linear-gradient(135deg, rgba(14, 21, 38, 0.95) 0%, rgba(20, 30, 55, 0.95) 100%)', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.12)' }}>
+            
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', alignItems: 'center' }}>
-
-              {/* Search Bar */}
+              
+              {/* Search Bar with Smooth Rounded Corners */}
               <div style={{ position: 'relative', gridColumn: 'span 2' }}>
                 <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }} />
-                <input
-                  type="text"
-                  className="input-field"
-                  placeholder="Search tools, capacitors, brand, model or SKU (e.g. AC capacitor, multimeter)..."
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  placeholder="Search tools, capacitors, brand, model or SKU (e.g. AC capacitor, multimeter)..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ paddingLeft: '2.8rem', height: '46px', fontSize: '0.95rem', background: 'rgba(0,0,0,0.3)', borderColor: 'rgba(16,185,129,0.3)' }}
+                  style={{ paddingLeft: '2.8rem', height: '46px', fontSize: '0.95rem', background: '#131b2e', color: '#ffffff', borderRadius: '12px', borderColor: 'rgba(16,185,129,0.5)' }}
                 />
                 {searchQuery && (
                   <button onClick={() => setSearchQuery('')} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
@@ -524,45 +559,45 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
                 )}
               </div>
 
-              {/* Service Filter Dropdown */}
+              {/* Service Filter Dropdown (Bright white text, dark background, rounded corners) */}
               <div>
-                <select
-                  className="input-field"
-                  style={{ height: '46px', background: 'rgba(0,0,0,0.3)' }}
+                <select 
+                  className="input-field" 
+                  style={{ height: '46px', background: '#131b2e', color: '#ffffff', borderRadius: '12px', borderColor: 'rgba(255,255,255,0.2)', fontWeight: '600', paddingLeft: '1rem' }}
                   value={selectedService}
                   onChange={(e) => setSelectedService(e.target.value)}
                 >
-                  <option value="All">All Compatible Services</option>
-                  <option value="AC Servicing / Repair">AC Servicing / Repair</option>
-                  <option value="Refrigerator Repair">Refrigerator Repair</option>
-                  <option value="Electrical Wiring / Circuit Repair">Electrical Wiring</option>
-                  <option value="Plumbing & Water-Line Repair">Plumbing & Water Line</option>
-                  <option value="Fan Servicing / Repair">Fan Servicing</option>
+                  <option value="All" style={{ background: '#131b2e', color: '#ffffff' }}>All Compatible Services</option>
+                  <option value="AC Servicing / Repair" style={{ background: '#131b2e', color: '#ffffff' }}>AC Servicing / Repair</option>
+                  <option value="Refrigerator Repair" style={{ background: '#131b2e', color: '#ffffff' }}>Refrigerator Repair</option>
+                  <option value="Electrical Wiring / Circuit Repair" style={{ background: '#131b2e', color: '#ffffff' }}>Electrical Wiring</option>
+                  <option value="Plumbing & Water-Line Repair" style={{ background: '#131b2e', color: '#ffffff' }}>Plumbing & Water Line</option>
+                  <option value="Fan Servicing / Repair" style={{ background: '#131b2e', color: '#ffffff' }}>Fan Servicing</option>
                 </select>
               </div>
 
-              {/* Sort By Dropdown */}
+              {/* Price / Rating Sort Dropdown (Bright white text, dark background, rounded corners) */}
               <div>
-                <select
-                  className="input-field"
-                  style={{ height: '46px', background: 'rgba(0,0,0,0.3)' }}
+                <select 
+                  className="input-field" 
+                  style={{ height: '46px', background: '#131b2e', color: '#ffffff', borderRadius: '12px', borderColor: 'rgba(255,255,255,0.2)', fontWeight: '600', paddingLeft: '1rem' }}
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                 >
-                  <option value="recommended">Sort: Recommended</option>
-                  <option value="price_asc">Price: Low → High</option>
-                  <option value="price_desc">Price: High → Low</option>
-                  <option value="rating">Highest Rated</option>
-                  <option value="discount">Biggest Discount</option>
-                  <option value="popular">Most Popular</option>
+                  <option value="recommended" style={{ background: '#131b2e', color: '#ffffff' }}>Sort: Recommended</option>
+                  <option value="price_asc" style={{ background: '#131b2e', color: '#ffffff' }}>Price: Low → High</option>
+                  <option value="price_desc" style={{ background: '#131b2e', color: '#ffffff' }}>Price: High → Low</option>
+                  <option value="rating" style={{ background: '#131b2e', color: '#ffffff' }}>Highest Rated</option>
+                  <option value="discount" style={{ background: '#131b2e', color: '#ffffff' }}>Biggest Discount</option>
+                  <option value="popular" style={{ background: '#131b2e', color: '#ffffff' }}>Most Popular</option>
                 </select>
               </div>
 
             </div>
 
             {/* Category Chips Bar */}
-            <div style={{ display: 'flex', gap: '0.6rem', marginTop: '1.2rem', overflowX: 'auto', paddingBottom: '0.4rem', scrollbarWidth: 'none' }}>
-              <button
+            <div style={{ display: 'flex', gap: '0.6rem', marginTop: '1.2rem', overflowX: 'auto', paddingBottom: '0.4rem' }}>
+              <button 
                 className={`btn ${selectedCategory === 'All' ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ borderRadius: '24px', padding: '0.4rem 1.2rem', fontSize: '0.85rem', fontWeight: 'bold' }}
                 onClick={() => setSelectedCategory('All')}
@@ -570,8 +605,8 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
                 All Categories
               </button>
               {categories.map(cat => (
-                <button
-                  key={cat.id}
+                <button 
+                  key={cat.id} 
                   className={`btn ${selectedCategory === cat.name ? 'btn-primary' : 'btn-secondary'}`}
                   style={{ borderRadius: '24px', padding: '0.4rem 1.2rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
                   onClick={() => setSelectedCategory(cat.name)}
@@ -601,7 +636,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
             <div className="dashboard-grid" style={{ padding: 0, gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
               {products.map(product => (
                 <div key={product.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', padding: '1.2rem', position: 'relative', height: '100%' }}>
-
+                  
                   {/* Discount Badge */}
                   {product.discountPercent > 0 && (
                     <span style={{
@@ -614,7 +649,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
                   )}
 
                   {/* Wishlist Button */}
-                  <button
+                  <button 
                     onClick={(e) => { e.stopPropagation(); toggleWishlist(product); }}
                     style={{
                       position: 'absolute', top: 18, right: 18, zIndex: 2,
@@ -627,9 +662,9 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
                   </button>
 
                   {/* Image */}
-                  <img
-                    src={product.imageUrl}
-                    alt={product.title}
+                  <img 
+                    src={product.imageUrl} 
+                    alt={product.title} 
                     onClick={() => handleOpenDetails(product)}
                     style={{ width: '100%', height: 170, objectFit: 'cover', borderRadius: '8px', marginBottom: '1rem', cursor: 'pointer', background: 'rgba(255,255,255,0.05)' }}
                   />
@@ -641,7 +676,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
                   </div>
 
                   {/* Title */}
-                  <h3
+                  <h3 
                     onClick={() => handleOpenDetails(product)}
                     style={{ fontSize: '1.05rem', marginBottom: '0.4rem', cursor: 'pointer', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
                   >
@@ -682,18 +717,18 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{product.warranty}</span>
                     </div>
 
-                    {/* Both Add to Cart and Buy Now Buttons */}
+                    {/* Both Add to Cart AND Direct Buy Now Buttons */}
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        className="btn btn-secondary"
+                      <button 
+                        className="btn btn-secondary" 
                         style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem' }}
                         onClick={() => addToCart(product, 1)}
                       >
                         <ShoppingBag size={14} /> Add to Cart
                       </button>
 
-                      <button
-                        className="btn btn-primary"
+                      <button 
+                        className="btn btn-primary" 
                         style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem' }}
                         onClick={() => handleInstantBuy(product)}
                         disabled={product.stockQuantity <= 0}
@@ -778,7 +813,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
                 <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setActiveTab('browse')}>
                   Continue Shopping
                 </button>
-                <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => setCheckoutModalOpen(true)}>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => { setInstantBuyProduct(null); setCheckoutModalOpen(true); }}>
                   Proceed to Checkout <ArrowRight size={16} />
                 </button>
               </div>
@@ -796,21 +831,21 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
 
           {/* Sub-Nav Tabs: Active Orders, Delivered Orders, Cancelled Orders */}
           <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.8rem' }}>
-            <button
+            <button 
               className={`btn ${orderSubTab === 'active' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setOrderSubTab('active')}
               style={{ fontSize: '0.85rem', borderRadius: '20px' }}
             >
               Active Orders ({activeOrdersList.length})
             </button>
-            <button
+            <button 
               className={`btn ${orderSubTab === 'delivered' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setOrderSubTab('delivered')}
               style={{ fontSize: '0.85rem', borderRadius: '20px' }}
             >
               Delivered Orders ({deliveredOrdersList.length})
             </button>
-            <button
+            <button 
               className={`btn ${orderSubTab === 'cancelled' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setOrderSubTab('cancelled')}
               style={{ fontSize: '0.85rem', borderRadius: '20px' }}
@@ -857,8 +892,8 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
                       </div>
                     </div>
 
-                    {/* Order Visual Timeline */}
-                    {renderOrderTimeline(order.orderStatus)}
+                    {/* Order Visual Timeline (EXCLUDES PAYMENT_CONFIRMED for COD) */}
+                    {renderOrderTimeline(order.orderStatus, order.paymentMethod)}
 
                     {/* Items List */}
                     <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
@@ -871,12 +906,12 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                             <strong>৳{item.subtotal}</strong>
-
+                            
                             {/* Review Button for Delivered Orders */}
                             {order.orderStatus === 'DELIVERED' && (
-                              <button
-                                className="btn btn-secondary"
-                                style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', background: 'var(--primary)', color: '#fff' }}
+                              <button 
+                                className="btn btn-primary" 
+                                style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
                                 onClick={() => {
                                   setReviewModalOrder(order);
                                   setReviewModalProduct(item.product || { id: item.product_id, title: item.productTitle });
@@ -901,8 +936,8 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
                       </div>
 
                       {orderSubTab === 'active' && !['OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'].includes(order.orderStatus) && (
-                        <button
-                          className="btn btn-secondary"
+                        <button 
+                          className="btn btn-secondary" 
                           style={{ color: '#ef4444', borderColor: '#ef4444', fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}
                           onClick={() => handleCancelOrder(order.id)}
                         >
@@ -982,11 +1017,11 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
         </div>
       )}
 
-      {/* --- PRODUCT DETAILS MODAL (WITH BOTH CART & BUY BUTTONS + DELIVERED REVIEWS) --- */}
+      {/* --- PRODUCT DETAILS MODAL (WITH BOTH CART & DIRECT BUY BUTTONS) --- */}
       {selectedProduct && (
         <div className="toast-popup-overlay" onClick={() => setSelectedProduct(null)}>
           <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', background: '#0e1526' }}>
-
+            
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
               <div>
                 <span className="badge badge-gold">{selectedProduct.category}</span>
@@ -1000,7 +1035,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
               <img src={selectedProduct.imageUrl} alt={selectedProduct.title} style={{ width: '100%', height: 240, objectFit: 'cover', borderRadius: '10px', background: 'rgba(255,255,255,0.05)' }} />
-
+              
               <div>
                 <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--primary)', marginBottom: '0.5rem' }}>
                   ৳{selectedProduct.price}
@@ -1030,16 +1065,16 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
 
                 {/* Both Add to Cart AND Buy Now Buttons inside Product Details */}
                 <div style={{ display: 'flex', gap: '0.8rem' }}>
-                  <button
-                    className="btn btn-secondary"
+                  <button 
+                    className="btn btn-secondary" 
                     style={{ flex: 1, padding: '0.8rem' }}
                     onClick={() => { addToCart(selectedProduct, 1); }}
                   >
                     <ShoppingBag size={18} /> Add to Cart
                   </button>
 
-                  <button
-                    className="btn btn-primary"
+                  <button 
+                    className="btn btn-primary" 
                     style={{ flex: 1, padding: '0.8rem' }}
                     onClick={() => handleInstantBuy(selectedProduct)}
                     disabled={selectedProduct.stockQuantity <= 0}
@@ -1107,7 +1142,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
                       </div>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.2rem 0' }}>{rev.comment}</p>
                       {rev.photoUrl && (
-                        <img src={rev.photoUrl} alt="Product Review Attachment" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: '6px', marginTop: '0.4rem', border: '1px solid var(--border-color)' }} />
+                        <img src={rev.photoUrl} alt="Product Review Attachment" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '8px', marginTop: '0.4rem', border: '1px solid var(--border-color)' }} />
                       )}
                     </div>
                   ))
@@ -1119,7 +1154,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
         </div>
       )}
 
-      {/* --- REVIEW SUBMISSION MODAL FOR DELIVERED ORDERS --- */}
+      {/* --- REVIEW SUBMISSION MODAL (DEVICE FILE PICKER + ONE REVIEW LIMIT) --- */}
       {reviewModalProduct && (
         <div className="toast-popup-overlay">
           <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '500px', padding: '2rem', background: '#0e1526' }}>
@@ -1130,62 +1165,101 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
               </button>
             </div>
 
-            <form onSubmit={handleReviewSubmit}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Star Rating</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <Star
-                      key={star}
-                      size={24}
-                      style={{ cursor: 'pointer' }}
-                      fill={star <= newReviewRating ? "var(--accent-gold)" : "none"}
-                      color="var(--accent-gold)"
-                      onClick={() => setNewReviewRating(star)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Written Review</label>
-                <textarea
-                  className="input-field"
-                  rows="3"
-                  required
-                  placeholder="Share your experience regarding performance, build quality, or compatibility..."
-                  value={newReviewComment}
-                  onChange={(e) => setNewReviewComment(e.target.value)}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1.2rem' }}>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Product Photo URL (Optional)</label>
-                <input
-                  type="text"
-                  className="input-field"
-                  placeholder="https://images.unsplash.com/..."
-                  value={newReviewPhotoUrl}
-                  onChange={(e) => setNewReviewPhotoUrl(e.target.value)}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.8rem' }}>
-                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setReviewModalOrder(null); setReviewModalProduct(null); }}>Cancel</button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={reviewSubmitting}>
-                  Submit Verified Review
+            {userAlreadyReviewedProduct(reviewModalProduct.id) ? (
+              <div style={{ textAlign: 'center', padding: '1.5rem' }}>
+                <CheckCircle size={40} color="var(--primary)" style={{ marginBottom: '0.8rem' }} />
+                <h4 style={{ fontSize: '1.1rem', marginBottom: '0.4rem' }}>Review Submitted</h4>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                  You have already submitted a review for this product. Multiple reviews or modifications are not permitted once submitted.
+                </p>
+                <button className="btn btn-secondary" style={{ marginTop: '1rem' }} onClick={() => { setReviewModalOrder(null); setReviewModalProduct(null); }}>
+                  Close
                 </button>
               </div>
-            </form>
+            ) : (
+              <form onSubmit={handleReviewSubmit}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Star Rating</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Star 
+                        key={star} 
+                        size={24} 
+                        style={{ cursor: 'pointer' }}
+                        fill={star <= newReviewRating ? "var(--accent-gold)" : "none"}
+                        color="var(--accent-gold)"
+                        onClick={() => setNewReviewRating(star)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Written Review</label>
+                  <textarea 
+                    className="input-field" 
+                    rows="3" 
+                    required
+                    placeholder="Share your experience regarding performance, build quality, or compatibility..."
+                    value={newReviewComment}
+                    onChange={(e) => setNewReviewComment(e.target.value)}
+                  />
+                </div>
+
+                {/* Device File Picker (Upload photo from device) */}
+                <div style={{ marginBottom: '1.2rem' }}>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>
+                    Upload Product Image from Device (Optional)
+                  </label>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    <label className="btn btn-secondary" style={{ cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Upload size={16} /> Choose Image File
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImageFileChange}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                    {newReviewBase64Photo && (
+                      <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 'bold' }}>
+                        Image Selected ✓
+                      </span>
+                    )}
+                  </div>
+
+                  {newReviewBase64Photo && (
+                    <div style={{ marginTop: '0.8rem', position: 'relative', display: 'inline-block' }}>
+                      <img src={newReviewBase64Photo} alt="Review Preview" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--primary)' }} />
+                      <button 
+                        type="button" 
+                        onClick={() => setNewReviewBase64Photo('')}
+                        style={{ position: 'absolute', top: -6, right: -6, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.8rem' }}>
+                  <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setReviewModalOrder(null); setReviewModalProduct(null); }}>Cancel</button>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={reviewSubmitting}>
+                    Submit Verified Review
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
 
-      {/* --- BANGLADESH CHECKOUT POPUP OVERLAY --- */}
+      {/* --- BANGLADESH CHECKOUT POPUP OVERLAY (PROMPTED DIRECTLY BY BUY NOW) --- */}
       {checkoutModalOpen && (
         <div className="toast-popup-overlay">
           <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '600px', padding: '2rem', background: '#0e1526', maxHeight: '90vh', overflowY: 'auto' }}>
-
+            
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.4rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <ShoppingBag color="var(--primary)" /> Checkout & Delivery Information
@@ -1197,7 +1271,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
 
             <form onSubmit={handleCheckoutSubmit}>
               <h4 style={{ fontSize: '0.95rem', color: 'var(--primary)', marginBottom: '0.8rem' }}>Customer & Delivery Address</h4>
-
+              
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', marginBottom: '0.8rem' }}>
                 <div>
                   <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Customer Name</label>
@@ -1239,9 +1313,9 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '1.2rem' }}>
                 {['BKASH', 'NAGAD', 'ROCKET', 'CASH_ON_DELIVERY'].map(method => (
                   <label key={method} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: deliveryForm.paymentMethod === method ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.02)', border: deliveryForm.paymentMethod === method ? '1px solid var(--primary)' : '1px solid var(--border-color)', padding: '0.6rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
-                    <input
-                      type="radio"
-                      name="payment"
+                    <input 
+                      type="radio" 
+                      name="payment" 
                       checked={deliveryForm.paymentMethod === method}
                       onChange={() => setDeliveryForm({ ...deliveryForm, paymentMethod: method })}
                     />
@@ -1252,22 +1326,29 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
 
               {/* Order Amount Breakdown */}
               <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                  <span>Items Subtotal:</span>
-                  <span>৳{cartSubtotal.toFixed(2)}</span>
-                </div>
+                {instantBuyProduct ? (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                    <span>Instant Item ({instantBuyProduct.title}):</span>
+                    <span>৳{instantBuyProduct.price.toFixed(2)}</span>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                    <span>Items Subtotal:</span>
+                    <span>৳{cartSubtotal.toFixed(2)}</span>
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                   <span>Standard Delivery Charge:</span>
-                  <span>৳{deliveryFee.toFixed(2)}</span>
+                  <span>৳60.00</span>
                 </div>
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--primary)' }}>
                   <span>Total Amount:</span>
-                  <span>৳{cartTotal.toFixed(2)}</span>
+                  <span>৳{(instantBuyProduct ? instantBuyProduct.price + 60 : cartTotal).toFixed(2)}</span>
                 </div>
               </div>
 
               <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.8rem', background: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)' }} disabled={paymentProcessing}>
-                {paymentProcessing ? 'Processing Order...' : `Place Order (৳${cartTotal.toFixed(2)})`}
+                {paymentProcessing ? 'Processing Order...' : `Place Order (৳${(instantBuyProduct ? instantBuyProduct.price + 60 : cartTotal).toFixed(2)})`}
               </button>
             </form>
           </div>
