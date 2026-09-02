@@ -33,8 +33,10 @@ import {
 import CustomerProfileHub from './components/customer/CustomerProfileHub';
 import CustomerSettings from './components/customer/CustomerSettings';
 import TechnicianMap, { calculateDistanceKm, formatDistanceString } from './components/customer/TechnicianMap';
+import AcademyCoursesHub from './components/academy/AcademyCoursesHub';
+import AdminAcademyManager from './components/academy/AdminAcademyManager';
 
-const API_BASE = "http://localhost:8081/api";
+const API_BASE = "http://localhost:8089/api";
 
 // Preset diagnostic photos for customer mock upload
 const MOCK_PHOTOS = [
@@ -513,6 +515,7 @@ function App() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [password, setPassword] = useState('');
   const [nidNumber, setNidNumber] = useState('');
 
@@ -848,12 +851,18 @@ function App() {
   };
 
   // Submit Sign Up
+  const validateBdPhone = (num) => /^01[3-9]\d{8}$/.test((num || '').trim());
+
   const handleSignUp = async (e) => {
     if (e) e.preventDefault();
     if (!email || !name || !phone || !password) {
-      alert("Please fill all required signup fields!");
       return;
     }
+    if (!validateBdPhone(phone)) {
+      setPhoneError("Must be a valid 11-digit Bangladeshi number (e.g. 01712345678)");
+      return;
+    }
+    setPhoneError("");
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
@@ -872,14 +881,14 @@ function App() {
       });
 
       if (res.ok) {
-        alert("Registration Successful! You can now log in.");
+        showToast("Registration Successful!", "🎉 Account created successfully! You can now log in.", "success");
         setAuthMode('login');
       } else {
         const errorText = await res.text();
-        alert(errorText || "Registration failed!");
+        showToast("Registration Failed", errorText || "Registration failed!", "error");
       }
     } catch (e) {
-      alert("Could not connect to the backend server. Make sure Spring Boot is running!");
+      showToast("Connection Error", "Could not connect to the backend server. Make sure Spring Boot is running!", "error");
     }
   };
 
@@ -1803,11 +1812,28 @@ function App() {
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="017xxxxxxxx"
+                    style={{
+                      borderColor: phoneError ? '#ef4444' : undefined,
+                      boxShadow: phoneError ? '0 0 0 1px #ef4444' : undefined
+                    }}
+                    placeholder="e.g. 01712345678"
                     value={phone}
-                    onChange={e => setPhone(e.target.value)}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setPhone(val);
+                      if (val && !/^01[3-9]\d{8}$/.test(val.trim())) {
+                        setPhoneError("Must be a valid 11-digit Bangladeshi number (e.g. 01712345678)");
+                      } else {
+                        setPhoneError("");
+                      }
+                    }}
                     required
                   />
+                  {phoneError && (
+                    <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.35rem', borderTop: '2px solid #ef4444', paddingTop: '0.2rem', fontWeight: 'bold' }}>
+                      ⚠️ {phoneError}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -2351,28 +2377,10 @@ function App() {
 
       {/* --- ACADEMY & COURSES TAB --- */}
       {isLoggedIn && activeTab === 'courses' && (
-        <div style={{ padding: '2rem' }}>
-          <div style={{ marginBottom: '2rem' }}>
-            <h1 style={{ fontSize: '2rem' }}>SkillVerse Academy</h1>
-            <p style={{ color: 'var(--text-secondary)' }}>Get certified by professional institutions and upgrade your career level ranking.</p>
-          </div>
-          <div className="dashboard-grid" style={{ padding: 0 }}>
-            {courses.map(c => (
-              <div key={c.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <img src={c.image} alt={c.title} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: '8px', marginBottom: '1rem' }} />
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>{c.title}</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', flex: 1, marginBottom: '1rem' }}>{c.description}</p>
-                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.8rem', fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                  <span>Instructor: {c.instructor}</span>
-                  <span>Duration: {c.duration}</span>
-                </div>
-                <button className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => triggerMockAction(c.title, 'course')}>
-                  <BookOpen size={16} /> Enroll & Start Learning
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+        <AcademyCoursesHub
+          currentUser={currentUser}
+          onShowToast={(title, msg, type) => showToast(title, msg, type)}
+        />
       )}
 
       {/* --- TOOLS MARKETPLACE TAB --- */}
@@ -2750,71 +2758,9 @@ function App() {
             </div>
           </div>
 
-          {/* Catalog Editor Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
-
-            {/* Courses Management */}
-            <div className="glass-card">
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><BookOpen size={20} color="var(--primary)" /> Academy Courses ({courses.length})</h2>
-
-              <form onSubmit={handleAdminAddCourse} style={{ marginBottom: '1.5rem' }}>
-                <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '0.8rem' }}>
-                  <input className="form-input" style={{ fontSize: '0.8rem', padding: '0.4rem' }} placeholder="Course Title" value={newCourseTitle} onChange={e => setNewCourseTitle(e.target.value)} required />
-                  <input className="form-input" style={{ fontSize: '0.8rem', padding: '0.4rem' }} placeholder="Instructor" value={newCourseInstructor} onChange={e => setNewCourseInstructor(e.target.value)} required />
-                  <input className="form-input" style={{ fontSize: '0.8rem', padding: '0.4rem' }} placeholder="Duration (e.g. 8 Weeks)" value={newCourseDuration} onChange={e => setNewCourseDuration(e.target.value)} />
-                  <input className="form-input" style={{ fontSize: '0.8rem', padding: '0.4rem' }} placeholder="Description" value={newCourseDesc} onChange={e => setNewCourseDesc(e.target.value)} />
-                </div>
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', fontSize: '0.8rem', padding: '0.4rem', justifyContent: 'center' }}><Plus size={14} /> Add Academy Course</button>
-              </form>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto' }}>
-                {courses.map(c => (
-                  <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.01)', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
-                    <div>
-                      <strong>{c.title}</strong>
-                      <div style={{ color: 'var(--text-muted)' }}>Instructor: {c.instructor}</div>
-                    </div>
-                    <button className="btn" style={{ padding: '0.2rem', background: 'transparent' }} onClick={() => handleAdminDeleteCourse(c.id)}>
-                      <Trash2 size={14} color="var(--accent-rose)" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Tools Catalog Management */}
-            <div className="glass-card">
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ShoppingBag size={20} color="var(--accent-blue)" /> Tool Store Catalog ({marketplaceItems.length})</h2>
-
-              <form onSubmit={handleAdminAddTool} style={{ marginBottom: '1.5rem' }}>
-                <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '0.8rem' }}>
-                  <input className="form-input" style={{ fontSize: '0.8rem', padding: '0.4rem' }} placeholder="Tool Title" value={newToolTitle} onChange={e => setNewToolTitle(e.target.value)} required />
-                  <input className="form-input" style={{ fontSize: '0.8rem', padding: '0.4rem' }} type="number" placeholder="Price (BDT)" value={newToolPrice} onChange={e => setNewToolPrice(e.target.value)} required />
-                  <select className="form-select" style={{ fontSize: '0.8rem', padding: '0.4rem' }} value={newToolType} onChange={e => setNewToolType(e.target.value)}>
-                    <option value="TOOL">Tool</option>
-                    <option value="SPARE_PART">Spare Part</option>
-                    <option value="RENTAL">Rental Device</option>
-                  </select>
-                  <input className="form-input" style={{ fontSize: '0.8rem', padding: '0.4rem' }} placeholder="Description" value={newToolDesc} onChange={e => setNewToolDesc(e.target.value)} />
-                </div>
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', fontSize: '0.8rem', padding: '0.4rem', justifyContent: 'center' }}><Plus size={14} /> Add Tool Item</button>
-              </form>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto' }}>
-                {marketplaceItems.map(item => (
-                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.01)', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
-                    <div>
-                      <strong>{item.title}</strong>
-                      <div style={{ color: 'var(--text-muted)' }}>Price: BDT {item.price} • {item.type}</div>
-                    </div>
-                    <button className="btn" style={{ padding: '0.2rem', background: 'transparent' }} onClick={() => handleAdminDeleteTool(item.id)}>
-                      <Trash2 size={14} color="var(--accent-rose)" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
+          {/* Admin Academy Management Section */}
+          <div style={{ marginTop: '2.5rem' }}>
+            <AdminAcademyManager onShowToast={(title, msg, type) => showToast(title, msg, type)} />
           </div>
         </div>
       )}

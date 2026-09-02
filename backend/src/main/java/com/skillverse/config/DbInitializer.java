@@ -13,17 +13,22 @@ public class DbInitializer implements CommandLineRunner {
     private final WorkerProfileRepository workerProfileRepository;
     private final ServiceBookingRepository bookingRepository;
     private final CourseRepository courseRepository;
+    private final CourseLessonRepository lessonRepository;
+    private final CourseEnrollmentRepository enrollmentRepository;
     private final MarketplaceItemRepository marketplaceRepository;
     private final VerificationRequestRepository verificationRequestRepository;
 
     public DbInitializer(UserRepository userRepository, WorkerProfileRepository workerProfileRepository,
-                         ServiceBookingRepository bookingRepository, CourseRepository courseRepository,
-                         MarketplaceItemRepository marketplaceRepository,
-                         VerificationRequestRepository verificationRequestRepository) {
+                          ServiceBookingRepository bookingRepository, CourseRepository courseRepository,
+                          CourseLessonRepository lessonRepository, CourseEnrollmentRepository enrollmentRepository,
+                          MarketplaceItemRepository marketplaceRepository,
+                          VerificationRequestRepository verificationRequestRepository) {
         this.userRepository = userRepository;
         this.workerProfileRepository = workerProfileRepository;
         this.bookingRepository = bookingRepository;
         this.courseRepository = courseRepository;
+        this.lessonRepository = lessonRepository;
+        this.enrollmentRepository = enrollmentRepository;
         this.marketplaceRepository = marketplaceRepository;
         this.verificationRequestRepository = verificationRequestRepository;
     }
@@ -78,206 +83,6 @@ public class DbInitializer implements CommandLineRunner {
         profile2.setLongitude(90.3742);
         workerProfileRepository.save(profile2);
 
-        User worker3 = new User("Sajid Hasan", "sajid@gmail.com", "01611223344", "WORKER");
-        worker3.setVerified(false);
-        worker3.setNidNumber("19972618954712999");
-        worker3.setRating(4.5);
-        worker3.setLatitude(23.8050);
-        worker3.setLongitude(90.3680);
-        worker3.setAddress("Section 10, Mirpur, Dhaka");
-        worker3.setProfilePicture("https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop");
-        userRepository.save(worker3);
-
-        WorkerProfile profile3 = new WorkerProfile(worker3, "House Painting, Carpentry", 3, "Mirpur, Mohammadpur", "Silver", 350.0);
-        profile3.setLatitude(23.8050);
-        profile3.setLongitude(90.3680);
-        workerProfileRepository.save(profile3);
-
-        VerificationRequest req1 = new VerificationRequest(worker3, "19972618954712999", 
-            "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300", 
-            "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=300");
-        verificationRequestRepository.save(req1);
-
-        // Worker 4: Tariqul Islam (AC Repair Specialist - Uttara Sector 13 ~350m)
-        User worker4 = new User("Tariqul Islam", "tariq@gmail.com", "01712345678", "WORKER");
-        worker4.setVerified(true);
-        worker4.setRating(4.9);
-        worker4.setLatitude(23.8745);
-        worker4.setLongitude(90.3815);
-        worker4.setAddress("Sector 13, Uttara, Dhaka");
-        worker4.setProfilePicture("https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop");
-        userRepository.save(worker4);
-
-        WorkerProfile profile4 = new WorkerProfile(worker4, "AC Repair, HVAC Servicing, Refrigerant Gas Top-up", 8, "Uttara, Tongi, Airport", "Master", 550.0);
-        profile4.setLatitude(23.8745);
-        profile4.setLongitude(90.3815);
-        workerProfileRepository.save(profile4);
-
-        // Worker 5: Tanvir Ahmed (Electrical & Smart Home - Uttara Sector 3 ~1.5km)
-        User worker5 = new User("Tanvir Ahmed", "tanvir@gmail.com", "01823456789", "WORKER");
-        worker5.setVerified(true);
-        worker5.setRating(4.7);
-        worker5.setLatitude(23.8680);
-        worker5.setLongitude(90.3910);
-        worker5.setAddress("Sector 3, Uttara, Dhaka");
-        worker5.setProfilePicture("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop");
-        userRepository.save(worker5);
-
-        WorkerProfile profile5 = new WorkerProfile(worker5, "Electrical, Smart Home Automation, Generator Repair", 5, "Uttara North & Airport Road", "Gold", 400.0);
-        profile5.setLatitude(23.8680);
-        profile5.setLongitude(90.3910);
-        workerProfileRepository.save(profile5);
-
-        // Worker 6: Mahfuzur Rahman (Plumbing & Water Pump Specialist - Gulshan 2)
-        User worker6 = new User("Mahfuzur Rahman", "mahfuz@gmail.com", "01934567890", "WORKER");
-        worker6.setVerified(true);
-        worker6.setRating(4.85);
-        worker6.setLatitude(23.7925);
-        worker6.setLongitude(90.4078);
-        worker6.setAddress("Road 71, Gulshan 2, Dhaka");
-        worker6.setProfilePicture("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop");
-        userRepository.save(worker6);
-
-        WorkerProfile profile6 = new WorkerProfile(worker6, "Plumbing, Water Pump Repair, Gas Line Fitting", 9, "Gulshan, Banani, Baridhara", "Platinum", 500.0);
-        profile6.setLatitude(23.7925);
-        profile6.setLongitude(90.4078);
-        workerProfileRepository.save(profile6);
-
-        // Worker 7: Kazi Kabir (House Painting & Interior Finishing - Mirpur 11)
-        User worker7 = new User("Kazi Kabir", "kabir@gmail.com", "01545678901", "WORKER");
-        worker7.setVerified(true);
-        worker7.setRating(4.6);
-        worker7.setLatitude(23.8150);
-        worker7.setLongitude(90.3650);
-        worker7.setAddress("Section 11, Mirpur, Dhaka");
-        worker7.setProfilePicture("https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop");
-        userRepository.save(worker7);
-
-        WorkerProfile profile7 = new WorkerProfile(worker7, "House Painting, Wood Polish, Carpentry", 4, "Mirpur & Cantonment", "Silver", 350.0);
-        profile7.setLatitude(23.8150);
-        profile7.setLongitude(90.3650);
-        workerProfileRepository.save(profile7);
-
-        // Worker 8: Shahriar Hossain (AC & Electrical Appliances - Banani)
-        User worker8 = new User("Shahriar Hossain", "shahriar@gmail.com", "01656789012", "WORKER");
-        worker8.setVerified(true);
-        worker8.setRating(4.95);
-        worker8.setLatitude(23.7930);
-        worker8.setLongitude(90.4040);
-        worker8.setAddress("Block E, Banani, Dhaka");
-        worker8.setProfilePicture("https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop");
-        userRepository.save(worker8);
-
-        WorkerProfile profile8 = new WorkerProfile(worker8, "AC Repair, Washing Machine Repair, Microwave Repair", 7, "Banani, Mohakhali, Tejgaon", "Platinum", 480.0);
-        profile8.setLatitude(23.7930);
-        profile8.setLongitude(90.4040);
-        workerProfileRepository.save(profile8);
-
-        // Worker 9: Farhan Ahmed (Washing Machine & Refrigerator Specialist - Bashundhara R/A)
-        User worker9 = new User("Farhan Ahmed", "farhan@gmail.com", "01722334455", "WORKER");
-        worker9.setVerified(true);
-        worker9.setRating(4.88);
-        worker9.setLatitude(23.8155);
-        worker9.setLongitude(90.4250);
-        worker9.setAddress("Block C, Bashundhara R/A, Dhaka");
-        worker9.setProfilePicture("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop");
-        userRepository.save(worker9);
-
-        WorkerProfile profile9 = new WorkerProfile(worker9, "Washing Machine Repair, Refrigerator Gas Top-up, Inverter PCB", 8, "Bashundhara, Baridhara, Kuril", "Master", 520.0);
-        profile9.setLatitude(23.8155);
-        profile9.setLongitude(90.4250);
-        workerProfileRepository.save(profile9);
-
-        // Worker 10: Imtiaz Chowdhury (Master Electrician & CCTV Specialist - Badda)
-        User worker10 = new User("Imtiaz Chowdhury", "imtiaz@gmail.com", "01833445566", "WORKER");
-        worker10.setVerified(true);
-        worker10.setRating(4.75);
-        worker10.setLatitude(23.7850);
-        worker10.setLongitude(90.4270);
-        worker10.setAddress("Middle Badda, Dhaka");
-        worker10.setProfilePicture("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop");
-        userRepository.save(worker10);
-
-        WorkerProfile profile10 = new WorkerProfile(worker10, "Electrical, CCTV Camera Installation, IPS & UPS Repair", 6, "Badda, Rampura, Khilgaon", "Gold", 420.0);
-        profile10.setLatitude(23.7850);
-        profile10.setLongitude(90.4270);
-        workerProfileRepository.save(profile10);
-
-        // Worker 11: Zubaer Rahman (Gas Stove & Water Purifier Technician - Mohammadpur)
-        User worker11 = new User("Zubaer Rahman", "zubaer@gmail.com", "01944556677", "WORKER");
-        worker11.setVerified(true);
-        worker11.setRating(4.82);
-        worker11.setLatitude(23.7590);
-        worker11.setLongitude(90.3620);
-        worker11.setAddress("Kazi Nazrul Islam Road, Mohammadpur, Dhaka");
-        worker11.setProfilePicture("https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop");
-        userRepository.save(worker11);
-
-        WorkerProfile profile11 = new WorkerProfile(worker11, "Gas Stove Burner Fitting, RO Water Purifier Servicing, Kitchen Geyser", 5, "Mohammadpur, Dhanmondi, Lalmatia", "Gold", 400.0);
-        profile11.setLatitude(23.7590);
-        profile11.setLongitude(90.3620);
-        workerProfileRepository.save(profile11);
-
-        // Worker 12: Ariful Islam (House Cleaning & Water Tank Cleaning Specialist - Khilgaon)
-        User worker12 = new User("Ariful Islam", "arif@gmail.com", "01555667788", "WORKER");
-        worker12.setVerified(true);
-        worker12.setRating(4.90);
-        worker12.setLatitude(23.7520);
-        worker12.setLongitude(90.4210);
-        worker12.setAddress("Tamtola, Khilgaon, Dhaka");
-        worker12.setProfilePicture("https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop");
-        userRepository.save(worker12);
-
-        WorkerProfile profile12 = new WorkerProfile(worker12, "Deep House Cleaning, Overhead Water Tank Jet Wash, Sofa Cleaning", 7, "Khilgaon, Malibagh, Basabo", "Platinum", 380.0);
-        profile12.setLatitude(23.7520);
-        profile12.setLongitude(90.4210);
-        workerProfileRepository.save(profile12);
-
-        // Worker 13: Hasan Mahmud (Roof Waterproofing & Masonry Repair - Old Dhaka / Lalbagh)
-        User worker13 = new User("Hasan Mahmud", "hasan@gmail.com", "01666778899", "WORKER");
-        worker13.setVerified(true);
-        worker13.setRating(4.70);
-        worker13.setLatitude(23.7180);
-        worker13.setLongitude(90.3880);
-        worker13.setAddress("Lalbagh Fort Road, Old Dhaka, Dhaka");
-        worker13.setProfilePicture("https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop");
-        userRepository.save(worker13);
-
-        WorkerProfile profile13 = new WorkerProfile(worker13, "Roof Damp Leak Proofing, Tile Fitting, Masonry Work", 11, "Old Dhaka, Lalbagh, Motijheel, Sadarghat", "Master", 450.0);
-        profile13.setLatitude(23.7180);
-        profile13.setLongitude(90.3880);
-        workerProfileRepository.save(profile13);
-
-        // Worker 14: Nazmul Huda (AC & Chiller Specialist - Tongi / Uttara Extension)
-        User worker14 = new User("Nazmul Huda", "nazmul@gmail.com", "01777889900", "WORKER");
-        worker14.setVerified(true);
-        worker14.setRating(4.92);
-        worker14.setLatitude(23.8920);
-        worker14.setLongitude(90.3950);
-        worker14.setAddress("Sector 18, Uttara, Dhaka");
-        worker14.setProfilePicture("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop");
-        userRepository.save(worker14);
-
-        WorkerProfile profile14 = new WorkerProfile(worker14, "AC Repair, Inverter Compressor Replacement, Gas Top-up", 9, "Uttara, Tongi, Gazipur", "Platinum", 550.0);
-        profile14.setLatitude(23.8920);
-        profile14.setLongitude(90.3950);
-        workerProfileRepository.save(profile14);
-
-        // Worker 15: Biplob Hossain (Sanitary Fitting & Sewer Line Unclogging - Mirpur 2)
-        User worker15 = new User("Biplob Hossain", "biplob@gmail.com", "01888990011", "WORKER");
-        worker15.setVerified(true);
-        worker15.setRating(4.80);
-        worker15.setLatitude(23.8080);
-        worker15.setLongitude(90.3610);
-        worker15.setAddress("Stadium Road, Mirpur 2, Dhaka");
-        worker15.setProfilePicture("https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop");
-        userRepository.save(worker15);
-
-        WorkerProfile profile15 = new WorkerProfile(worker15, "Plumbing, Sewer Line Unclogging, High Pressure Drain Wash", 8, "Mirpur, Pallabi, Kafrul", "Gold", 460.0);
-        profile15.setLatitude(23.8080);
-        profile15.setLongitude(90.3610);
-        workerProfileRepository.save(profile15);
-
         // Pre-populate bookings
         ServiceBooking booking1 = new ServiceBooking(customer, worker1, "AC Repair & Servicing", LocalDateTime.now().plusDays(1), 1500.0, "AC unit not cooling effectively and makes noise.");
         booking1.setStartVerificationCode("4829");
@@ -285,10 +90,284 @@ public class DbInitializer implements CommandLineRunner {
         booking1.setLiveLocation("23.8103, 90.4125");
         bookingRepository.save(booking1);
 
-        // Pre-populate courses
-        courseRepository.save(new Course("Advanced HVAC & AC Repairing", "Master modern air conditioning installation, fault diagnosis, and eco-friendly gas recharging.", "Md. Asaduzzaman (Institution of Engineers, Bangladesh)", "12 Weeks", 4.9, 142, "https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?w=300&auto=format&fit=crop"));
-        courseRepository.save(new Course("Home Electrical Safety Standards", "Learn national grid standards, safety gear usage, and wiring diagnostics for residential buildings.", "Prof. Tasnim Ahmed (BUET)", "6 Weeks", 4.8, 210, "https://images.unsplash.com/photo-1505797149-43b0069ec26b?w=300&auto=format&fit=crop"));
-        courseRepository.save(new Course("Professional Communication & Ethics", "Enhance customer interaction protocols, basic digital invoice operations, and time management skills.", "Farhana Yasmin (SkillVerse Training)", "3 Weeks", 4.7, 345, "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=300&auto=format&fit=crop"));
+        // --- PRE-POPULATE ACADEMY COURSES ---
+        Course c1 = new Course(
+            "Professional Workplace Communication",
+            "Learn essential communication techniques, client negotiation, crisis resolution, and professional presentation for modern technicians and service managers.",
+            "Farhana Yasmin",
+            "Communication",
+            "Beginner",
+            "6 hours",
+            6,
+            4.8,
+            1250,
+            false,
+            1500.0,
+            "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop"
+        );
+        c1.setWhatYouWillLearn("✓ Understand professional communication\n✓ Communicate effectively with customers\n✓ Handle workplace conflicts\n✓ Write professional emails & digital quotes\n✓ Improve presentation & service etiquette");
+        c1 = courseRepository.save(c1);
+
+        Course c2 = new Course(
+            "Advanced HVAC & Inverter AC Servicing",
+            "Master modern inverter air conditioning installation, fault diagnosis, electronic PCB handling, and eco-friendly R410A gas recharging.",
+            "Md. Asaduzzaman (IEB Certified)",
+            "HVAC & AC",
+            "Intermediate",
+            "12 hours",
+            8,
+            4.9,
+            840,
+            false,
+            2500.0,
+            "https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?w=600&auto=format&fit=crop"
+        );
+        c2.setWhatYouWillLearn("✓ Diagnose inverter compressor error codes\n✓ Perform safe R410A & R32 refrigerant gas top-up\n✓ Handle electronic PCB control board troubleshooting\n✓ Perform high pressure chemical jet wash");
+        c2 = courseRepository.save(c2);
+
+        Course c3 = new Course(
+            "Home Electrical Safety & Grid Wiring",
+            "Learn national electrical code safety protocols, circuit breaker sizing, earthing installation, and digital multimeter troubleshooting.",
+            "Prof. Tasnim Ahmed (BUET)",
+            "Electrical",
+            "Beginner",
+            "4 hours",
+            5,
+            4.85,
+            2100,
+            true,
+            0.0,
+            "https://images.unsplash.com/photo-1505797149-43b0069ec26b?w=600&auto=format&fit=crop"
+        );
+        c3.setWhatYouWillLearn("✓ Understand voltage, current, and resistance fundamentals\n✓ Operate digital multimeters safely without short circuits\n✓ Calculate MCB circuit breaker load capacity\n✓ Install proper copper rod ground earthing");
+        c3 = courseRepository.save(c3);
+
+        Course c4 = new Course(
+            "Concealed Plumbing & Acoustic Leak Detection",
+            "Master modern CPVC pipe joining, concealed leak acoustic location tools, pressure testing, and sanitary installation.",
+            "Engr. Rafiqul Islam",
+            "Plumbing",
+            "Advanced",
+            "8 hours",
+            6,
+            4.75,
+            620,
+            false,
+            1800.0,
+            "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop"
+        );
+        c4.setWhatYouWillLearn("✓ Detect concealed behind-tile pipe leaks with acoustic sensors\n✓ Join CPVC & PPR heat-fusion pipes with zero leakage\n✓ Execute hydrostatic pressure testing\n✓ Install modern concealed shower valves & wall-hung toilets");
+        c4 = courseRepository.save(c4);
+
+        Course c5 = new Course(
+            "Smart Home Automation & IoT Sensor Setup",
+            "Learn wireless Smart Life & Zigbee switch pairing, smart door lock programming, ambient LED controller wiring, and voice assistant integration.",
+            "Engr. Tanvir Hossain",
+            "Smart Home",
+            "Intermediate",
+            "7 hours",
+            5,
+            4.9,
+            930,
+            false,
+            2200.0,
+            "https://images.unsplash.com/photo-1558002038-1055907df827?w=600&auto=format&fit=crop"
+        );
+        c5.setWhatYouWillLearn("✓ Wire smart relays & touch switches into existing gang boxes\n✓ Configure Zigbee 3.0 hubs & mesh range extenders\n✓ Program automated motion sensor light routines\n✓ Setup mobile remote security alerts");
+        c5 = courseRepository.save(c5);
+
+        Course c6 = new Course(
+            "Technician Workplace Safety & OSHA Standards",
+            "Essential hazard awareness, high voltage arc flash safety, ladder stability, chemical handling, and site emergency evacuation.",
+            "Capt. Mahmudul Hasan",
+            "Safety",
+            "Beginner",
+            "3 hours",
+            4,
+            4.95,
+            3400,
+            true,
+            0.0,
+            "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop"
+        );
+        c6.setWhatYouWillLearn("✓ Identify workplace electrical & structural hazards\n✓ Wear PPE gear according to national safety standards\n✓ Execute emergency lockout/tagout (LOTO) procedures\n✓ Prevent high-altitude scaffold falls");
+        c6 = courseRepository.save(c6);
+
+        Course c7 = new Course(
+            "Commercial Painting & Wall Dampproofing",
+            "Master damp seal chemical application, wall putty sanding, airless spray painting, and decorative accent wall textures.",
+            "Md. Shah Alam",
+            "Painting",
+            "Beginner",
+            "5 hours",
+            5,
+            4.7,
+            510,
+            false,
+            1200.0,
+            "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&auto=format&fit=crop"
+        );
+        c7.setWhatYouWillLearn("✓ Apply damp-proof barrier coatings to moisture damaged walls\n✓ Smooth wall surfaces using acrylic filler & putty\n✓ Operate commercial high-pressure airless paint sprayers\n✓ Create geometric & velvet wall finish textures");
+        c7 = courseRepository.save(c7);
+
+        Course c8 = new Course(
+            "Solar Panel Installation & Off-Grid Inverters",
+            "Design solar rooftop arrays, size lithium battery banks, wire MPPT charge controllers, and troubleshoot net metering solar systems.",
+            "Dr. Jahangir Kabir (REB)",
+            "Electrical",
+            "Advanced",
+            "10 hours",
+            6,
+            4.88,
+            1150,
+            false,
+            2800.0,
+            "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop"
+        );
+        c8.setWhatYouWillLearn("✓ Calculate daily household kilowatt-hour power consumption\n✓ Mount rooftop solar racking at optimal sunlight tilt angles\n✓ Wire hybrid inverters & LiFePO4 battery storage\n✓ Perform DC isolator switch & surge protection wiring");
+        c8 = courseRepository.save(c8);
+
+        Course c9 = new Course(
+            "Refrigerator & Deep Freezer Sealed System Repair",
+            "Master compressor replacement, copper filter drier brazing, capillary tube clearing, and R600a eco-refrigerant charging.",
+            "Master Tech Tariqul Islam",
+            "HVAC & AC",
+            "Intermediate",
+            "9 hours",
+            6,
+            4.82,
+            760,
+            false,
+            2000.0,
+            "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop"
+        );
+        c9.setWhatYouWillLearn("✓ Diagnose no-cooling complaints in single & double door fridges\n✓ Braze copper-to-copper & copper-to-steel joints safely\n✓ Vacuum sealed refrigeration loops to 300 microns\n✓ Charge exact R600a & R134a gas weight using digital scales");
+        c9 = courseRepository.save(c9);
+
+        Course c10 = new Course(
+            "Custom Carpentry & Modular Kitchen Cabinetry",
+            "Learn board cutting, PVC edge banding, concealed soft-close hinge alignment, and modular kitchen cabinet installation.",
+            "Usthad Babul Hossain",
+            "Carpentry",
+            "Intermediate",
+            "8 hours",
+            5,
+            4.78,
+            430,
+            false,
+            1600.0,
+            "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=600&auto=format&fit=crop"
+        );
+        c10.setWhatYouWillLearn("✓ Read architectural furniture shop drawings accurately\n✓ Apply PVC heat edge banding for water resistant boards\n✓ Install hydraulic soft-close drawer slides & 3D hinges\n✓ Mount wall-hung kitchen cabinets securely with anchor bolts");
+        c10 = courseRepository.save(c10);
+
+        Course c11 = new Course(
+            "Diesel Generator & Automatic Transfer Switch (ATS)",
+            "Perform industrial generator oil servicing, radiator flushing, AVR voltage regulation adjustments, and 3-phase ATS panel wiring.",
+            "Engr. Nurul Huda",
+            "Electrical",
+            "Advanced",
+            "11 hours",
+            6,
+            4.91,
+            680,
+            false,
+            3000.0,
+            "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop"
+        );
+        c11.setWhatYouWillLearn("✓ Execute 500-hour generator preventive maintenance tune-ups\n✓ Calibrate automatic voltage regulators (AVR) for steady 400V\n✓ Wire 3-phase automatic transfer switch (ATS) contactors\n✓ Diagnose fuel injector pump air locks");
+        c11 = courseRepository.save(c11);
+
+        Course c12 = new Course(
+            "CCTV Security Camera & NVR Network Setup",
+            "IP camera mounting, Cat6 RJ45 crimping, PoE switch power budget calculation, NVR hard drive installation, and remote mobile app viewing.",
+            "Ashraful Alam (Network Certified)",
+            "Smart Home",
+            "Beginner",
+            "5 hours",
+            5,
+            4.86,
+            1890,
+            true,
+            0.0,
+            "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=600&auto=format&fit=crop"
+        );
+        c12.setWhatYouWillLearn("✓ Crimp T568B network cables with 100% test pass\n✓ Mount dome & bullet IP cameras with waterproof junction boxes\n✓ Configure NVR recording schedules & motion detection zones\n✓ Setup DDNS & P2P cloud viewing on Android & iPhone");
+        c12 = courseRepository.save(c12);
+
+        // --- PRE-POPULATE YOUTUBE EMBEDDED LESSONS FOR ALL COURSES ---
+        // Using "Rick Astley - Never Gonna Give You Up (4K Remaster)" (Video ID: dQw4w9WgXcQ)
+        String demoVid = "dQw4w9WgXcQ";
+
+        // Course 1 Lessons
+        lessonRepository.save(new CourseLesson(c1.getId(), "Module 1 — Introduction to Professional Ethics", "Lesson 1: Workplace Communication Fundamentals", "Overview of customer satisfaction strategies and active listening skills.", demoVid, "12:45", 1, true));
+        lessonRepository.save(new CourseLesson(c1.getId(), "Module 1 — Introduction to Professional Ethics", "Lesson 2: Client Expectation Management", "How to set realistic service timeframes and explain technical faults clearly.", demoVid, "15:20", 2, true));
+        lessonRepository.save(new CourseLesson(c1.getId(), "Module 2 — Core Practical Skills", "Lesson 3: De-escalating Customer Complaints", "Practical scenarios for dealing with dissatisfied customers politely.", demoVid, "18:10", 3, false));
+        lessonRepository.save(new CourseLesson(c1.getId(), "Module 2 — Core Practical Skills", "Lesson 4: Digital Invoicing & Service Summary", "Generating digital quotes and obtaining customer completion verification.", demoVid, "14:00", 4, false));
+        lessonRepository.save(new CourseLesson(c1.getId(), "Module 3 — Masterclass Topics", "Lesson 5: Professional Hygiene & Safety Protocols", "On-site clean-up standards and personal protection equipment.", demoVid, "10:30", 5, false));
+        lessonRepository.save(new CourseLesson(c1.getId(), "Module 3 — Masterclass Topics", "Lesson 6: Final Evaluation & Exam Overview", "Prepare for final certification quiz and practical field assessment.", demoVid, "20:00", 6, false));
+
+        // Course 2 Lessons
+        lessonRepository.save(new CourseLesson(c2.getId(), "Module 1 — Inverter Technology Principles", "Lesson 1: Inverter vs Non-Inverter Compressors", "Understanding DC inverter variable speed motor control.", demoVid, "14:10", 1, true));
+        lessonRepository.save(new CourseLesson(c2.getId(), "Module 1 — Inverter Technology Principles", "Lesson 2: PCB Microcontroller Diagnostic Codes", "Reading blink codes on outdoor unit control boards.", demoVid, "16:45", 2, true));
+        lessonRepository.save(new CourseLesson(c2.getId(), "Module 2 — Gas Charging & Leak Repair", "Lesson 3: R410A & R32 High Pressure Gas Charging", "Using manifold gauges and digital scales for eco refrigerant.", demoVid, "20:30", 3, false));
+        lessonRepository.save(new CourseLesson(c2.getId(), "Module 2 — Gas Charging & Leak Repair", "Lesson 4: Chemical Jet Foam Wash Procedure", "Step-by-step indoor coil cleaning without damaging blower motors.", demoVid, "15:50", 4, false));
+
+        // Course 3 Lessons (Free Course)
+        lessonRepository.save(new CourseLesson(c3.getId(), "Module 1 — Basic Electrical Concepts", "Lesson 1: Understanding Voltage, Current & Resistance", "Fundamental principles of electricity for home technicians.", demoVid, "10:15", 1, true));
+        lessonRepository.save(new CourseLesson(c3.getId(), "Module 1 — Basic Electrical Concepts", "Lesson 2: Safety Gear & Multimeter Usage", "How to use a digital multimeter without short circuiting.", demoVid, "14:30", 2, true));
+        lessonRepository.save(new CourseLesson(c3.getId(), "Module 2 — House Wiring Basics", "Lesson 3: Distribution Board & Circuit Breakers", "Understanding MCBs, RCCBs, and proper phase balancing.", demoVid, "22:00", 3, true));
+        lessonRepository.save(new CourseLesson(c3.getId(), "Module 2 — House Wiring Basics", "Lesson 4: Earthing & Shock Prevention", "Step by step earthing rod installation and resistance check.", demoVid, "16:45", 4, true));
+        lessonRepository.save(new CourseLesson(c3.getId(), "Module 3 — Summary", "Lesson 5: Emergency First Aid & Shock Response", "Crucial first-aid steps in case of electrical accidents.", demoVid, "11:20", 5, true));
+
+        // Course 4 Lessons
+        lessonRepository.save(new CourseLesson(c4.getId(), "Module 1 — Concealed Leak Detection", "Lesson 1: Acoustic Sensor Operation Behind Tiles", "Using ultrasonic listening devices to locate water wall leaks.", demoVid, "13:20", 1, true));
+        lessonRepository.save(new CourseLesson(c4.getId(), "Module 1 — Concealed Leak Detection", "Lesson 2: CPVC Pipe Heat Fusion Joining", "Proper heating temperature and socket depth for CPVC joints.", demoVid, "17:10", 2, true));
+        lessonRepository.save(new CourseLesson(c4.getId(), "Module 2 — Hydrostatic Testing", "Lesson 3: High Pressure Pump Testing", "Testing pipeline integrity at 10 bar pressure before tiling.", demoVid, "19:00", 3, false));
+
+        // Course 5 Lessons
+        lessonRepository.save(new CourseLesson(c5.getId(), "Module 1 — Smart Relays", "Lesson 1: Neutral vs Non-Neutral Switch Wiring", "Wiring Tuya & Sonoff smart relays into standard electrical gang boxes.", demoVid, "15:00", 1, true));
+        lessonRepository.save(new CourseLesson(c5.getId(), "Module 2 — Zigbee Mesh Setup", "Lesson 2: Zigbee 3.0 Gateway Pairing", "Connecting wireless motion sensors & door contacts to Home Assistant.", demoVid, "18:40", 2, false));
+
+        // Course 6 Lessons (Free Safety Course)
+        lessonRepository.save(new CourseLesson(c6.getId(), "Module 1 — Hazard Identification", "Lesson 1: Arc Flash & High Voltage Risk Assessment", "Understanding personal protective equipment (PPE) ratings.", demoVid, "11:30", 1, true));
+        lessonRepository.save(new CourseLesson(c6.getId(), "Module 2 — LOTO Safety", "Lesson 2: Lockout / Tagout (LOTO) Procedures", "Securing power breakers during site service work.", demoVid, "14:15", 2, true));
+
+        // Course 7 Lessons
+        lessonRepository.save(new CourseLesson(c7.getId(), "Module 1 — Wall Preparation", "Lesson 1: Dampproof Barrier Application", "Sealing damp brick walls with waterproof acrylic polymer.", demoVid, "16:20", 1, true));
+
+        // Course 8 Lessons
+        lessonRepository.save(new CourseLesson(c8.getId(), "Module 1 — Solar PV Fundamentals", "Lesson 1: Solar Panel Array Tilt Angle & Azimuth", "Maximizing annual kilowatt-hour yield in South Asia.", demoVid, "21:00", 1, true));
+        lessonRepository.save(new CourseLesson(c8.getId(), "Module 2 — Inverter Wiring", "Lesson 2: Hybrid Inverter & LiFePO4 Battery Setup", "Connecting solar panels, utility grid, and battery storage.", demoVid, "24:30", 2, false));
+
+        // Course 9 Lessons
+        lessonRepository.save(new CourseLesson(c9.getId(), "Module 1 — Refrigeration Cycle", "Lesson 1: Compressor Replacement & Brazing", "Removing burnt out fridge compressors safely.", demoVid, "18:15", 1, true));
+
+        // Course 10 Lessons
+        lessonRepository.save(new CourseLesson(c10.getId(), "Module 1 — Cabinetry Hardware", "Lesson 1: Soft-Close Hinge & Slide Installation", "Adjusting 3D cabinet hinges for perfectly aligned doors.", demoVid, "14:50", 1, true));
+
+        // Course 11 Lessons
+        lessonRepository.save(new CourseLesson(c11.getId(), "Module 1 — Diesel Engine Tune-Up", "Lesson 1: Generator 500-Hour Service Routine", "Changing oil filters, fuel filters, and bleeding fuel injectors.", demoVid, "22:10", 1, true));
+
+        // Course 12 Lessons (Free CCTV Course)
+        lessonRepository.save(new CourseLesson(c12.getId(), "Module 1 — IP Networking", "Lesson 1: Cat6 Cable Crimping & PoE Testing", "Crimping RJ45 connectors with standard T568B pinout.", demoVid, "12:00", 1, true));
+        lessonRepository.save(new CourseLesson(c12.getId(), "Module 2 — NVR Configuration", "Lesson 2: NVR Remote Cloud App Setup", "Pairing IP cameras to mobile smartphones via P2P cloud barcode.", demoVid, "16:30", 2, true));
+
+        // --- PRE-POPULATE DEMO ENROLLMENTS ---
+        // Customer Anisur enrolled in Course 3 (Free) and completed 3/5 lessons
+        CourseEnrollment e1 = new CourseEnrollment(customer.getId(), c3.getId(), "FREE", "NONE", "TXN-FREE-001", 0.0);
+        e1.setCompletedLessonsCount(3);
+        e1.setProgressPercentage(60);
+        e1.setIsCompleted(false);
+        enrollmentRepository.save(e1);
+
+        // Worker Kamrul enrolled in Course 1 (Paid) - SUCCESSFUL Payment
+        CourseEnrollment e2 = new CourseEnrollment(worker1.getId(), c1.getId(), "SUCCESSFUL", "BKASH", "BKASH-TXN-99812", 1500.0);
+        e2.setCompletedLessonsCount(6);
+        e2.setProgressPercentage(100);
+        e2.setIsCompleted(true);
+        e2.setCompletedAt(LocalDateTime.now().minusDays(2));
+        enrollmentRepository.save(e2);
 
         // Pre-populate marketplace items
         marketplaceRepository.save(new MarketplaceItem("Industrial Pipe Wrench Set", "Durable heavy-duty wrench set, sizes 10, 14, and 18 inches.", 1550.0, "TOOL", "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=200&auto=format&fit=crop"));
@@ -296,6 +375,6 @@ public class DbInitializer implements CommandLineRunner {
         marketplaceRepository.save(new MarketplaceItem("Submersible Water Pump Motor (1.5 HP)", "High efficiency copper winding motor with thermal overload protector.", 12500.0, "SPARE_PART", "https://images.unsplash.com/photo-1508962914676-134849a727f0?w=200&auto=format&fit=crop"));
         marketplaceRepository.save(new MarketplaceItem("Heavy Duty Demolition Jack Hammer (Rental)", "Rent per day: Professional grade concrete and rock breaker.", 800.0, "RENTAL", "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=200&auto=format&fit=crop"));
 
-        System.out.println(">>> SkillVerse Database Pre-populated with Course & Marketplace Mock Data <<<");
+        System.out.println(">>> SkillVerse Database Pre-populated with Course & YouTube Lessons Mock Data <<<");
     }
 }

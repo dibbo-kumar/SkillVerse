@@ -36,6 +36,7 @@ export default function CustomerSettings({
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
+  const [phoneError, setPhoneError] = useState('');
   const [nidNumber, setNidNumber] = useState(user?.nidNumber || '');
   const [avatarUrl, setAvatarUrl] = useState(user?.profilePicture || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150');
   const [address, setAddress] = useState(user?.address || '');
@@ -108,8 +109,15 @@ export default function CustomerSettings({
     }
   ];
 
+  const validateBdPhone = (num) => /^01[3-9]\d{8}$/.test((num || '').trim());
+
   const handleSaveProfile = (e) => {
     e.preventDefault();
+    if (!validateBdPhone(phone)) {
+      setPhoneError("Must be a valid 11-digit Bangladeshi number (e.g. 01712345678)");
+      return;
+    }
+    setPhoneError("");
     if (onUpdateProfile) {
       onUpdateProfile({
         name,
@@ -304,10 +312,27 @@ export default function CustomerSettings({
                     <input
                       type="text"
                       className="form-input"
+                      style={{
+                        borderColor: phoneError ? '#ef4444' : undefined,
+                        boxShadow: phoneError ? '0 0 0 1px #ef4444' : undefined
+                      }}
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setPhone(val);
+                        if (val && !/^01[3-9]\d{8}$/.test(val.trim())) {
+                          setPhoneError("Must be a valid 11-digit Bangladeshi number (e.g. 01712345678)");
+                        } else {
+                          setPhoneError("");
+                        }
+                      }}
                       required
                     />
+                    {phoneError && (
+                      <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.35rem', borderTop: '2px solid #ef4444', paddingTop: '0.2rem', fontWeight: 'bold' }}>
+                        ⚠️ {phoneError}
+                      </div>
+                    )}
                   </div>
                 </div>
 
