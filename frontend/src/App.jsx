@@ -35,6 +35,8 @@ import CustomerSettings from './components/customer/CustomerSettings';
 import TechnicianMap, { calculateDistanceKm, formatDistanceString } from './components/customer/TechnicianMap';
 import AcademyCoursesHub from './components/academy/AcademyCoursesHub';
 import AdminAcademyManager from './components/academy/AdminAcademyManager';
+import ToolStoreHub from './components/store/ToolStoreHub';
+import AdminStoreManager from './components/store/AdminStoreManager';
 
 const API_BASE = "http://localhost:8089/api";
 
@@ -541,6 +543,7 @@ function App() {
   const [allUsersList, setAllUsersList] = useState([]);
   const [workerBookings, setWorkerBookings] = useState([]);
   const [workerProfile, setWorkerProfile] = useState(null);
+  const [contextualBookingStore, setContextualBookingStore] = useState(null);
 
   // Customer Management Center States
   const [savedWorkerIds, setSavedWorkerIds] = useState(() => {
@@ -1672,10 +1675,6 @@ function App() {
                 <Key size={14} /> Admin Portal
               </span>
             )}
-
-            <span className={`nav-link ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
-              My Profile
-            </span>
           </div>
         )}
 
@@ -2383,30 +2382,14 @@ function App() {
         />
       )}
 
-      {/* --- TOOLS MARKETPLACE TAB --- */}
+      {/* --- TOOLS STORE TAB MODULE --- */}
       {isLoggedIn && activeTab === 'marketplace' && (
-        <div style={{ padding: '2rem' }}>
-          <div style={{ marginBottom: '2rem' }}>
-            <h1 style={{ fontSize: '2rem' }}>Tools & Spare Parts Store</h1>
-            <p style={{ color: 'var(--text-secondary)' }}>Purchase certified toolkits or rent premium maintenance hardware per day.</p>
-          </div>
-          <div className="dashboard-grid" style={{ padding: 0 }}>
-            {marketplaceItems.map(item => (
-              <div key={item.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <img src={item.imageUrl} alt={item.title} style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: '8px', marginBottom: '1rem' }} />
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{item.title}</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', flex: 1, marginBottom: '1rem' }}>{item.description}</p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '0.8rem' }}>
-                  <div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{item.type}</span>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--primary)' }}>BDT {item.price}</div>
-                  </div>
-                  <button className="btn btn-primary" onClick={() => triggerMockAction(item.title, 'tool')}><ShoppingBag size={16} /> Buy Now</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ToolStoreHub
+          currentUser={currentUser}
+          onShowToast={(title, msg, type) => showToast(title, msg, type)}
+          contextualBooking={contextualBookingStore}
+          onCloseContextual={() => setContextualBookingStore(null)}
+        />
       )}
 
       {/* --- CUSTOMER STANDALONE MY PROFILE PAGE --- */}
@@ -2761,6 +2744,11 @@ function App() {
           {/* Admin Academy Management Section */}
           <div style={{ marginTop: '2.5rem' }}>
             <AdminAcademyManager onShowToast={(title, msg, type) => showToast(title, msg, type)} />
+          </div>
+
+          {/* Admin Tool Store Management Section */}
+          <div style={{ marginTop: '2.5rem' }}>
+            <AdminStoreManager onShowToast={(title, msg, type) => showToast(title, msg, type)} />
           </div>
         </div>
       )}

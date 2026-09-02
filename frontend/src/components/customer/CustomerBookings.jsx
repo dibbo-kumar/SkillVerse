@@ -410,7 +410,10 @@ export default function CustomerBookings({
                       </div>
                     )}
 
-                    <div className="safety-action-row" style={{ marginTop: '1rem' }}>
+                    <div className="safety-action-row" style={{ marginTop: '1rem', display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
+                      <button className="btn btn-primary" style={{ background: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)', display: 'flex', alignItems: 'center', gap: '0.4rem' }} onClick={() => onShopPartsForBooking && onShopPartsForBooking(b)}>
+                        <ShoppingBag size={15} /> Shop Parts for This Service
+                      </button>
                       <button className="btn btn-secondary" onClick={() => onStatusChange(b.id, 'CANCELLED')}>
                         Cancel Booking
                       </button>

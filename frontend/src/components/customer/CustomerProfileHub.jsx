@@ -65,7 +65,8 @@ export default function CustomerProfileHub({
   onUpdateProfile,
   onUpdateWorkerLocation,
   onLogout,
-  onOpenBookingModal
+  onOpenBookingModal,
+  onShopPartsForBooking
 }) {
   const [subTab, setSubTab] = useState(initialSubTab);
 
@@ -238,6 +239,7 @@ export default function CustomerProfileHub({
             onStatusChange={onStatusChange}
             onStartPayment={onStartPayment}
             onOpenReviewModal={handleOpenReviewModal}
+            onShopPartsForBooking={onShopPartsForBooking}
             onNavigateTab={(tab) => {
               if (tab === 'find-services') {
                 onNavigateTab('customer');
