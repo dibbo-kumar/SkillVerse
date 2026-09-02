@@ -2683,10 +2683,10 @@ function App() {
                       <div key={app.id || workerId} className="glass-card" style={{ borderLeft: '4px solid var(--accent-gold)', padding: '1.25rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
                           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                            <img 
-                              src={applicantUser?.profilePicture || "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150"} 
-                              alt={applicantName} 
-                              style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(245,158,11,0.4)' }} 
+                            <img
+                              src={applicantUser?.profilePicture || "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150"}
+                              alt={applicantName}
+                              style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(245,158,11,0.4)' }}
                             />
                             <div>
                               <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{applicantName}</h3>
