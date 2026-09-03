@@ -7,4 +7,7 @@ import java.util.List;
 public interface ServiceBookingRepository extends JpaRepository<ServiceBooking, Long> {
     List<ServiceBooking> findByCustomerId(Long customerId);
     List<ServiceBooking> findByWorkerId(Long workerId);
+    List<ServiceBooking> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
+    List<ServiceBooking> findByWorkerIdOrderByCreatedAtDesc(Long workerId);
+    long countByWorkerIdAndStatusIn(Long workerId, List<String> statuses);
 }

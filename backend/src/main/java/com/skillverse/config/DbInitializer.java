@@ -5,6 +5,7 @@ import com.skillverse.repository.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Configuration
 public class DbInitializer implements CommandLineRunner {
@@ -21,6 +22,8 @@ public class DbInitializer implements CommandLineRunner {
         private final StoreCategoryRepository storeCategoryRepository;
         private final StoreOrderRepository storeOrderRepository;
         private final ProductReviewRepository productReviewRepository;
+        private final ProblemPostRepository problemPostRepository;
+        private final ProblemOfferRepository problemOfferRepository;
 
         public DbInitializer(UserRepository userRepository, WorkerProfileRepository workerProfileRepository,
                         ServiceBookingRepository bookingRepository, CourseRepository courseRepository,
@@ -30,7 +33,9 @@ public class DbInitializer implements CommandLineRunner {
                         ToolStoreProductRepository toolStoreProductRepository,
                         StoreCategoryRepository storeCategoryRepository,
                         StoreOrderRepository storeOrderRepository,
-                        ProductReviewRepository productReviewRepository) {
+                        ProductReviewRepository productReviewRepository,
+                        ProblemPostRepository problemPostRepository,
+                        ProblemOfferRepository problemOfferRepository) {
                 this.userRepository = userRepository;
                 this.workerProfileRepository = workerProfileRepository;
                 this.bookingRepository = bookingRepository;
@@ -43,6 +48,8 @@ public class DbInitializer implements CommandLineRunner {
                 this.storeCategoryRepository = storeCategoryRepository;
                 this.storeOrderRepository = storeOrderRepository;
                 this.productReviewRepository = productReviewRepository;
+                this.problemPostRepository = problemPostRepository;
+                this.problemOfferRepository = problemOfferRepository;
         }
 
         @Override
@@ -50,9 +57,51 @@ public class DbInitializer implements CommandLineRunner {
                 if (userRepository.count() == 0) {
                         seedCoreData();
                 }
+                if (problemPostRepository.count() == 0) {
+                        seedProblemPosts();
+                }
                 if (storeCategoryRepository.count() == 0) {
                         seedToolStoreData();
                 }
+        }
+
+        private void seedProblemPosts() {
+                List<User> customers = userRepository.findAll().stream()
+                                .filter(u -> "CUSTOMER".equalsIgnoreCase(u.getRole()))
+                                .toList();
+                List<User> workers = userRepository.findAll().stream()
+                                .filter(u -> "WORKER".equalsIgnoreCase(u.getRole()))
+                                .toList();
+
+                if (customers.isEmpty() || workers.size() < 2) return;
+
+                User customer = customers.get(0);
+                User worker1 = workers.get(0);
+                User worker2 = workers.get(1);
+
+                ProblemPost prob1 = new ProblemPost();
+                prob1.setCustomer(customer);
+                prob1.setServiceCategory("AC Repair & Servicing");
+                prob1.setTitle("Emergency AC Gas Leak & Inverter Cooling Issue");
+                prob1.setDescription("Our 1.5 ton General split AC is blowing normal room temperature air. Error code E4 visible on display.");
+                prob1.setApplianceInfo("General Inverter 1.5 Ton Split AC");
+                prob1.setPhotoUrl("https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?w=600");
+                prob1.setPreferredDate("Tomorrow");
+                prob1.setPreferredTime("10:00 AM - 12:00 PM");
+                prob1.setAddress(customer.getAddress() != null ? customer.getAddress() : "House 14, Road 4, Sector 12, Uttara, Dhaka");
+                prob1.setBudgetPrice(1200.0);
+                prob1.setStatus("OPEN");
+                ProblemPost savedProb1 = problemPostRepository.save(prob1);
+
+                ProblemOffer off1 = new ProblemOffer(savedProb1, worker2, 1100.0,
+                                "Mohammad Rafiq here. Specialized in AC leakage pressure test and vacuum charging. Available tomorrow at 10 AM.",
+                                "Within 45 mins");
+                problemOfferRepository.save(off1);
+
+                ProblemOffer off2 = new ProblemOffer(savedProb1, worker1, 1250.0,
+                                "Kamrul Islam here. Certified HVAC technician with complete digital manifold gauge and genuine R32/R410 gas canisters.",
+                                "Within 1-2 hours");
+                problemOfferRepository.save(off2);
         }
 
         private void seedCoreData() {
@@ -115,7 +164,30 @@ public class DbInitializer implements CommandLineRunner {
                 booking1.setLiveLocation("23.8103, 90.4125");
                 bookingRepository.save(booking1);
 
-                // --- PRE-POPULATE ACADEMY COURSES ---
+                // --- PRE-POPULATE POSTED PROBLEM & TECHNICIAN OFFERS ---
+                ProblemPost prob1 = new ProblemPost();
+                prob1.setCustomer(customer);
+                prob1.setServiceCategory("AC Repair & Servicing");
+                prob1.setTitle("Emergency AC Gas Leak & Inverter Cooling Issue");
+                prob1.setDescription("Our 1.5 ton General split AC is blowing normal room temperature air. Error code E4 visible on display.");
+                prob1.setApplianceInfo("General Inverter 1.5 Ton Split AC");
+                prob1.setPhotoUrl("https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?w=600");
+                prob1.setPreferredDate("Tomorrow");
+                prob1.setPreferredTime("10:00 AM - 12:00 PM");
+                prob1.setAddress(customer.getAddress());
+                prob1.setBudgetPrice(1200.0);
+                prob1.setStatus("OPEN");
+                ProblemPost savedProb1 = problemPostRepository.save(prob1);
+
+                ProblemOffer off1 = new ProblemOffer(savedProb1, worker2, 1100.0,
+                                "Mohammad Rafiq here. Specialized in AC leakage pressure test and vacuum charging. Available tomorrow at 10 AM.",
+                                "Within 45 mins");
+                problemOfferRepository.save(off1);
+
+                ProblemOffer off2 = new ProblemOffer(savedProb1, worker1, 1250.0,
+                                "Kamrul Islam here. Certified HVAC technician with complete digital manifold gauge and genuine R32/R410 gas canisters.",
+                                "Within 1-2 hours");
+                problemOfferRepository.save(off2);
                 Course c1 = new Course(
                                 "Professional Workplace Communication",
                                 "Learn essential communication techniques, client negotiation, crisis resolution, and professional presentation for modern technicians and service managers.",

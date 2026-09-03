@@ -4,7 +4,7 @@ import {
   DollarSign, TrendingUp, AlertTriangle, RefreshCw, Layers, ShieldCheck, Search, XCircle, Star, Eye
 } from 'lucide-react';
 
-const API_BASE = "http://localhost:8089/api/store";
+const API_BASE = "http://localhost:8081/api/store";
 
 export default function AdminStoreManager({ onShowToast }) {
   const [adminTab, setAdminTab] = useState('overview'); // 'overview', 'products', 'categories', 'orders'

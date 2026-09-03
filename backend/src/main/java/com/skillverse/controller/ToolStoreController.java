@@ -51,14 +51,32 @@ public class ToolStoreController {
         
         if (search != null && !search.trim().isEmpty()) {
             list = productRepository.searchProducts(search.trim());
-        } else if (serviceType != null && !serviceType.trim().isEmpty()) {
-            list = productRepository.findByCompatibleService(serviceType.trim());
-        } else if (category != null && !category.trim().isEmpty() && !category.equalsIgnoreCase("All")) {
-            list = productRepository.findByCategory(category.trim());
-        } else if (type != null && !type.trim().isEmpty()) {
-            list = productRepository.findByType(type.trim());
         } else {
             list = productRepository.findAll();
+        }
+
+        // Filter by serviceType if specified and not 'All'
+        if (serviceType != null && !serviceType.trim().isEmpty() && !serviceType.equalsIgnoreCase("All")) {
+            String s = serviceType.trim().toLowerCase();
+            list = list.stream()
+                    .filter(p -> p.getCompatibleServices() != null && p.getCompatibleServices().toLowerCase().contains(s))
+                    .collect(Collectors.toList());
+        }
+
+        // Filter by category if specified and not 'All'
+        if (category != null && !category.trim().isEmpty() && !category.equalsIgnoreCase("All")) {
+            String c = category.trim().toLowerCase();
+            list = list.stream()
+                    .filter(p -> p.getCategory() != null && p.getCategory().toLowerCase().contains(c))
+                    .collect(Collectors.toList());
+        }
+
+        // Filter by product type if specified and not 'All'
+        if (type != null && !type.trim().isEmpty() && !type.equalsIgnoreCase("All")) {
+            String t = type.trim().toLowerCase();
+            list = list.stream()
+                    .filter(p -> p.getType() != null && p.getType().toLowerCase().contains(t))
+                    .collect(Collectors.toList());
         }
 
         // Sorting logic

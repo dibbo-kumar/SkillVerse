@@ -24,7 +24,7 @@ import {
   BarChart3
 } from 'lucide-react';
 
-const API_BASE = "http://localhost:8089/api";
+const API_BASE = "http://localhost:8081/api";
 
 export default function AcademyCoursesHub({ currentUser, onShowToast }) {
   const [courses, setCourses] = useState([]);

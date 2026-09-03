@@ -23,7 +23,7 @@ import {
   Lock
 } from 'lucide-react';
 
-const API_BASE = "http://localhost:8089/api";
+const API_BASE = "http://localhost:8081/api";
 
 export default function AdminAcademyManager({ onShowToast }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'courses', 'enrollments', 'analytics'

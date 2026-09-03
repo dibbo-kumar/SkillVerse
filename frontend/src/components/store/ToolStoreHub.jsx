@@ -6,9 +6,9 @@ import {
   Camera, ImageIcon, X, AlertTriangle, ArrowUpRight, Upload
 } from 'lucide-react';
 
-const API_BASE = "http://localhost:8089/api/store";
+const API_BASE = "http://localhost:8081/api/store";
 
-export default function ToolStoreHub({ currentUser, onShowToast, contextualBooking = null, onCloseContextual = null }) {
+function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, onCloseContextual = null }) {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,13 +25,23 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
 
   // Cart & Wishlist State
   const [cart, setCart] = useState(() => {
-    const saved = localStorage.getItem('skillverse_store_cart');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('skillverse_store_cart');
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed.filter(item => item && item.product) : [];
+    } catch (e) {
+      return [];
+    }
   });
 
   const [wishlist, setWishlist] = useState(() => {
-    const saved = localStorage.getItem('skillverse_store_wishlist');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('skillverse_store_wishlist');
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed.filter(item => item && item.id) : [];
+    } catch (e) {
+      return [];
+    }
   });
 
   // Save cart & wishlist to localStorage
@@ -201,8 +211,9 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
     });
   };
 
-  const cartSubtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const deliveryFee = cart.length > 0 ? 60.0 : 0;
+  const safeCart = Array.isArray(cart) ? cart.filter(item => item && item.product) : [];
+  const cartSubtotal = safeCart.reduce((sum, item) => sum + ((item?.product?.price || 0) * (item?.quantity || 1)), 0);
+  const deliveryFee = safeCart.length > 0 ? 60.0 : 0;
   const cartTotal = cartSubtotal + deliveryFee;
 
   const handleOpenDetails = (product) => {
@@ -546,7 +557,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
                 <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }} />
                 <input 
                   type="text" 
-                  className="input-field" 
+                  className="form-input" 
                   placeholder="Search tools, capacitors, brand, model or SKU (e.g. AC capacitor, multimeter)..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -562,7 +573,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
               {/* Service Filter Dropdown (Bright white text, dark background, rounded corners) */}
               <div>
                 <select 
-                  className="input-field" 
+                  className="form-input" 
                   style={{ height: '46px', background: '#131b2e', color: '#ffffff', borderRadius: '12px', borderColor: 'rgba(255,255,255,0.2)', fontWeight: '600', paddingLeft: '1rem' }}
                   value={selectedService}
                   onChange={(e) => setSelectedService(e.target.value)}
@@ -579,7 +590,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
               {/* Price / Rating Sort Dropdown (Bright white text, dark background, rounded corners) */}
               <div>
                 <select 
-                  className="input-field" 
+                  className="form-input" 
                   style={{ height: '46px', background: '#131b2e', color: '#ffffff', borderRadius: '12px', borderColor: 'rgba(255,255,255,0.2)', fontWeight: '600', paddingLeft: '1rem' }}
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
@@ -897,7 +908,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
 
                     {/* Items List */}
                     <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                      {order.items.map(item => (
+                      {(order.items || []).map(item => (
                         <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                             <img src={item.productImageUrl || item.product?.imageUrl} alt={item.productTitle} style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: '4px' }} />
@@ -965,7 +976,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
           </p>
 
           <div className="dashboard-grid" style={{ padding: 0 }}>
-            {userOrders.flatMap(o => o.items).map((item, idx) => (
+            {(userOrders || []).flatMap(o => o.items || []).map((item, idx) => (
               <div key={idx} className="glass-card" style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '1.2rem' }}>
                 <img src={item.productImageUrl || item.product?.imageUrl} alt={item.productTitle} style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: '8px' }} />
                 <div style={{ flex: 1 }}>
@@ -1197,7 +1208,7 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Written Review</label>
                   <textarea 
-                    className="input-field" 
+                    className="form-input" 
                     rows="3" 
                     required
                     placeholder="Share your experience regarding performance, build quality, or compatibility..."
@@ -1275,23 +1286,23 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', marginBottom: '0.8rem' }}>
                 <div>
                   <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Customer Name</label>
-                  <input type="text" className="input-field" required value={deliveryForm.customerName} onChange={(e) => setDeliveryForm({ ...deliveryForm, customerName: e.target.value })} />
+                  <input type="text" className="form-input" required value={deliveryForm.customerName} onChange={(e) => setDeliveryForm({ ...deliveryForm, customerName: e.target.value })} />
                 </div>
                 <div>
                   <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Phone Number</label>
-                  <input type="text" className="input-field" required value={deliveryForm.phone} onChange={(e) => setDeliveryForm({ ...deliveryForm, phone: e.target.value })} />
+                  <input type="text" className="form-input" required value={deliveryForm.phone} onChange={(e) => setDeliveryForm({ ...deliveryForm, phone: e.target.value })} />
                 </div>
               </div>
 
               <div style={{ marginBottom: '0.8rem' }}>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Full Delivery Address</label>
-                <input type="text" className="input-field" required value={deliveryForm.address} onChange={(e) => setDeliveryForm({ ...deliveryForm, address: e.target.value })} />
+                <input type="text" className="form-input" required value={deliveryForm.address} onChange={(e) => setDeliveryForm({ ...deliveryForm, address: e.target.value })} />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.8rem', marginBottom: '1.2rem' }}>
                 <div>
                   <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Division</label>
-                  <select className="input-field" value={deliveryForm.division} onChange={(e) => setDeliveryForm({ ...deliveryForm, division: e.target.value })}>
+                  <select className="form-input" value={deliveryForm.division} onChange={(e) => setDeliveryForm({ ...deliveryForm, division: e.target.value })}>
                     <option value="Dhaka">Dhaka</option>
                     <option value="Chittagong">Chittagong</option>
                     <option value="Rajshahi">Rajshahi</option>
@@ -1300,11 +1311,11 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
                 </div>
                 <div>
                   <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>District</label>
-                  <input type="text" className="input-field" required value={deliveryForm.district} onChange={(e) => setDeliveryForm({ ...deliveryForm, district: e.target.value })} />
+                  <input type="text" className="form-input" required value={deliveryForm.district} onChange={(e) => setDeliveryForm({ ...deliveryForm, district: e.target.value })} />
                 </div>
                 <div>
                   <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Area / Thana</label>
-                  <input type="text" className="input-field" required value={deliveryForm.area} onChange={(e) => setDeliveryForm({ ...deliveryForm, area: e.target.value })} />
+                  <input type="text" className="form-input" required value={deliveryForm.area} onChange={(e) => setDeliveryForm({ ...deliveryForm, area: e.target.value })} />
                 </div>
               </div>
 
@@ -1388,5 +1399,56 @@ export default function ToolStoreHub({ currentUser, onShowToast, contextualBooki
       )}
 
     </div>
+  );
+}
+
+class ToolStoreErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Tool Store Component Error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-primary)' }}>
+          <div className="glass-card" style={{ maxWidth: '500px', margin: '0 auto', padding: '2rem' }}>
+            <AlertTriangle size={48} color="var(--accent-gold)" style={{ margin: '0 auto 1rem auto' }} />
+            <h3 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>Tool Store Display Warning</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+              A temporary display error occurred while rendering store products or saved cart data.
+            </p>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                localStorage.removeItem('skillverse_store_cart');
+                localStorage.removeItem('skillverse_store_wishlist');
+                this.setState({ hasError: false });
+                window.location.reload();
+              }}
+            >
+              <RefreshCw size={16} /> Reset Store Cache & Reload
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function ToolStoreHub(props) {
+  return (
+    <ToolStoreErrorBoundary>
+      <ToolStoreContent {...props} />
+    </ToolStoreErrorBoundary>
   );
 }

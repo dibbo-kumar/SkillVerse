@@ -37,8 +37,13 @@ import AcademyCoursesHub from './components/academy/AcademyCoursesHub';
 import AdminAcademyManager from './components/academy/AdminAcademyManager';
 import ToolStoreHub from './components/store/ToolStoreHub';
 import AdminStoreManager from './components/store/AdminStoreManager';
+import MyBookingsHub from './components/bookings/MyBookingsHub';
+import PostProblemModal from './components/bookings/PostProblemModal';
+import WorkerDashboard from './components/worker/WorkerDashboard';
+import NotificationBell from './components/notifications/NotificationBell';
+import PostedProblemsHub from './components/bookings/PostedProblemsHub';
 
-const API_BASE = "http://localhost:8089/api";
+const API_BASE = "http://localhost:8081/api";
 
 // Preset diagnostic photos for customer mock upload
 const MOCK_PHOTOS = [
@@ -543,7 +548,29 @@ function App() {
   const [allUsersList, setAllUsersList] = useState([]);
   const [workerBookings, setWorkerBookings] = useState([]);
   const [workerProfile, setWorkerProfile] = useState(null);
+  const [showPostProblemModal, setShowPostProblemModal] = useState(false);
+  const [showPostedProblemsModal, setShowPostedProblemsModal] = useState(false);
   const [contextualBookingStore, setContextualBookingStore] = useState(null);
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const saved = localStorage.getItem('skillverse_notifications');
+      return saved ? JSON.parse(saved) : [
+        { id: 1, title: 'Worker Price Offer Received', message: 'Mohammad Rafiq submitted a quote of ৳1100 for your AC Leak problem post.', time: '10m ago', read: false },
+        { id: 2, title: 'Technician En-Route', message: 'Technician Kamrul Islam has marked status as On The Way to your address.', time: '1h ago', read: false },
+        { id: 3, title: 'Service Completed', message: 'Bathroom Concealed Pipe Leak Repair has been completed.', time: '1d ago', read: true }
+      ];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('skillverse_notifications', JSON.stringify(notifications));
+    } catch (e) {
+      console.error("Failed saving notifications", e);
+    }
+  }, [notifications]);
 
   // Customer Management Center States
   const [savedWorkerIds, setSavedWorkerIds] = useState(() => {
@@ -1681,6 +1708,18 @@ function App() {
         {/* User Details & Logout */}
         {isLoggedIn ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <NotificationBell
+              notifications={notifications}
+              onMarkAllRead={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
+              onNotificationClick={(n) => {
+                setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, read: true } : item));
+                if (n.title.includes('Offer')) {
+                  setShowPostedProblemsModal(true);
+                } else {
+                  setActiveTab('my-bookings');
+                }
+              }}
+            />
             <div style={{ textAlign: 'right', cursor: 'pointer' }} onClick={() => setActiveTab('profile')} title="Go to Profile & Settings">
               <div style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{currentUser.name}</div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Role: {currentUser.role}</div>
@@ -1997,6 +2036,32 @@ function App() {
             </div>
           </div>
 
+          {/* Post Your Problem Entry Point */}
+          <div style={{ padding: '0 2rem', marginBottom: '1.5rem' }}>
+            <div className="glass-card" style={{ background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(79, 70, 229, 0.12))', border: '1px solid rgba(59, 130, 246, 0.35)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', padding: '1.2rem 1.5rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', margin: '0 0 0.3rem 0', color: '#ffffff', fontWeight: 'bold' }}>Can't find the right technician?</h3>
+                <p style={{ fontSize: '0.85rem', color: '#cbd5e1', margin: 0 }}>Post your maintenance problem publicly with preferred date & budget. Technicians will respond with custom offers!</p>
+              </div>
+              <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '0.7rem 1.2rem', fontWeight: 'bold', fontSize: '0.9rem', border: '1px solid var(--accent-blue)', color: 'var(--accent-blue)' }}
+                  onClick={() => setShowPostedProblemsModal(true)}
+                >
+                  📋 Your Posted Problems
+                </button>
+                <button
+                  className="btn btn-primary"
+                  style={{ background: 'linear-gradient(90deg, #2563eb, #4f46e5)', border: 'none', padding: '0.7rem 1.4rem', fontWeight: 'bold', fontSize: '0.9rem', boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)' }}
+                  onClick={() => setShowPostProblemModal(true)}
+                >
+                  📢 Post Your Problem Now
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Service Booking & Active Service Grid */}
           <div style={{ padding: '0 2rem' }}>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -2221,155 +2286,12 @@ function App() {
             </div>
           )}
 
-          {/* Worker Active Jobs List */}
+          {/* Worker Dashboard Component */}
           {currentUser.verified && (
-            <>
-              <h2 style={{ fontSize: '1.4rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Briefcase size={22} color="var(--primary)" /> Your Active Dispatched Orders
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
-                {workerBookings.length === 0 ? (
-                  <div className="glass-card" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                    No service bookings are currently assigned to you. Go online to receive matches.
-                  </div>
-                ) : (
-                  workerBookings.map(wb => (
-                    <div key={wb.id} className="glass-card">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-                        <div>
-                          <h3 style={{ fontSize: '1.1rem' }}>{wb.serviceType}</h3>
-                          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                            Client: <strong>{wb.customer.name}</strong> • Phone: {wb.customer.phone}
-                          </p>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <span className="badge badge-pending" style={{ marginRight: '0.5rem' }}>{wb.status}</span>
-                          <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>BDT {wb.estimatedCost}</div>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', margin: '1rem 0' }}>
-                        <div style={{ flex: '1 1 300px' }}>
-                          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                            <strong>Details:</strong> {wb.description}
-                          </p>
-                        </div>
-                        {wb.beforePhoto && (
-                          <div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Problem Photo uploaded by Client:</div>
-                            <img src={wb.beforePhoto} alt="Problem Preview" style={{ width: '120px', height: '80px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)' }} />
-                          </div>
-                        )}
-                      </div>
-
-                      <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                        {wb.status === 'PENDING' && (
-                          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                            <button className="btn btn-primary" onClick={() => handleStatusChange(wb.id, 'ACCEPTED', true)}>
-                              Accept Booking Order
-                            </button>
-                            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>or offer counter price:</span>
-                            <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
-                              <input
-                                type="number"
-                                className="form-input"
-                                style={{ width: '120px', padding: '0.4rem' }}
-                                placeholder="Counter BDT"
-                                value={counterPrices[wb.id] || ''}
-                                onChange={e => setCounterPrices({ ...counterPrices, [wb.id]: Number(e.target.value) })}
-                              />
-                              <button className="btn btn-secondary" onClick={() => handleSendCounterOffer(wb.id)}>Submit Counter</button>
-                            </div>
-                          </div>
-                        )}
-                        {wb.status === 'COUNTERED' && (
-                          <div style={{ fontSize: '0.85rem', color: 'var(--accent-gold)' }}>
-                            Counter Offer of <strong>BDT {wb.estimatedCost}</strong> sent to customer. Waiting for customer approval.
-                          </div>
-                        )}
-                        {wb.status === 'ACCEPTED' && (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--accent-gold)' }}>
-                              Booking confirmed! Scheduled arrival code: <strong>{wb.startVerificationCode}</strong>.
-                            </div>
-                            <button className="btn btn-primary" onClick={() => handleStatusChange(wb.id, 'ON_THE_WAY', true)}>
-                              <Navigation size={14} /> Mark "On The Way"
-                            </button>
-                          </div>
-                        )}
-                        {wb.status === 'ON_THE_WAY' && (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--accent-blue)' }}>
-                              En route to client address.
-                            </div>
-                            <button className="btn btn-primary" onClick={() => handleStatusChange(wb.id, 'ARRIVED', true)}>
-                              <MapPin size={14} /> Mark "Arrived at Doorstep"
-                            </button>
-                          </div>
-                        )}
-                        {wb.status === 'ARRIVED' && (
-                          <div style={{ background: 'rgba(245, 158, 11, 0.06)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--accent-gold)', marginBottom: '0.8rem' }}>
-                              📍 Arrived at client location. Ask the customer for their <strong>Start OTP</strong> to begin the service.
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                              <input
-                                type="text"
-                                className="form-input"
-                                style={{ width: '140px', padding: '0.5rem', fontFamily: 'monospace', fontSize: '1.1rem', textAlign: 'center', letterSpacing: '0.3em' }}
-                                placeholder="Enter OTP"
-                                maxLength={6}
-                                value={otpInputs[`start-${wb.id}`] || ''}
-                                onChange={e => setOtpInputs(prev => ({ ...prev, [`start-${wb.id}`]: e.target.value }))}
-                              />
-                              <button className="btn btn-primary" onClick={() => verifyStartOtp(wb, true)}>
-                                <Zap size={14} /> Verify OTP & Begin Job
-                              </button>
-                            </div>
-                            {otpErrors[`start-${wb.id}`] && (
-                              <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem', fontWeight: 'bold' }}>
-                                {otpErrors[`start-${wb.id}`]}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {wb.status === 'IN_PROGRESS' && (
-                          <div style={{ background: 'rgba(16, 185, 129, 0.06)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--primary)', marginBottom: '0.8rem' }}>
-                              🔧 Service in progress. When the job is done, ask the customer for their <strong>Completion OTP</strong> to finish.
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                              <input
-                                type="text"
-                                className="form-input"
-                                style={{ width: '140px', padding: '0.5rem', fontFamily: 'monospace', fontSize: '1.1rem', textAlign: 'center', letterSpacing: '0.3em' }}
-                                placeholder="Enter OTP"
-                                maxLength={6}
-                                value={otpInputs[`complete-${wb.id}`] || ''}
-                                onChange={e => setOtpInputs(prev => ({ ...prev, [`complete-${wb.id}`]: e.target.value }))}
-                              />
-                              <button className="btn btn-primary" onClick={() => verifyCompletionOtp(wb, true)}>
-                                <CheckCircle2 size={14} /> Verify OTP & Complete Job
-                              </button>
-                            </div>
-                            {otpErrors[`complete-${wb.id}`] && (
-                              <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem', fontWeight: 'bold' }}>
-                                {otpErrors[`complete-${wb.id}`]}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {wb.status === 'COMPLETED' && (
-                          <span className="badge badge-verified">
-                            <CheckCircle2 size={12} /> Service Completed & Payment Deposited into Wallet
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </>
+            <WorkerDashboard
+              currentWorker={currentUser}
+              onShowToast={(title, msg, type) => showToast(title, msg, type)}
+            />
           )}
         </div>
       )}
@@ -2407,41 +2329,13 @@ function App() {
 
       {/* --- CUSTOMER MY BOOKINGS & HUB --- */}
       {isLoggedIn && activeTab === 'my-bookings' && currentUser.role === 'CUSTOMER' && (
-        <CustomerProfileHub
-          user={currentUser}
-          bookings={bookings}
-          serviceHistory={serviceHistory}
-          properties={properties}
-          workers={workers}
-          savedWorkerIds={savedWorkerIds}
-          addresses={addresses}
-          transactions={transactions}
-          reviews={reviews}
-          rewards={rewards}
-          initialSubTab="bookings"
-          onNavigateTab={(tab) => {
-            if (tab === 'customer') setActiveTab('customer');
-            else if (tab === 'my-bookings') setActiveTab('my-bookings');
-            else setActiveTab(tab);
+        <MyBookingsHub
+          currentUser={currentUser}
+          onShowToast={(title, msg, type) => showToast(title, msg, type)}
+          onNavigateToWorkerProfile={(workerId) => {
+            const w = workers.find(item => item.user?.id === workerId || item.id === workerId);
+            if (w) setViewingWorker(w);
           }}
-          onAcceptCounterOffer={handleAcceptCounterOffer}
-          onStatusChange={handleStatusChange}
-          onStartPayment={startPaymentProcess}
-          onAddProperty={handleAddProperty}
-          onDeleteProperty={handleDeleteProperty}
-          onAddAppliance={handleAddAppliance}
-          onDeleteAppliance={handleDeleteAppliance}
-          onToggleSaveWorker={handleToggleSaveWorker}
-          onAddAddress={handleAddAddress}
-          onEditAddress={handleEditAddress}
-          onDeleteAddress={handleDeleteAddress}
-          onSetDefaultAddress={handleSetDefaultAddress}
-          onSubmitReview={handleSubmitReview}
-          onUpdateProfile={handleUpdateProfile}
-          onUpdateWorkerLocation={handleUpdateWorkerLocation}
-          workerProfile={workerProfile}
-          onLogout={handleLogout}
-          onOpenBookingModal={handleOpenBookingModalWithOptions}
         />
       )}
 
@@ -3113,6 +3007,26 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Post Problem Modal */}
+      <PostProblemModal
+        isOpen={showPostProblemModal}
+        onClose={() => setShowPostProblemModal(false)}
+        currentUser={currentUser}
+        onProblemPosted={() => setActiveTab('my-bookings')}
+        onShowToast={(title, msg, type) => showToast(title, msg, type)}
+      />
+
+      {/* Posted Problems Hub Modal */}
+      <PostedProblemsHub
+        isOpen={showPostedProblemsModal}
+        onClose={() => setShowPostedProblemsModal(false)}
+        currentUser={currentUser}
+        onAcceptWorkerOffer={(createdBooking) => {
+          setActiveTab('my-bookings');
+        }}
+        onShowToast={(title, msg, type) => showToast(title, msg, type)}
+      />
 
       {/* Footer */}
       <footer className="footer">
