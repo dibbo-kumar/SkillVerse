@@ -374,6 +374,11 @@ public class ToolStoreController {
         return ResponseEntity.ok(reviewRepository.findByProductIdOrderByCreatedAtDesc(productId));
     }
 
+    @GetMapping("/reviews/user/{userId}")
+    public ResponseEntity<List<ProductReview>> getUserReviews(@PathVariable Long userId) {
+        return ResponseEntity.ok(reviewRepository.findByUserId(userId));
+    }
+
     public static class ReviewDTO {
         public Long productId;
         public Long userId;
@@ -399,6 +404,11 @@ public class ToolStoreController {
 
         if (!isDeliveredPurchase) {
             return ResponseEntity.badRequest().body("You can only submit a review after the product has been delivered to you.");
+        }
+
+        // Verify user has not already submitted a review for this product
+        if (reviewRepository.existsByProductIdAndUserId(dto.productId, dto.userId)) {
+            return ResponseEntity.badRequest().body("You have already submitted a review for this product. Multiple reviews or edits are not allowed.");
         }
 
         ProductReview review = new ProductReview(product, user, dto.rating, dto.comment, true);

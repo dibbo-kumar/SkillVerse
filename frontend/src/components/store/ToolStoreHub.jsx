@@ -60,6 +60,7 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
   const [placedOrder, setPlacedOrder] = useState(null);
   const [userOrders, setUserOrders] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [userReviews, setUserReviews] = useState([]);
 
   // Review Submission Modal State
   const [reviewModalOrder, setReviewModalOrder] = useState(null);
@@ -96,6 +97,7 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
     fetchProducts();
     fetchCategories();
     fetchUserOrders();
+    fetchUserReviews();
   }, []);
 
   const fetchProducts = async () => {
@@ -145,6 +147,19 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
       }
     } catch (err) {
       console.error("Error fetching user orders:", err);
+    }
+  };
+
+  const fetchUserReviews = async () => {
+    if (!currentUser || !currentUser.id) return;
+    try {
+      const res = await fetch(`${API_BASE}/reviews/user/${currentUser.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUserReviews(data);
+      }
+    } catch (err) {
+      console.error("Error fetching user reviews:", err);
     }
   };
 
@@ -358,6 +373,7 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
         setNewReviewComment('');
         setNewReviewBase64Photo('');
         fetchUserOrders();
+        fetchUserReviews();
         fetchProducts();
       } else {
         const errMsg = await res.text();
@@ -381,7 +397,10 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
 
   // Check if user already submitted a review for this product
   const userAlreadyReviewedProduct = (productId) => {
-    return reviews.some(r => r.user?.id === currentUser?.id || r.user_id === currentUser?.id);
+    if (!productId) return false;
+    const prodId = Number(productId);
+    return userReviews.some(r => Number(r.product?.id || r.productId || r.product_id) === prodId) ||
+           reviews.some(r => (Number(r.user?.id || r.user_id) === Number(currentUser?.id)) && Number(r.product?.id || r.productId || r.product_id) === prodId);
   };
 
   // Filter My Orders Sub-Tabs
@@ -920,16 +939,22 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
                             
                             {/* Review Button for Delivered Orders */}
                             {order.orderStatus === 'DELIVERED' && (
-                              <button 
-                                className="btn btn-primary" 
-                                style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
-                                onClick={() => {
-                                  setReviewModalOrder(order);
-                                  setReviewModalProduct(item.product || { id: item.product_id, title: item.productTitle });
-                                }}
-                              >
-                                <Star size={12} fill="#fff" /> Review Product
-                              </button>
+                              userAlreadyReviewedProduct(item.product?.id || item.product_id) ? (
+                                <span className="badge badge-gold" style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                  <CheckCircle size={12} /> Reviewed
+                                </span>
+                              ) : (
+                                <button 
+                                  className="btn btn-primary" 
+                                  style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+                                  onClick={() => {
+                                    setReviewModalOrder(order);
+                                    setReviewModalProduct(item.product || { id: item.product_id, title: item.productTitle });
+                                  }}
+                                >
+                                  <Star size={12} fill="#fff" /> Review Product
+                                </button>
+                              )
                             )}
                           </div>
                         </div>

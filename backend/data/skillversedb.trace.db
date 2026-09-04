@@ -1,0 +1,9 @@
+2026-09-05 02:04:44.760671+06:00 jdbc[6]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PHOTO_URL CHARACTER VARYING(255)": "'data:image/jpeg;base64,/9j/4dBNRXhpZgAASUkqAAgAAAANAAABBAABAAAAoA8AAAEBBAABAAAA... (6869403)"; SQL statement:
+insert into product_reviews (comment,created_at,is_verified_purchase,photo_url,product_id,rating,user_id,id) values (?,?,?,?,?,?,?,default) [22001-224]
+2026-09-05 02:04:48.309218+06:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PHOTO_URL CHARACTER VARYING(255)": "'data:image/jpeg;base64,/9j/4dBNRXhpZgAASUkqAAgAAAANAAABBAABAAAAoA8AAAEBBAABAAAA... (6869403)"; SQL statement:
+insert into product_reviews (comment,created_at,is_verified_purchase,photo_url,product_id,rating,user_id,id) values (?,?,?,?,?,?,?,default) [22001-224]
+2026-09-05 02:05:27.570595+06:00 jdbc[4]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PHOTO_URL CHARACTER VARYING(255)": "'data:image/jpeg;base64,/9j/4dBNRXhpZgAASUkqAAgAAAANAAABBAABAAAAoA8AAAEBBAABAAAA... (6869403)"; SQL statement:
+insert into product_reviews (comment,created_at,is_verified_purchase,photo_url,product_id,rating,user_id,id) values (?,?,?,?,?,?,?,default) [22001-224]

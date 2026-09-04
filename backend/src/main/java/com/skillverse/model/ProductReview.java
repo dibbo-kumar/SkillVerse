@@ -25,6 +25,9 @@ public class ProductReview {
     private String comment;
 
     private boolean isVerifiedPurchase = true;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String photoUrl;
     private LocalDateTime createdAt;
 
