@@ -22,6 +22,9 @@ public class User {
     private Double longitude = 90.3795;
     private String address = "House 14, Road 4, Sector 12, Uttara, Dhaka";
 
+    private String status = "ACTIVE"; // ACTIVE, SUSPENDED, DEACTIVATED
+    private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();
+
     public User() {}
 
     public User(String name, String email, String phone, String role) {
@@ -67,4 +70,10 @@ public class User {
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+
+    public String getStatus() { return status != null ? status : "ACTIVE"; }
+    public void setStatus(String status) { this.status = status; }
+
+    public java.time.LocalDateTime getCreatedAt() { return createdAt != null ? createdAt : java.time.LocalDateTime.now(); }
+    public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

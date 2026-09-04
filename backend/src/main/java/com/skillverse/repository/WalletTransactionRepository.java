@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface WalletTransactionRepository extends JpaRepository<WalletTransaction, Long> {
     List<WalletTransaction> findByWorkerIdOrderByCreatedAtDesc(Long workerId);
+    List<WalletTransaction> findAllByOrderByCreatedAtDesc();
+    List<WalletTransaction> findByTransactionTypeOrderByCreatedAtDesc(String transactionType);
 }

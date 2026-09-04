@@ -41,6 +41,7 @@ import AdminStoreManager from './components/store/AdminStoreManager';
 import MyBookingsHub from './components/bookings/MyBookingsHub';
 import PostProblemModal from './components/bookings/PostProblemModal';
 import WorkerDashboard from './components/worker/WorkerDashboard';
+import AdminDashboard from './components/admin/AdminDashboard';
 import NotificationBell from './components/notifications/NotificationBell';
 import PostedProblemsHub from './components/bookings/PostedProblemsHub';
 
@@ -2546,132 +2547,14 @@ function App() {
         </div>
       )}
 
-      {/* --- ADMIN PORTAL TAB --- */}
+      {/* --- ADMIN DASHBOARD & CONTROL CENTER --- */}
       {isLoggedIn && activeTab === 'admin' && currentUser.role === 'ADMIN' && (
-        <div style={{ padding: '2rem' }}>
-          <div style={{ marginBottom: '2rem' }}>
-            <h1 style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Database size={28} color="#f59e0b" />
-              Administrative Command Center
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>Approve pending workers, manage learning catalogs, and view system statistics.</p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', marginBottom: '3rem' }}>
-
-            {/* Verification Panel */}
-            <div className="glass-card" style={{ gridColumn: 'span 2' }}>
-              <h2 style={{ fontSize: '1.3rem', marginBottom: '1.2rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <ShieldCheck size={22} color="var(--primary)" />
-                Pending Worker NID Verification Queue ({pendingApplications.length})
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {pendingApplications.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
-                    <CheckCircle2 size={36} color="var(--primary)" style={{ margin: '0 auto 0.5rem', opacity: 0.6 }} />
-                    <div>All submitted worker NID verification requests have been processed!</div>
-                  </div>
-                ) : (
-                  pendingApplications.map((app, idx) => {
-                    const applicantUser = (app && typeof app.user === 'object' && app.user) ? app.user : (app || {});
-                    const applicantName = applicantUser?.name || app?.name || "Worker Candidate";
-                    const applicantEmail = applicantUser?.email || app?.email || "worker@gmail.com";
-                    const nidVal = app?.nidNumber || applicantUser?.nidNumber || "19972618954712999";
-                    const frontImg = app?.nidFrontPhoto || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300";
-                    const backImg = app?.nidBackPhoto || "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=300";
-                    const reqId = app?.id;
-                    const workerId = applicantUser?.id || app?.id || idx;
-
-                    return (
-                      <div key={app.id || workerId} className="glass-card" style={{ borderLeft: '4px solid var(--accent-gold)', padding: '1.25rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
-                          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                            <img
-                              src={applicantUser?.profilePicture || "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150"}
-                              alt={applicantName}
-                              style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(245,158,11,0.4)' }}
-                            />
-                            <div>
-                              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{applicantName}</h3>
-                              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                Email: {applicantEmail} • Status: <span className="badge badge-warning">NID Submitted — Pending Review</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>National NID Number:</div>
-                            <div style={{ fontFamily: 'monospace', fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
-                              {nidVal}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Document previews */}
-                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', background: 'rgba(0,0,0,0.2)', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                          <div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>NID Front Card:</div>
-                            <img src={frontImg} alt="NID Front" style={{ width: '120px', height: '75px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)' }} />
-                          </div>
-                          <div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>NID Back Card:</div>
-                            <img src={backImg} alt="NID Back" style={{ width: '120px', height: '75px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)' }} />
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end' }}>
-                          <button className="btn btn-primary" onClick={() => handleAdminApproveWorker(reqId, workerId)}>
-                            <CheckCircle2 size={16} /> Approve & Verify Worker NID
-                          </button>
-                          <button className="btn btn-secondary" style={{ color: '#ef4444' }} onClick={() => handleAdminRejectWorker(reqId)}>
-                            <XCircle size={16} /> Reject Application
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
-            {/* Metrics Panel */}
-            <div className="glass-card">
-              <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Platform Diagnostics</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.85rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Total Staff / Workers:</span>
-                  <strong>{workers.length}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Verified Escrow Contracts:</span>
-                  <strong>{bookings.length}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Platform Commission Volume:</span>
-                  <strong style={{ color: 'var(--primary)' }}>BDT 45,200</strong>
-                </div>
-              </div>
-
-              {/* platform chart volume */}
-              <div style={{ marginTop: '1.5rem' }}>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>System Load Graph</div>
-                <svg viewBox="0 0 300 100" style={{ width: '100%', height: 'auto' }}>
-                  <path d="M 0 80 Q 75 20, 150 50 T 300 10 L 300 100 L 0 100 Z" fill="rgba(16, 185, 129, 0.15)" stroke="var(--primary)" strokeWidth="2" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Admin Academy Management Section */}
-          <div style={{ marginTop: '2.5rem' }}>
-            <AdminAcademyManager onShowToast={(title, msg, type) => showToast(title, msg, type)} />
-          </div>
-
-          {/* Admin Tool Store Management Section */}
-          <div style={{ marginTop: '2.5rem' }}>
-            <AdminStoreManager onShowToast={(title, msg, type) => showToast(title, msg, type)} />
-          </div>
-        </div>
+        <AdminDashboard
+          currentUser={currentUser}
+          onShowToast={(title, msg, type) => showToast(title, msg, type)}
+        />
       )}
+
 
       {/* --- FLOATING WORKER DETAILS SCREEN / MODAL --- */}
       {viewingWorker && (

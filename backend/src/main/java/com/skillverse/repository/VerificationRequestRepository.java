@@ -9,4 +9,5 @@ public interface VerificationRequestRepository extends JpaRepository<Verificatio
     List<VerificationRequest> findByStatus(String status);
     Optional<VerificationRequest> findByUserIdAndStatus(Long userId, String status);
     List<VerificationRequest> findByUserId(Long userId);
+    List<VerificationRequest> findAllByOrderBySubmittedAtDesc();
 }

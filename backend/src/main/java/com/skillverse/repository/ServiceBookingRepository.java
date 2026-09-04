@@ -9,5 +9,5 @@ public interface ServiceBookingRepository extends JpaRepository<ServiceBooking, 
     List<ServiceBooking> findByWorkerId(Long workerId);
     List<ServiceBooking> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
     List<ServiceBooking> findByWorkerIdOrderByCreatedAtDesc(Long workerId);
-    long countByWorkerIdAndStatusIn(Long workerId, List<String> statuses);
+    List<ServiceBooking> findAllByOrderByCreatedAtDesc();
 }

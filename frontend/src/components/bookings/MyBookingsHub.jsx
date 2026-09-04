@@ -115,7 +115,6 @@ export default function MyBookingsHub({ currentUser, onShowToast, onNavigateToWo
     try {
       const res = await fetch(`${API_BASE}/bookings/${bId}/accept-price?acceptedBy=CUSTOMER`, { method: 'PUT' });
       if (res.ok) {
-        if (onShowToast) onShowToast("Price Accepted", "Booking is now confirmed.", "success");
         fetchCustomerData();
       } else {
         const err = await res.json();
@@ -132,7 +131,6 @@ export default function MyBookingsHub({ currentUser, onShowToast, onNavigateToWo
     try {
       const res = await fetch(`${API_BASE}/bookings/${selectedBooking.id}/counter-offer?price=${counterPrice}&offeredBy=CUSTOMER`, { method: 'PUT' });
       if (res.ok) {
-        if (onShowToast) onShowToast("Counter Offer Sent", "Technician will review your counter price.", "success");
         setShowCounterModal(false);
         fetchCustomerData();
       }
@@ -145,7 +143,6 @@ export default function MyBookingsHub({ currentUser, onShowToast, onNavigateToWo
     try {
       const res = await fetch(`${API_BASE}/bookings/${bId}/cancel?reason=CustomerRequested`, { method: 'PUT' });
       if (res.ok) {
-        if (onShowToast) onShowToast("Booking Cancelled", "Service request has been cancelled.", "info");
         fetchCustomerData();
       } else {
         const err = await res.json();
@@ -162,7 +159,6 @@ export default function MyBookingsHub({ currentUser, onShowToast, onNavigateToWo
     try {
       const res = await fetch(`${API_BASE}/bookings/${selectedBooking.id}/verify-completion-otp?otp=${completionOtpInput}`, { method: 'PUT' });
       if (res.ok) {
-        if (onShowToast) onShowToast("OTP Verified!", "Service marked as completed.", "success");
         setShowCompletionOtpModal(false);
         setCompletionOtpInput('');
         fetchCustomerData();

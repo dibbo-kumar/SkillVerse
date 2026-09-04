@@ -113,7 +113,6 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     try {
       const res = await fetch(`${API_BASE}/bookings/${bId}/accept-price?acceptedBy=WORKER`, { method: 'PUT' });
       if (res.ok) {
-        if (onShowToast) onShowToast("Booking Confirmed", "You accepted the customer price. Job is now confirmed.", "success");
         fetchWorkerData();
         setActiveSubTab('active-job');
       } else {
@@ -131,7 +130,6 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     try {
       const res = await fetch(`${API_BASE}/bookings/${selectedBooking.id}/counter-offer?price=${counterPrice}&offeredBy=WORKER`, { method: 'PUT' });
       if (res.ok) {
-        if (onShowToast) onShowToast("Counter Offer Sent", `Counter price ৳${counterPrice} submitted. Waiting for customer response.`, "success");
         setShowCounterModal(false);
         setCounterPrice('');
         fetchWorkerData();
@@ -145,7 +143,6 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     try {
       const res = await fetch(`${API_BASE}/bookings/${bId}/cancel?reason=WorkerDeclined`, { method: 'PUT' });
       if (res.ok) {
-        if (onShowToast) onShowToast("Request Declined", "You declined the service request.", "info");
         fetchWorkerData();
       }
     } catch (e) {
@@ -157,7 +154,6 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     try {
       const res = await fetch(`${API_BASE}/bookings/${bId}/on-the-way`, { method: 'PUT' });
       if (res.ok) {
-        if (onShowToast) onShowToast("On The Way", "Customer has been notified that you are en route!", "info");
         fetchWorkerData();
       } else {
         const err = await res.json();
@@ -172,7 +168,6 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     try {
       const res = await fetch(`${API_BASE}/bookings/${bId}/arrived`, { method: 'PUT' });
       if (res.ok) {
-        if (onShowToast) onShowToast("Arrived at Location", "Customer has been notified. Collect Start OTP to begin.", "info");
         fetchWorkerData();
       } else {
         const err = await res.json();
@@ -190,7 +185,6 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     try {
       const res = await fetch(`${API_BASE}/bookings/${targetBooking.id}/verify-start-otp?otp=${startOtpInput}`, { method: 'PUT' });
       if (res.ok) {
-        if (onShowToast) onShowToast("Start OTP Verified!", "Work has commenced. Status updated to In Progress.", "success");
         setStartOtpInput('');
         setShowStartOtpModal(false);
         fetchWorkerData();
@@ -207,7 +201,6 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     try {
       const res = await fetch(`${API_BASE}/bookings/${bId}/request-completion`, { method: 'PUT' });
       if (res.ok) {
-        if (onShowToast) onShowToast("Completion Requested", "Customer received your request with their 4-digit verification code.", "success");
         fetchWorkerData();
       } else {
         const err = await res.json();
@@ -225,7 +218,6 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     try {
       const res = await fetch(`${API_BASE}/bookings/${targetBooking.id}/verify-completion-otp?otp=${completionOtpInput}`, { method: 'PUT' });
       if (res.ok) {
-        if (onShowToast) onShowToast("Service Completed!", "Completion verified. Customer will now settle payment.", "success");
         setCompletionOtpInput('');
         setShowCompletionOtpModal(false);
         fetchWorkerData();
@@ -246,7 +238,6 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
         body: JSON.stringify(photos)
       });
       if (res.ok) {
-        if (onShowToast) onShowToast("Photo Saved", "Job evidence photo uploaded successfully.", "success");
         fetchWorkerData();
       }
     } catch (e) {
