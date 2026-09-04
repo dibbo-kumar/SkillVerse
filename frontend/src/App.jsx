@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ShieldCheck,
   MapPin,
@@ -526,18 +527,42 @@ function App() {
   const [password, setPassword] = useState('');
   const [nidNumber, setNidNumber] = useState('');
 
-  const [activeTab, setActiveTab] = useState(() => {
-    const savedTab = localStorage.getItem('fixconnect_active_tab');
-    if (savedTab) return savedTab;
-    const savedUser = localStorage.getItem('fixconnect_user');
-    if (savedUser) {
-      try {
-        const u = JSON.parse(savedUser);
-        return u.role === 'ADMIN' ? 'admin' : u.role === 'WORKER' ? 'worker' : 'customer';
-      } catch (e) { }
-    }
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Map browser URL paths to logical views
+  const getTabFromPath = (path) => {
+    if (path.startsWith('/bookings') || path.startsWith('/my-bookings')) return 'my-bookings';
+    if (path.startsWith('/academy') || path.startsWith('/courses')) return 'courses';
+    if (path.startsWith('/store') || path.startsWith('/marketplace')) return 'marketplace';
+    if (path.startsWith('/worker')) return 'worker';
+    if (path.startsWith('/profile') || path.startsWith('/settings')) return 'profile';
+    if (path.startsWith('/admin')) return 'admin';
     return 'customer';
-  });
+  };
+
+  const getPathFromTab = (tab) => {
+    switch (tab) {
+      case 'my-bookings': return '/bookings';
+      case 'courses': return '/academy';
+      case 'marketplace': return '/store';
+      case 'worker': return '/worker/dashboard';
+      case 'profile': return '/profile';
+      case 'admin': return '/admin';
+      case 'customer':
+      default:
+        return '/';
+    }
+  };
+
+  const activeTab = getTabFromPath(location.pathname);
+
+  const setActiveTab = (tab) => {
+    const targetPath = getPathFromTab(tab);
+    if (location.pathname !== targetPath) {
+      navigate(targetPath);
+    }
+  };
 
   // App data states
   const [workers, setWorkers] = useState(INITIAL_WORKERS);
@@ -1033,6 +1058,7 @@ function App() {
     setAiEstimate(null);
     localStorage.removeItem('fixconnect_user');
     localStorage.removeItem('fixconnect_active_tab');
+    navigate('/');
   };
 
   // Submit Work Application (Worker side)
