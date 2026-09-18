@@ -217,45 +217,70 @@ public class AdminController {
     @GetMapping("/verification/requests")
     public ResponseEntity<List<VerificationRequest>> getVerificationRequests(@RequestParam(required = false) String status) {
         if (status != null && !status.equalsIgnoreCase("ALL")) {
-            return ResponseEntity.ok(verificationRequestRepository.findByStatus(status.toUpperCase()));
+            return ResponseEntity.ok(verificationRequestRepository.findByStatusOrderBySubmittedAtDesc(status.toUpperCase()));
         }
         return ResponseEntity.ok(verificationRequestRepository.findAllByOrderBySubmittedAtDesc());
     }
 
-    @PutMapping("/verification/{id}/decision")
+    @RequestMapping(value = "/verification/{id}/decision", method = {RequestMethod.PUT, RequestMethod.POST})
     public ResponseEntity<?> decideVerification(@PathVariable Long id,
-                                                @RequestParam String decision, // APPROVE, REJECT, SUSPEND
-                                                @RequestParam(required = false) String reason) {
+                                                @RequestParam(required = false) String decision, // APPROVE, APPROVED, CORRECTION_REQUIRED, REQUEST_CORRECTION, REJECT, REJECTED, SUSPEND, SUSPENDED
+                                                @RequestParam(required = false) String reason,
+                                                @RequestBody(required = false) Map<String, String> body) {
+        String dec = decision;
+        String reas = reason;
+        if ((dec == null || dec.isEmpty()) && body != null) {
+            dec = body.getOrDefault("decision", body.get("status"));
+        }
+        if ((reas == null || reas.isEmpty()) && body != null) {
+            reas = body.getOrDefault("reason", body.get("adminRemarks"));
+        }
+        if (dec == null || dec.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Decision is required"));
+        }
+        final String finalReason = reas;
+        String normalizedDec = dec.toUpperCase();
+        if ("APPROVE".equals(normalizedDec)) normalizedDec = "APPROVED";
+        if ("REJECT".equals(normalizedDec)) normalizedDec = "REJECTED";
+        if ("SUSPEND".equals(normalizedDec)) normalizedDec = "SUSPENDED";
+        if ("REQUEST_CORRECTION".equals(normalizedDec)) normalizedDec = "CORRECTION_REQUIRED";
+        final String actionDec = normalizedDec;
+
         return verificationRequestRepository.findById(id).map(req -> {
-            String dec = decision.toUpperCase();
-            req.setStatus(dec);
+            req.setStatus(actionDec);
+            req.setAdminRemarks(finalReason);
+            req.setReviewedAt(LocalDateTime.now());
             verificationRequestRepository.save(req);
 
             User user = req.getUser();
             if (user != null) {
-                if ("APPROVE".equals(dec) || "APPROVED".equals(dec)) {
+                if ("APPROVED".equals(actionDec)) {
                     user.setVerified(true);
                     user.setNidNumber(req.getNidNumber());
                     user.setStatus("ACTIVE");
-                } else if ("SUSPEND".equals(dec) || "SUSPENDED".equals(dec)) {
+                } else if ("SUSPENDED".equals(actionDec)) {
                     user.setVerified(false);
                     user.setStatus("SUSPENDED");
+                } else if ("CORRECTION_REQUIRED".equals(actionDec)) {
+                    user.setVerified(false);
+                    user.setStatus("CORRECTION_REQUIRED");
                 } else {
                     user.setVerified(false);
+                    user.setStatus("REJECTED");
                 }
                 userRepository.save(user);
             }
 
             auditLogRepository.save(new AuditLog(
-                    "WORKER_VERIFICATION_" + dec,
+                    "WORKER_VERIFICATION_" + actionDec,
                     "System Admin",
                     "ADMIN",
                     "Worker",
                     req.getUser() != null ? req.getUser().getId() : req.getId(),
-                    "Verification request #" + id + " marked " + dec + (reason != null ? " Reason: " + reason : "")
+                    "Verification request #" + id + " marked " + actionDec + (finalReason != null ? " Reason: " + finalReason : "")
             ));
 
-            return ResponseEntity.ok(Map.of("message", "Verification decision recorded: " + dec, "request", req));
+            return ResponseEntity.ok(Map.of("message", "Verification decision recorded: " + actionDec, "status", actionDec, "adminRemarks", finalReason != null ? finalReason : "", "request", req));
         }).orElse(ResponseEntity.notFound().build());
     }
 

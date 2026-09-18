@@ -57,11 +57,188 @@ public class DbInitializer implements CommandLineRunner {
                 if (userRepository.count() == 0) {
                         seedCoreData();
                 }
+                if (verificationRequestRepository.count() == 0) {
+                        seedVerificationData();
+                }
                 if (problemPostRepository.count() == 0) {
                         seedProblemPosts();
                 }
                 if (storeCategoryRepository.count() == 0) {
                         seedToolStoreData();
+                }
+        }
+
+        private void seedVerificationData() {
+                User worker1 = userRepository.findByEmail("kamrul@gmail.com").orElse(null);
+                if (worker1 != null) {
+                        VerificationRequest v1 = new VerificationRequest();
+                        v1.setUser(worker1);
+                        v1.setFullName("Kamrul Islam");
+                        v1.setDateOfBirth("1994-08-14");
+                        v1.setPhone(worker1.getPhone());
+                        v1.setPhoneVerified(true);
+                        v1.setNidNumber("19942618954712365");
+                        v1.setNidFrontPhoto("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600");
+                        v1.setNidBackPhoto("https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600");
+                        v1.setProfileSelfiePhoto(worker1.getProfilePicture());
+                        v1.setPresentAddress("Sector 11, Road 3, House 24, Uttara, Dhaka");
+                        v1.setPermanentAddress("Vill: Sonapur, PS: Begumganj, Dist: Noakhali");
+                        v1.setDivision("Dhaka");
+                        v1.setDistrict("Dhaka");
+                        v1.setCityArea("Uttara");
+                        v1.setPostalCode("1230");
+                        v1.setDetailedAddress("Sector 11, Road 3, House 24, Uttara, Dhaka");
+                        v1.setSkills("Electrical, AC Repair, Smart Home");
+                        v1.setExperienceYears(6);
+                        v1.setExperienceDescription("Expert in inverter split AC installation, copper brazing, and 3-phase commercial wiring.");
+                        v1.setPreviousEmployer("Electra Bangladesh Ltd");
+                        v1.setExperienceCertPhoto("https://images.unsplash.com/photo-1589330694653-dad6ef0190b8?w=600");
+                        v1.setWorkProofPhoto("https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600");
+                        v1.setPayoutMethod("bKash");
+                        v1.setPayoutAccount(worker1.getPhone());
+                        v1.setPayoutAccountHolder("Kamrul Islam");
+                        v1.setStatus("APPROVED");
+                        v1.setSubmittedAt(LocalDateTime.now().minusDays(15));
+                        v1.setReviewedAt(LocalDateTime.now().minusDays(14));
+                        verificationRequestRepository.save(v1);
+                }
+
+                User worker2 = userRepository.findByEmail("rafiq@gmail.com").orElse(null);
+                if (worker2 != null) {
+                        VerificationRequest v2 = new VerificationRequest();
+                        v2.setUser(worker2);
+                        v2.setFullName("Mohammad Rafiq");
+                        v2.setDateOfBirth("1989-03-22");
+                        v2.setPhone(worker2.getPhone());
+                        v2.setPhoneVerified(true);
+                        v2.setNidNumber("19892618954785412");
+                        v2.setNidFrontPhoto("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600");
+                        v2.setNidBackPhoto("https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600");
+                        v2.setProfileSelfiePhoto(worker2.getProfilePicture());
+                        v2.setPresentAddress("Road 9A, House 12, Dhanmondi, Dhaka");
+                        v2.setPermanentAddress("Vill: Charsindur, PS: Palash, Dist: Narsingdi");
+                        v2.setDivision("Dhaka");
+                        v2.setDistrict("Dhaka");
+                        v2.setCityArea("Dhanmondi");
+                        v2.setPostalCode("1209");
+                        v2.setDetailedAddress("Road 9A, House 12, Dhanmondi, Dhaka");
+                        v2.setSkills("Plumbing, Water Pump Repair");
+                        v2.setExperienceYears(10);
+                        v2.setExperienceDescription("Specialized in concealed acoustic leak detection, PPR pipe heat fusion, and high-pressure pumps.");
+                        v2.setPreviousEmployer("Aqua Plumbing Solutions");
+                        v2.setWorkProofPhoto("https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600");
+                        v2.setPayoutMethod("Nagad");
+                        v2.setPayoutAccount(worker2.getPhone());
+                        v2.setPayoutAccountHolder("Mohammad Rafiq");
+                        v2.setStatus("APPROVED");
+                        v2.setSubmittedAt(LocalDateTime.now().minusDays(20));
+                        v2.setReviewedAt(LocalDateTime.now().minusDays(19));
+                        verificationRequestRepository.save(v2);
+                }
+
+                // Seed Demo Candidate 3: Tanvir Alam (PENDING / UNDER REVIEW)
+                User worker3 = userRepository.findByEmail("tanvir@gmail.com").orElse(null);
+                if (worker3 == null) {
+                        worker3 = new User("Tanvir Alam", "tanvir@gmail.com", "01733445566", "WORKER");
+                        worker3.setVerified(false);
+                        worker3.setStatus("UNDER_REVIEW");
+                        worker3.setNidNumber("19962618954734891");
+                        worker3.setRating(5.0);
+                        worker3.setLatitude(23.8041);
+                        worker3.setLongitude(90.3667);
+                        worker3.setAddress("House 22, Road 7, Mirpur 10, Dhaka");
+                        worker3.setProfilePicture("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop");
+                        worker3 = userRepository.save(worker3);
+
+                        WorkerProfile profile3 = new WorkerProfile(worker3, "AC Repair & Servicing, Electrical", 4,
+                                        "Dhaka West (Mirpur, Kallyanpur, Mohammadpur)", "Silver", 400.0);
+                        profile3.setLatitude(23.8041);
+                        profile3.setLongitude(90.3667);
+                        workerProfileRepository.save(profile3);
+
+                        VerificationRequest v3 = new VerificationRequest();
+                        v3.setUser(worker3);
+                        v3.setFullName("Tanvir Alam");
+                        v3.setDateOfBirth("1996-05-12");
+                        v3.setPhone(worker3.getPhone());
+                        v3.setPhoneVerified(true);
+                        v3.setNidNumber("19962618954734891");
+                        v3.setNidFrontPhoto("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600");
+                        v3.setNidBackPhoto("https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600");
+                        v3.setProfileSelfiePhoto(worker3.getProfilePicture());
+                        v3.setPresentAddress("House 22, Road 7, Mirpur 10, Dhaka");
+                        v3.setPermanentAddress("Vill: Joypur, PS: Kotwali, Dist: Cumilla");
+                        v3.setDivision("Dhaka");
+                        v3.setDistrict("Dhaka");
+                        v3.setCityArea("Mirpur");
+                        v3.setPostalCode("1216");
+                        v3.setDetailedAddress("House 22, Road 7, Mirpur 10, Dhaka");
+                        v3.setSkills("AC Repair & Servicing, Electrical");
+                        v3.setExperienceYears(4);
+                        v3.setExperienceDescription("4 years experience in commercial HVAC units, split AC gas charging, and capacitor testing.");
+                        v3.setPreviousEmployer("Cooling Star Service Point");
+                        v3.setExperienceCertPhoto("https://images.unsplash.com/photo-1589330694653-dad6ef0190b8?w=600");
+                        v3.setTrainingCertPhoto("https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600");
+                        v3.setWorkProofPhoto("https://images.unsplash.com/photo-1581092334651-ddf26d9a09d0?w=600");
+                        v3.setPayoutMethod("bKash");
+                        v3.setPayoutAccount("01733445566");
+                        v3.setPayoutAccountHolder("Tanvir Alam");
+                        v3.setStatus("PENDING");
+                        v3.setSubmittedAt(LocalDateTime.now().minusHours(3));
+                        verificationRequestRepository.save(v3);
+                }
+
+                // Seed Demo Candidate 4: Jahangir Kabir (CORRECTION_REQUIRED)
+                User worker4 = userRepository.findByEmail("jahangir@gmail.com").orElse(null);
+                if (worker4 == null) {
+                        worker4 = new User("Jahangir Kabir", "jahangir@gmail.com", "01622334455", "WORKER");
+                        worker4.setVerified(false);
+                        worker4.setStatus("CORRECTION_REQUIRED");
+                        worker4.setNidNumber("19912618954790123");
+                        worker4.setRating(5.0);
+                        worker4.setLatitude(23.7500);
+                        worker4.setLongitude(90.3900);
+                        worker4.setAddress("Green Road, Farmgate, Dhaka");
+                        worker4.setProfilePicture("https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop");
+                        worker4 = userRepository.save(worker4);
+
+                        WorkerProfile profile4 = new WorkerProfile(worker4, "Electrical, Generator Repair", 5,
+                                        "Dhaka Central (Farmgate, Tejgaon, Kawran Bazar)", "Silver", 420.0);
+                        profile4.setLatitude(23.7500);
+                        profile4.setLongitude(90.3900);
+                        workerProfileRepository.save(profile4);
+
+                        VerificationRequest v4 = new VerificationRequest();
+                        v4.setUser(worker4);
+                        v4.setFullName("Jahangir Kabir");
+                        v4.setDateOfBirth("1991-11-05");
+                        v4.setPhone(worker4.getPhone());
+                        v4.setPhoneVerified(true);
+                        v4.setNidNumber("19912618954790123");
+                        v4.setNidFrontPhoto("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600");
+                        v4.setNidBackPhoto("https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600");
+                        v4.setProfileSelfiePhoto(worker4.getProfilePicture());
+                        v4.setPresentAddress("Green Road, Farmgate, Dhaka");
+                        v4.setPermanentAddress("Vill: Rampur, PS: Bancharampur, Dist: Brahmanbaria");
+                        v4.setDivision("Dhaka");
+                        v4.setDistrict("Dhaka");
+                        v4.setCityArea("Farmgate");
+                        v4.setPostalCode("1215");
+                        v4.setDetailedAddress("Green Road, 2nd Floor, Farmgate, Dhaka");
+                        v4.setSkills("Electrical, Generator Repair");
+                        v4.setExperienceYears(5);
+                        v4.setExperienceDescription("Specialist in distribution board installation, MCB breakers, and industrial generators.");
+                        v4.setPreviousEmployer("Dhaka Power Tech");
+                        v4.setPayoutMethod("Bank Account");
+                        v4.setPayoutAccount("2050123456789012");
+                        v4.setPayoutAccountHolder("Jahangir Kabir");
+                        v4.setPayoutBankName("Islami Bank Bangladesh Ltd");
+                        v4.setPayoutBankBranch("Farmgate Branch");
+                        v4.setStatus("CORRECTION_REQUIRED");
+                        v4.setAdminRemarks("NID back photo is blurred and unreadable. Please upload a clear photo showing the barcode and issue date.");
+                        v4.setSubmittedAt(LocalDateTime.now().minusDays(1));
+                        v4.setReviewedAt(LocalDateTime.now().minusHours(5));
+                        verificationRequestRepository.save(v4);
                 }
         }
 

@@ -24,8 +24,18 @@ public class AuthController {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("Error: Email is already in use!");
         }
+        if ("WORKER".equalsIgnoreCase(user.getRole())) {
+            user.setVerified(false);
+            user.setStatus("UNVERIFIED");
+        } else if ("ADMIN".equalsIgnoreCase(user.getRole())) {
+            user.setVerified(true);
+            user.setStatus("ACTIVE");
+        } else {
+            user.setVerified(true);
+            user.setStatus("ACTIVE");
+        }
         User saved = userRepository.save(user);
-        if ("WORKER".equals(saved.getRole())) {
+        if ("WORKER".equalsIgnoreCase(saved.getRole())) {
             com.skillverse.model.WorkerProfile profile = new com.skillverse.model.WorkerProfile(
                 saved, 
                 "Electrical, Plumbing", 

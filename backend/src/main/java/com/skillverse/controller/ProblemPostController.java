@@ -116,6 +116,10 @@ public class ProblemPostController {
             return ResponseEntity.badRequest().body(Map.of("error", "Worker not found"));
         }
 
+        if (!Boolean.TRUE.equals(worker.isVerified()) || !"ACTIVE".equalsIgnoreCase(worker.getStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Worker is unverified or under review. Admin verification is required to submit quotes on problem posts."));
+        }
+
         Double price = Double.valueOf(req.get("proposedPrice").toString());
         String msg = req.getOrDefault("message", "").toString();
         String arrival = req.getOrDefault("estimatedArrival", "Within 2 hours").toString();
@@ -157,6 +161,10 @@ public class ProblemPostController {
         ProblemOffer acceptedOffer = optionalOffer.get();
         ProblemPost post = acceptedOffer.getProblemPost();
         User worker = acceptedOffer.getWorker();
+
+        if (worker == null || !Boolean.TRUE.equals(worker.isVerified()) || !"ACTIVE".equalsIgnoreCase(worker.getStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Cannot assign problem to an unverified technician."));
+        }
 
         // Enforce: Worker cannot take job if already has active job
         List<String> activeStatuses = List.of("CONFIRMED", "ON_THE_WAY", "ARRIVED", "IN_PROGRESS", "COMPLETION_REQUESTED");

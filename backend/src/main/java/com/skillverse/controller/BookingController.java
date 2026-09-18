@@ -109,6 +109,14 @@ public class BookingController {
 
         ServiceBooking booking = optionalBooking.get();
 
+        // Enforce: Worker must be verified by admin
+        User worker = booking.getWorker();
+        if ("WORKER".equalsIgnoreCase(acceptedBy) && worker != null) {
+            if (!Boolean.TRUE.equals(worker.isVerified()) || !"ACTIVE".equalsIgnoreCase(worker.getStatus())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Worker account is unverified or under review. Admin verification is required before accepting bookings."));
+            }
+        }
+
         // Enforce: Worker cannot accept if they already have an active job
         if (booking.getWorker() != null && isWorkerBusy(booking.getWorker().getId(), booking.getId())) {
             return ResponseEntity.badRequest().body(Map.of("error", "Worker already has an active job in progress. Complete or finalize the current job before accepting another."));
@@ -134,6 +142,10 @@ public class BookingController {
     public ResponseEntity<?> counterOffer(@PathVariable Long id, @RequestParam Double price, @RequestParam String offeredBy) {
         return bookingRepository.findById(id).map(booking -> {
             if ("WORKER".equalsIgnoreCase(offeredBy)) {
+                User worker = booking.getWorker();
+                if (worker != null && (!Boolean.TRUE.equals(worker.isVerified()) || !"ACTIVE".equalsIgnoreCase(worker.getStatus()))) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Worker is unverified. Admin verification required to submit counter-offers."));
+                }
                 booking.setWorkerCounterPrice(price);
                 booking.setLastOfferedBy("WORKER");
             } else {

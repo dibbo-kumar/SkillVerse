@@ -46,6 +46,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
   const [selectedVerifReq, setSelectedVerifReq] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [decisionAction, setDecisionAction] = useState('REJECTED'); // REJECTED, CORRECTION_REQUIRED, SUSPENDED
   const [targetRejectType, setTargetRejectType] = useState('VERIFICATION'); // VERIFICATION or WITHDRAWAL
   const [targetRejectId, setTargetRejectId] = useState(null);
 
@@ -163,6 +164,15 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
   const handleRejectPrompt = (type, id) => {
     setTargetRejectType(type);
     setTargetRejectId(id);
+    setDecisionAction('REJECTED');
+    setRejectReason('');
+    setShowRejectModal(true);
+  };
+
+  const handleDecisionPrompt = (action, type, id) => {
+    setTargetRejectType(type);
+    setTargetRejectId(id);
+    setDecisionAction(action);
     setRejectReason('');
     setShowRejectModal(true);
   };
@@ -171,7 +181,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
     if (!targetRejectId) return;
     try {
       if (targetRejectType === 'VERIFICATION') {
-        const res = await fetch(`${API_BASE}/admin/verification/${targetRejectId}/decision?decision=REJECTED&reason=${encodeURIComponent(rejectReason)}`, { method: 'PUT' });
+        const res = await fetch(`${API_BASE}/admin/verification/${targetRejectId}/decision?decision=${decisionAction}&reason=${encodeURIComponent(rejectReason)}`, { method: 'PUT' });
         if (res.ok) {
           fetchDashboardData();
           setShowRejectModal(false);
@@ -257,10 +267,13 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
       case 'COMPLETED': return <span className="badge badge-verified">Completed</span>;
       case 'PAID': return <span className="badge badge-gold">Paid & Settled</span>;
       case 'CANCELLED': return <span className="badge" style={{ background: 'rgba(244, 63, 94, 0.15)', color: '#f43f5e' }}>Cancelled</span>;
-      case 'APPROVED': return <span className="badge badge-verified">Approved</span>;
-      case 'REJECTED': return <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>Rejected</span>;
+      case 'APPROVED': return <span className="badge badge-verified">Approved ✓</span>;
+      case 'CORRECTION_REQUIRED': return <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>⚠️ Correction Required</span>;
+      case 'UNDER_REVIEW': return <span className="badge" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}>⏳ Under Review</span>;
+      case 'UNVERIFIED': return <span className="badge" style={{ background: 'rgba(156, 163, 175, 0.15)', color: '#9ca3af' }}>Unverified</span>;
+      case 'REJECTED': return <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>Rejected ✕</span>;
       case 'ACTIVE': return <span className="badge badge-verified">Active</span>;
-      case 'SUSPENDED': return <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>Suspended</span>;
+      case 'SUSPENDED': return <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>Suspended 🚫</span>;
       default: return <span className="badge">{status}</span>;
     }
   };
@@ -799,15 +812,18 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
         {/* ========================================================================= */}
         {/* 3. WORKER VERIFICATION */}
         {/* ========================================================================= */}
+        {/* ========================================================================= */}
+        {/* 3. WORKER VERIFICATION */}
+        {/* ========================================================================= */}
         {activeTab === 'verification' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
               <div>
                 <h1 style={{ fontSize: '1.8rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <ShieldCheck size={26} color="#f59e0b" /> Worker NID Verification Hub
+                  <ShieldCheck size={26} color="#f59e0b" /> Technician Verification Hub & Safety Control
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', margin: '0.2rem 0 0 0', fontSize: '0.85rem' }}>
-                  Review biometric and national NID cards submitted by technician candidates before unlocking job access.
+                  Review biometric identity, home addresses, professional skills, and payout credentials before granting entry into customer homes.
                 </p>
               </div>
               <button className="btn btn-secondary" onClick={fetchDashboardData} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -816,102 +832,244 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
             </div>
 
             {/* Filter Tabs */}
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.8rem' }}>
-              {['PENDING', 'APPROVED', 'REJECTED', 'ALL'].map(st => (
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.8rem', overflowX: 'auto' }}>
+              {[
+                { key: 'PENDING', label: `⏳ Pending Review (${verificationRequests.filter(r => r.status === 'PENDING').length})` },
+                { key: 'CORRECTION_REQUIRED', label: `⚠️ Correction Required (${verificationRequests.filter(r => r.status === 'CORRECTION_REQUIRED').length})` },
+                { key: 'APPROVED', label: `✓ Approved & Certified (${verificationRequests.filter(r => r.status === 'APPROVED').length})` },
+                { key: 'REJECTED', label: `✕ Rejected (${verificationRequests.filter(r => r.status === 'REJECTED').length})` },
+                { key: 'SUSPENDED', label: `🚫 Suspended (${verificationRequests.filter(r => r.status === 'SUSPENDED').length})` },
+                { key: 'ALL', label: `All Applications (${verificationRequests.length})` }
+              ].map(f => (
                 <button
-                  key={st}
-                  className={`btn ${verifStatusFilter === st ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}
-                  onClick={() => setVerifStatusFilter(st)}
+                  key={f.key}
+                  className={`btn ${verifStatusFilter === f.key ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                  onClick={() => setVerifStatusFilter(f.key)}
                 >
-                  {st === 'PENDING' ? `⏳ Pending Review (${verificationRequests.filter(r => r.status === 'PENDING').length})` : st}
+                  {f.label}
                 </button>
               ))}
             </div>
 
             {/* Verification Cards List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               {verificationRequests.length === 0 ? (
                 <div className="glass-card" style={{ textAlign: 'center', padding: '3.5rem', color: 'var(--text-muted)' }}>
                   <CheckCircle2 size={44} color="var(--primary)" style={{ margin: '0 auto 0.8rem', opacity: 0.7 }} />
                   <div style={{ fontSize: '1.1rem', fontWeight: 600, color: '#ffffff' }}>No requests in this queue</div>
-                  <div style={{ fontSize: '0.85rem' }}>All submitted technician applications have been reviewed.</div>
+                  <div style={{ fontSize: '0.85rem' }}>All submitted technician applications in this category have been processed.</div>
                 </div>
               ) : (
                 verificationRequests.map(req => {
                   const applicant = req.user || {};
                   return (
-                    <div key={req.id} className="glass-card" style={{ borderLeft: req.status === 'PENDING' ? '4px solid #f59e0b' : req.status === 'APPROVED' ? '4px solid #10b981' : '4px solid #ef4444', padding: '1.4rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
-                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <div
+                      key={req.id}
+                      className="glass-card"
+                      style={{
+                        borderLeft: req.status === 'PENDING'
+                          ? '5px solid #f59e0b'
+                          : req.status === 'APPROVED'
+                          ? '5px solid #10b981'
+                          : req.status === 'CORRECTION_REQUIRED'
+                          ? '5px solid #f97316'
+                          : '5px solid #ef4444',
+                        padding: '1.6rem'
+                      }}
+                    >
+                      {/* 1. Header & Identity */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.2rem' }}>
+                        <div style={{ display: 'flex', gap: '1.2rem', alignItems: 'center' }}>
                           <img
-                            src={applicant.profilePicture || "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150"}
-                            alt={applicant.name}
-                            style={{ width: 54, height: 54, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(245,158,11,0.4)' }}
+                            src={req.profileSelfiePhoto || applicant.profilePicture || "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150"}
+                            alt={req.fullName || applicant.name}
+                            style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(245,158,11,0.5)' }}
                           />
                           <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                              <h3 style={{ fontSize: '1.15rem', margin: 0 }}>{applicant.name || "Worker Candidate"}</h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                              <h3 style={{ fontSize: '1.25rem', margin: 0, color: '#ffffff' }}>{req.fullName || applicant.name || "Technician Candidate"}</h3>
                               {renderStatusBadge(req.status)}
+                              {req.phoneVerified && (
+                                <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', fontSize: '0.72rem' }}>
+                                  ✓ Phone OTP Verified
+                                </span>
+                              )}
                             </div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                              Email: <strong>{applicant.email}</strong> • Phone: <strong>{applicant.phone}</strong> • Address: {applicant.address}
+                            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>
+                              Phone: <strong style={{ color: '#ffffff' }}>{req.phone || applicant.phone}</strong> • Email: <strong style={{ color: '#ffffff' }}>{applicant.email}</strong> • DOB: {req.dateOfBirth || "1994-08-14"}
                             </div>
                           </div>
                         </div>
 
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>National NID Number</div>
-                          <div style={{ fontFamily: 'monospace', fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
-                            {req.nidNumber || applicant.nidNumber || "19972618954712999"}
+                          <div style={{ fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
+                            {req.nidNumber || applicant.nidNumber || "19942618954712365"}
                           </div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
                             Submitted: {req.submittedAt ? new Date(req.submittedAt).toLocaleString() : 'Recently'}
                           </div>
                         </div>
                       </div>
 
-                      {/* NID Photos Preview */}
-                      <div style={{ display: 'flex', gap: '1.2rem', flexWrap: 'wrap', background: 'rgba(0,0,0,0.25)', padding: '1rem', borderRadius: '10px', marginBottom: '1.2rem' }}>
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>National ID (Front Card)</div>
-                          <img
-                            src={req.nidFrontPhoto || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400"}
-                            alt="NID Front"
-                            style={{ width: '160px', height: '100px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
-                            onClick={() => setSelectedVerifReq(req)}
-                          />
+                      {/* 2. Verification Checkpoints Bar */}
+                      <div style={{ background: 'rgba(0,0,0,0.35)', padding: '0.8rem 1.2rem', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '1.2rem' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Verification Checkpoints:
                         </div>
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>National ID (Back Card)</div>
-                          <img
-                            src={req.nidBackPhoto || "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400"}
-                            alt="NID Back"
-                            style={{ width: '160px', height: '100px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
-                            onClick={() => setSelectedVerifReq(req)}
-                          />
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', fontSize: '0.8rem' }}>
+                          <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <CheckCircle2 size={14} /> Identity (NID & Selfie)
+                          </span>
+                          <span style={{ color: '#9ca3af' }}>•</span>
+                          <span style={{ color: req.phoneVerified ? '#34d399' : '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <CheckCircle2 size={14} /> Phone OTP Verified
+                          </span>
+                          <span style={{ color: '#9ca3af' }}>•</span>
+                          <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <CheckCircle2 size={14} /> Address (Present & Permanent)
+                          </span>
+                          <span style={{ color: '#9ca3af' }}>•</span>
+                          <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <CheckCircle2 size={14} /> Professional Experience
+                          </span>
+                          <span style={{ color: '#9ca3af' }}>•</span>
+                          <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <CheckCircle2 size={14} /> Documents Audited
+                          </span>
+                          <span style={{ color: '#9ca3af' }}>•</span>
+                          <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <CheckCircle2 size={14} /> Payout Account Configured
+                          </span>
                         </div>
-                        <div style={{ flex: 1, minWidth: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'center', fontSize: '0.85rem' }}>
-                          <div style={{ color: 'var(--text-secondary)' }}>
-                            Click documents to inspect full resolution for biometric security and national database cross-verification.
+                      </div>
+
+                      {/* 3. Address & Professional Information Grids */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem', marginBottom: '1.2rem' }}>
+                        {/* Address Box */}
+                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
+                            📍 Residential Addresses
+                          </div>
+                          <div><strong>Present:</strong> {req.presentAddress || req.detailedAddress || applicant.address}</div>
+                          <div style={{ marginTop: '0.3rem' }}><strong>Permanent:</strong> {req.permanentAddress || req.presentAddress || applicant.address}</div>
+                          <div style={{ marginTop: '0.3rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                            Division: {req.division || "Dhaka"} • District: {req.district || "Dhaka"} • Area: {req.cityArea || "Uttara"} • Postal: {req.postalCode || "1230"}
+                          </div>
+                        </div>
+
+                        {/* Professional & Payout Box */}
+                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-gold)', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
+                            🛠️ Professional & Payout
+                          </div>
+                          <div>
+                            <strong>Skills:</strong> {req.skills || "AC Repair, Electrical, Plumbing"} • <strong>Experience:</strong> {req.experienceYears || 5} Years
+                          </div>
+                          {req.previousEmployer && (
+                            <div style={{ marginTop: '0.2rem', color: 'var(--text-secondary)' }}>
+                              Previous Employer: <strong>{req.previousEmployer}</strong>
+                            </div>
+                          )}
+                          <div style={{ marginTop: '0.4rem', borderTop: '1px dashed var(--border-color)', paddingTop: '0.4rem' }}>
+                            <strong>Payout Method:</strong> <span className="badge badge-gold" style={{ fontSize: '0.7rem' }}>{req.payoutMethod || "bKash"}</span> • Account: <strong style={{ fontFamily: 'monospace' }}>{req.payoutAccount || applicant.phone}</strong> {req.payoutAccountHolder ? `(${req.payoutAccountHolder})` : ''}
+                            {req.payoutBankName && <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Bank: {req.payoutBankName} ({req.payoutBankBranch})</div>}
                           </div>
                         </div>
                       </div>
 
-                      {/* Action Decision Buttons */}
-                      <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                      {/* 4. Document & Photo Previews */}
+                      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px', marginBottom: '1.2rem' }}>
+                        <div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>NID Front Card</div>
+                          <img
+                            src={req.nidFrontPhoto || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400"}
+                            alt="NID Front"
+                            style={{ width: 140, height: 90, objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
+                            onClick={() => setSelectedVerifReq(req)}
+                          />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>NID Back Card</div>
+                          <img
+                            src={req.nidBackPhoto || "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400"}
+                            alt="NID Back"
+                            style={{ width: 140, height: 90, objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
+                            onClick={() => setSelectedVerifReq(req)}
+                          />
+                        </div>
+                        {req.experienceCertPhoto && (
+                          <div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Experience Certificate</div>
+                            <img
+                              src={req.experienceCertPhoto}
+                              alt="Certificate"
+                              style={{ width: 140, height: 90, objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
+                              onClick={() => setSelectedVerifReq(req)}
+                            />
+                          </div>
+                        )}
+                        {req.workProofPhoto && (
+                          <div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Work Proof Photo</div>
+                            <img
+                              src={req.workProofPhoto}
+                              alt="Work Proof"
+                              style={{ width: 140, height: 90, objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
+                              onClick={() => setSelectedVerifReq(req)}
+                            />
+                          </div>
+                        )}
+                        <div style={{ flex: 1, minWidth: '180px', display: 'flex', flexDirection: 'column', justifyContent: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                          Click any document or photo thumbnail to inspect in full resolution.
+                        </div>
+                      </div>
+
+                      {/* 5. Admin Remarks (if available) */}
+                      {req.adminRemarks && (
+                        <div style={{ background: 'rgba(245, 158, 11, 0.1)', borderLeft: '4px solid #f59e0b', padding: '0.8rem 1rem', borderRadius: '8px', marginBottom: '1.2rem', fontSize: '0.85rem' }}>
+                          <strong style={{ color: '#f59e0b' }}>Admin Note / Correction Feedback:</strong>
+                          <div style={{ color: '#ffffff', marginTop: '0.2rem' }}>{req.adminRemarks}</div>
+                        </div>
+                      )}
+
+                      {/* 6. Action Buttons */}
+                      <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
                         <button className="btn btn-secondary" style={{ fontSize: '0.8rem' }} onClick={() => setSelectedVerifReq(req)}>
-                          <Eye size={14} /> Full Inspection
+                          <Eye size={14} /> Full Audit Dossier
                         </button>
-                        {req.status === 'PENDING' && (
-                          <>
-                            <button className="btn btn-secondary" style={{ color: '#ef4444', borderColor: '#ef4444', fontSize: '0.8rem' }} onClick={() => handleRejectPrompt('VERIFICATION', req.id)}>
-                              <XCircle size={14} /> Reject Application
-                            </button>
-                            <button className="btn btn-primary" style={{ fontSize: '0.8rem' }} onClick={() => handleApproveVerification(req.id)}>
-                              <CheckCircle2 size={14} /> Approve & Verify NID
-                            </button>
-                          </>
+
+                        {req.status !== 'APPROVED' && (
+                          <button className="btn btn-primary" style={{ fontSize: '0.8rem' }} onClick={() => handleApproveVerification(req.id)}>
+                            <CheckCircle2 size={14} /> Approve & Verify NID
+                          </button>
+                        )}
+
+                        <button
+                          className="btn btn-secondary"
+                          style={{ color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.5)', fontSize: '0.8rem' }}
+                          onClick={() => handleDecisionPrompt('CORRECTION_REQUIRED', 'VERIFICATION', req.id)}
+                        >
+                          <AlertCircle size={14} /> Request Correction
+                        </button>
+
+                        <button
+                          className="btn btn-secondary"
+                          style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.5)', fontSize: '0.8rem' }}
+                          onClick={() => handleDecisionPrompt('REJECTED', 'VERIFICATION', req.id)}
+                        >
+                          <XCircle size={14} /> Reject
+                        </button>
+
+                        {req.status === 'APPROVED' && (
+                          <button
+                            className="btn btn-secondary"
+                            style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.5)', fontSize: '0.8rem' }}
+                            onClick={() => handleDecisionPrompt('SUSPENDED', 'VERIFICATION', req.id)}
+                          >
+                            <AlertCircle size={14} /> Suspend Access
+                          </button>
                         )}
                       </div>
                     </div>
@@ -923,39 +1081,104 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
             {/* Document Inspection Lightbox Modal */}
             {selectedVerifReq && (
               <div className="toast-popup-overlay" onClick={() => setSelectedVerifReq(null)}>
-                <div className="glass-card" style={{ maxWidth: '780px', width: '100%', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+                <div className="glass-card" style={{ maxWidth: '840px', width: '100%', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
                     <div>
-                      <h2 style={{ fontSize: '1.4rem', margin: 0 }}>NID Security Audit: {selectedVerifReq.user?.name}</h2>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>NID: <strong>{selectedVerifReq.nidNumber}</strong></div>
+                      <h2 style={{ fontSize: '1.4rem', margin: 0 }}>Technician Security Audit: {selectedVerifReq.fullName || selectedVerifReq.user?.name}</h2>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        NID: <strong style={{ color: 'var(--accent-gold)' }}>{selectedVerifReq.nidNumber}</strong> • Status: {renderStatusBadge(selectedVerifReq.status)}
+                      </div>
                     </div>
                     <button onClick={() => setSelectedVerifReq(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                       <XCircle size={24} />
                     </button>
                   </div>
 
+                  {/* High-res Documents Grid */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
                     <div>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Front Document</span>
-                      <img src={selectedVerifReq.nidFrontPhoto} alt="NID Front" style={{ width: '100%', borderRadius: '10px', border: '1px solid var(--border-color)' }} />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem', color: 'var(--primary)' }}>
+                        National ID (Front Card)
+                      </span>
+                      <img src={selectedVerifReq.nidFrontPhoto || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600"} alt="NID Front" style={{ width: '100%', borderRadius: '10px', border: '1px solid var(--border-color)' }} />
                     </div>
                     <div>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Back Document</span>
-                      <img src={selectedVerifReq.nidBackPhoto} alt="NID Back" style={{ width: '100%', borderRadius: '10px', border: '1px solid var(--border-color)' }} />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem', color: 'var(--primary)' }}>
+                        National ID (Back Card)
+                      </span>
+                      <img src={selectedVerifReq.nidBackPhoto || "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600"} alt="NID Back" style={{ width: '100%', borderRadius: '10px', border: '1px solid var(--border-color)' }} />
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                    <button className="btn btn-secondary" onClick={() => setSelectedVerifReq(null)}>Close</button>
-                    {selectedVerifReq.status === 'PENDING' && (
-                      <>
-                        <button className="btn btn-secondary" style={{ color: '#ef4444' }} onClick={() => { setSelectedVerifReq(null); handleRejectPrompt('VERIFICATION', selectedVerifReq.id); }}>
-                          Reject Application
-                        </button>
-                        <button className="btn btn-primary" onClick={() => handleApproveVerification(selectedVerifReq.id)}>
-                          Approve & Unlock Job Access
-                        </button>
-                      </>
+                  {/* Profile Selfie & Optional Proof */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <div>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Selfie / Live Photo</span>
+                      <img src={selectedVerifReq.profileSelfiePhoto || selectedVerifReq.user?.profilePicture || "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400"} alt="Selfie" style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '10px', border: '1px solid var(--border-color)' }} />
+                    </div>
+                    {selectedVerifReq.experienceCertPhoto && (
+                      <div>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Training / Experience Certificate</span>
+                        <img src={selectedVerifReq.experienceCertPhoto} alt="Cert" style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '10px', border: '1px solid var(--border-color)' }} />
+                      </div>
+                    )}
+                    {selectedVerifReq.workProofPhoto && (
+                      <div>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Previous Work Photo</span>
+                        <img src={selectedVerifReq.workProofPhoto} alt="Proof" style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '10px', border: '1px solid var(--border-color)' }} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Full Details Breakdown */}
+                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.2rem', borderRadius: '12px', fontSize: '0.85rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>FULL LEGAL NAME & PHONE</div>
+                      <div style={{ fontWeight: 600, color: '#ffffff' }}>{selectedVerifReq.fullName || selectedVerifReq.user?.name}</div>
+                      <div>Phone: {selectedVerifReq.phone || selectedVerifReq.user?.phone}</div>
+                      <div style={{ marginTop: '0.6rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>PRESENT ADDRESS</div>
+                      <div>{selectedVerifReq.presentAddress || selectedVerifReq.detailedAddress || selectedVerifReq.user?.address}</div>
+                    </div>
+                    <div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>SKILLS & EXPERIENCE</div>
+                      <div>{selectedVerifReq.skills || "Technical Service"} ({selectedVerifReq.experienceYears || 5} Years)</div>
+                      <div style={{ marginTop: '0.6rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>PAYOUT METHOD</div>
+                      <div>{selectedVerifReq.payoutMethod || "bKash"}: <strong style={{ fontFamily: 'monospace' }}>{selectedVerifReq.payoutAccount || selectedVerifReq.user?.phone}</strong></div>
+                    </div>
+                  </div>
+
+                  {/* Actions in Modal */}
+                  <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', flexWrap: 'wrap' }}>
+                    <button className="btn btn-secondary" onClick={() => setSelectedVerifReq(null)}>Close Inspection</button>
+
+                    <button
+                      className="btn btn-secondary"
+                      style={{ color: '#f59e0b', borderColor: '#f59e0b' }}
+                      onClick={() => {
+                        const id = selectedVerifReq.id;
+                        setSelectedVerifReq(null);
+                        handleDecisionPrompt('CORRECTION_REQUIRED', 'VERIFICATION', id);
+                      }}
+                    >
+                      Request Correction
+                    </button>
+
+                    <button
+                      className="btn btn-secondary"
+                      style={{ color: '#ef4444', borderColor: '#ef4444' }}
+                      onClick={() => {
+                        const id = selectedVerifReq.id;
+                        setSelectedVerifReq(null);
+                        handleDecisionPrompt('REJECTED', 'VERIFICATION', id);
+                      }}
+                    >
+                      Reject Application
+                    </button>
+
+                    {selectedVerifReq.status !== 'APPROVED' && (
+                      <button className="btn btn-primary" onClick={() => handleApproveVerification(selectedVerifReq.id)}>
+                        Approve & Unlock Job Access
+                      </button>
                     )}
                   </div>
                 </div>
@@ -1656,23 +1879,43 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
           </div>
         )}
 
-        {/* --- REJECTION REASON MODAL DIALOG --- */}
+        {/* --- DECISION / CORRECTION / REJECTION REASON MODAL DIALOG --- */}
         {showRejectModal && (
           <div className="toast-popup-overlay" onClick={() => setShowRejectModal(false)}>
-            <div className="glass-card" style={{ maxWidth: '480px', width: '100%', padding: '2rem' }} onClick={e => e.stopPropagation()}>
-              <h3 style={{ fontSize: '1.2rem', color: '#ef4444', margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <AlertCircle size={20} /> Reject {targetRejectType === 'VERIFICATION' ? 'Worker Verification' : 'Payout Withdrawal'}
+            <div className="glass-card" style={{ maxWidth: '520px', width: '100%', padding: '2rem' }} onClick={e => e.stopPropagation()}>
+              <h3 style={{
+                fontSize: '1.2rem',
+                color: decisionAction === 'CORRECTION_REQUIRED' ? '#f59e0b' : '#ef4444',
+                margin: '0 0 0.5rem 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <AlertCircle size={20} />
+                {decisionAction === 'CORRECTION_REQUIRED'
+                  ? 'Request Candidate Correction'
+                  : decisionAction === 'SUSPENDED'
+                  ? 'Suspend Technician Access'
+                  : `Reject ${targetRejectType === 'VERIFICATION' ? 'Worker Verification' : 'Payout Withdrawal'}`}
               </h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.2rem' }}>
-                Please provide an official audit reason for rejecting this record.
+                {decisionAction === 'CORRECTION_REQUIRED'
+                  ? 'Provide specific instructions so the worker knows what details or documents need to be corrected.'
+                  : decisionAction === 'SUSPENDED'
+                  ? 'Specify the compliance or safety reason for suspending this technician.'
+                  : 'Please provide an official audit reason for rejecting this application.'}
               </p>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <label className="form-label">Rejection Feedback / Reason</label>
+                <label className="form-label">
+                  {decisionAction === 'CORRECTION_REQUIRED' ? 'Correction Instructions for Worker *' : 'Reason / Audit Note *'}
+                </label>
                 <textarea
                   className="form-input"
-                  style={{ height: '90px', resize: 'vertical' }}
-                  placeholder="e.g. Incomplete NID photo clarity, document mismatch, or invalid withdrawal account."
+                  style={{ height: '100px', resize: 'vertical' }}
+                  placeholder={decisionAction === 'CORRECTION_REQUIRED'
+                    ? "e.g. NID back photo is blurred. Please upload a clear photo showing the barcode and issue date."
+                    : "e.g. Incomplete documentation, mismatch in national database, or invalid credentials."}
                   value={rejectReason}
                   onChange={e => setRejectReason(e.target.value)}
                   required
@@ -1681,8 +1924,15 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
 
               <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end' }}>
                 <button className="btn btn-secondary" onClick={() => setShowRejectModal(false)}>Cancel</button>
-                <button className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444' }} onClick={handleConfirmReject}>
-                  Confirm Rejection
+                <button
+                  className="btn btn-primary"
+                  style={{
+                    background: decisionAction === 'CORRECTION_REQUIRED' ? '#f59e0b' : '#ef4444',
+                    borderColor: decisionAction === 'CORRECTION_REQUIRED' ? '#f59e0b' : '#ef4444'
+                  }}
+                  onClick={handleConfirmReject}
+                >
+                  {decisionAction === 'CORRECTION_REQUIRED' ? 'Send Correction Request' : decisionAction === 'SUSPENDED' ? 'Confirm Suspension' : 'Confirm Rejection'}
                 </button>
               </div>
             </div>
