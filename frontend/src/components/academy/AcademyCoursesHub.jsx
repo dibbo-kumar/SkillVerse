@@ -26,7 +26,7 @@ import {
 
 const API_BASE = "http://localhost:8081/api";
 
-export default function AcademyCoursesHub({ currentUser, onShowToast }) {
+export default function AcademyCoursesHub({ currentUser, rewards, onUsePoints, onShowToast }) {
   const [courses, setCourses] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,11 +46,13 @@ export default function AcademyCoursesHub({ currentUser, onShowToast }) {
   // Payment Modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [payingCourse, setPayingCourse] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('BKASH'); // BKASH, NAGAD, ROCKET, CARD, INTERNET_BANKING
+  const [paymentMethod, setPaymentMethod] = useState('BKASH'); // BKASH, NAGAD, ROCKET, CARD, INTERNET_BANKING, WORKER_WALLET
   const [paymentAccount, setPaymentAccount] = useState('');
   const [paymentPin, setPaymentPin] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentState, setPaymentState] = useState('IDLE'); // IDLE, PROCESSING, SUCCESSFUL, FAILED
+  const [useRewardPoints, setUseRewardPoints] = useState(false);
+  const [workerWalletBalance, setWorkerWalletBalance] = useState(0);
 
   // Certificate Modal state
   const [certificateData, setCertificateData] = useState(null);
@@ -203,32 +205,56 @@ export default function AcademyCoursesHub({ currentUser, onShowToast }) {
   };
 
   // Paid Course Enrollment Start
-  const handleStartPaidEnrollment = (course) => {
+  const handleStartPaidEnrollment = async (course) => {
     if (!currentUser?.id) {
-      alert("Please log in to enroll in courses.");
+      if (onShowToast) onShowToast("Login Required", "Please log in to enroll in courses.", "info");
       return;
     }
     setPayingCourse(course);
     setPaymentState('IDLE');
     setPaymentAccount('');
     setPaymentPin('');
+    setUseRewardPoints(false);
+
+    if (currentUser.role === 'WORKER') {
+      try {
+        const res = await fetch(`${API_BASE}/wallet/worker/${currentUser.id}`);
+        if (res.ok) {
+          const wData = await res.json();
+          setWorkerWalletBalance(wData.balance || 0);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     setShowPaymentModal(true);
   };
 
   // Execute Mock Bangladesh Payment & Activation
   const handleProcessPayment = async () => {
-    if (!paymentAccount || paymentAccount.length < 8) {
-      alert("Please enter a valid mobile wallet or bank account number!");
-      return;
+    const appliedPoints = (currentUser?.role === 'CUSTOMER' && useRewardPoints)
+      ? Math.min(rewards?.points || 0, payingCourse?.price || 0)
+      : 0;
+    const finalCashPayable = Math.max(0, (payingCourse?.price || 0) - appliedPoints);
+
+    if (paymentMethod !== 'WORKER_WALLET' && finalCashPayable > 0) {
+      if (!paymentAccount || paymentAccount.length < 4) {
+        if (onShowToast) onShowToast("Payment Detail Required", "Please enter your account number or mobile number.", "error");
+        return;
+      }
     }
 
     setIsProcessingPayment(true);
     setPaymentState('PROCESSING');
 
-    // Simulate backend payment gateway response delay
     setTimeout(async () => {
       try {
         const txId = `${paymentMethod}-TXN-${Math.floor(100000 + Math.random() * 900000)}`;
+        const recordedMethod = appliedPoints > 0
+          ? `${paymentMethod} (৳${finalCashPayable} Cash + ${appliedPoints} pts)`
+          : (paymentMethod === 'WORKER_WALLET' ? 'WORKER_WALLET_BALANCE' : paymentMethod);
+
         const res = await fetch(`${API_BASE}/training/enroll`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -236,9 +262,9 @@ export default function AcademyCoursesHub({ currentUser, onShowToast }) {
             userId: currentUser.id,
             courseId: payingCourse.id,
             paymentStatus: 'SUCCESSFUL',
-            paymentMethod: paymentMethod,
+            paymentMethod: recordedMethod,
             transactionId: txId,
-            amountPaid: payingCourse.price
+            amountPaid: finalCashPayable
           })
         });
 
@@ -248,10 +274,14 @@ export default function AcademyCoursesHub({ currentUser, onShowToast }) {
           setPaymentState('SUCCESSFUL');
           setIsProcessingPayment(false);
 
+          if (appliedPoints > 0 && onUsePoints) {
+            onUsePoints(appliedPoints);
+          }
+
           setTimeout(() => {
             setShowPaymentModal(false);
             if (onShowToast) {
-              onShowToast("Payment Confirmed!", `🎉 Payment of ৳${payingCourse.price} verified via ${paymentMethod}.\nTxID: ${txId}`, "success");
+              onShowToast("Payment Confirmed!", `🎉 Enrolled in "${payingCourse.title}" via ${recordedMethod}.\nTxID: ${txId}`, "success");
             }
             handleStartLearning(payingCourse);
           }, 1200);
@@ -264,7 +294,7 @@ export default function AcademyCoursesHub({ currentUser, onShowToast }) {
         setPaymentState('FAILED');
         setIsProcessingPayment(false);
       }
-    }, 1500);
+    }, 1000);
   };
 
   // Toggle Lesson Completion in Learning Studio
@@ -983,87 +1013,166 @@ export default function AcademyCoursesHub({ currentUser, onShowToast }) {
               <button className="btn-icon" onClick={() => setShowPaymentModal(false)}><X size={18} /></button>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '1.2rem' }}>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Course Title:</div>
-              <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{payingCourse.title}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed var(--border-color)' }}>
-                <span>Total Payable Amount:</span>
-                <strong style={{ color: 'var(--accent-gold)', fontSize: '1.1rem' }}>৳{payingCourse.price?.toLocaleString()}</strong>
-              </div>
-            </div>
+            {/* Course & Points Breakdown */}
+            {(() => {
+              const appliedPoints = (currentUser?.role === 'CUSTOMER' && useRewardPoints)
+                ? Math.min(rewards?.points || 0, payingCourse.price)
+                : 0;
+              const finalCash = Math.max(0, payingCourse.price - appliedPoints);
 
-            {/* Select Bangladesh Payment Method */}
-            <div style={{ marginBottom: '1.2rem' }}>
-              <label className="form-label">Select Payment Method</label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-                {[
-                  { id: 'BKASH', label: 'bKash', color: '#e2136e' },
-                  { id: 'NAGAD', label: 'Nagad', color: '#f7941d' },
-                  { id: 'ROCKET', label: 'Rocket', color: '#8c3494' },
-                  { id: 'CARD', label: 'Card / Visa', color: '#2563eb' },
-                  { id: 'INTERNET_BANKING', label: 'Banking', color: '#10b981' }
-                ].map(m => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    className={`btn ${paymentMethod === m.id ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ justifyContent: 'center', fontSize: '0.8rem', padding: '0.5rem', borderColor: paymentMethod === m.id ? m.color : 'transparent' }}
-                    onClick={() => setPaymentMethod(m.id)}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+              return (
+                <>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '1.2rem' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Course Title:</div>
+                    <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{payingCourse.title}</div>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                      <span>Course Base Price:</span>
+                      <span>৳{payingCourse.price?.toLocaleString()}</span>
+                    </div>
 
-            {/* Payment Account Details Input */}
-            <div style={{ marginBottom: '1rem' }}>
-              <label className="form-label">
-                {paymentMethod === 'CARD' ? 'Card Number' : `${paymentMethod} Mobile Number`}
-              </label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder={paymentMethod === 'CARD' ? '4111 2222 3333 4444' : '01711223344'}
-                value={paymentAccount}
-                onChange={e => setPaymentAccount(e.target.value)}
-              />
-            </div>
+                    {appliedPoints > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#10b981', fontSize: '0.85rem', marginTop: '0.2rem' }}>
+                        <span>Reward Points Discount ({appliedPoints} pts):</span>
+                        <span>-৳{appliedPoints.toLocaleString()}</span>
+                      </div>
+                    )}
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label className="form-label">PIN / OTP (Simulation)</label>
-              <input
-                type="password"
-                className="form-input"
-                placeholder="••••"
-                value={paymentPin}
-                onChange={e => setPaymentPin(e.target.value)}
-              />
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Payment Gateway Integration Architecture: Frontend → Backend Payment Service → Gateway Verification → Course Enrollment Activation.
-              </span>
-            </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed var(--border-color)' }}>
+                      <span>Net Cash Payable:</span>
+                      <strong style={{ color: 'var(--accent-gold)', fontSize: '1.15rem' }}>৳{finalCash.toLocaleString()}</strong>
+                    </div>
+                  </div>
 
-            {/* Status State Alerts */}
-            {paymentState === 'PROCESSING' && (
-              <div style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem', textAlign: 'center' }}>
-                ⏳ Connecting to {paymentMethod} Payment Gateway... Verifying transaction.
-              </div>
-            )}
+                  {/* Customer Reward Points Redemption Box */}
+                  {currentUser?.role === 'CUSTOMER' && (rewards?.points || 0) > 0 && (
+                    <div style={{
+                      background: 'rgba(99, 102, 241, 0.08)',
+                      border: '1px solid rgba(99, 102, 241, 0.3)',
+                      borderRadius: '8px',
+                      padding: '0.8rem 1rem',
+                      marginBottom: '1.2rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.8rem'
+                    }}>
+                      <div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <Award size={16} /> Redeem Reward Points
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                          Available Balance: <strong>{rewards?.points} Points</strong> (1 pt = ৳1 off)
+                        </div>
+                      </div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>
+                        <input
+                          type="checkbox"
+                          checked={useRewardPoints}
+                          onChange={e => setUseRewardPoints(e.target.checked)}
+                          style={{ width: 16, height: 16 }}
+                        />
+                        Apply Discount
+                      </label>
+                    </div>
+                  )}
 
-            {paymentState === 'SUCCESSFUL' && (
-              <div style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem', textAlign: 'center', fontWeight: 'bold' }}>
-                ✓ Payment Successful! Activating course enrollment...
-              </div>
-            )}
+                  {/* Worker Wallet Balance Info */}
+                  {currentUser?.role === 'WORKER' && (
+                    <div style={{
+                      background: 'rgba(16, 185, 129, 0.08)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      borderRadius: '8px',
+                      padding: '0.8rem 1rem',
+                      marginBottom: '1.2rem',
+                      fontSize: '0.85rem'
+                    }}>
+                      <div style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: '0.2rem' }}>
+                        💰 Worker Wallet Cash Balance: ৳{workerWalletBalance}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Technicians can pay directly using earned job income balance.
+                      </div>
+                    </div>
+                  )}
 
-            {/* Footer Buttons */}
-            <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end' }}>
-              <button className="btn btn-secondary" disabled={isProcessingPayment} onClick={() => setShowPaymentModal(false)}>Cancel</button>
-              <button className="btn btn-primary" disabled={isProcessingPayment} onClick={handleProcessPayment}>
-                {isProcessingPayment ? 'Processing...' : `Confirm & Pay ৳${payingCourse.price}`}
-              </button>
-            </div>
+                  {/* Select Payment Method */}
+                  <div style={{ marginBottom: '1.2rem' }}>
+                    <label className="form-label">Select Payment Method</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: currentUser?.role === 'WORKER' ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                      {[
+                        ...(currentUser?.role === 'WORKER' ? [{ id: 'WORKER_WALLET', label: '💰 Wallet Balance', color: '#10b981' }] : []),
+                        { id: 'BKASH', label: 'bKash', color: '#e2136e' },
+                        { id: 'NAGAD', label: 'Nagad', color: '#f7941d' },
+                        { id: 'ROCKET', label: 'Rocket', color: '#8c3494' },
+                        { id: 'CARD', label: 'Card / Visa', color: '#2563eb' },
+                        { id: 'INTERNET_BANKING', label: 'Banking', color: '#10b981' }
+                      ].map(m => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          className={`btn ${paymentMethod === m.id ? 'btn-primary' : 'btn-secondary'}`}
+                          style={{ justifyContent: 'center', fontSize: '0.8rem', padding: '0.5rem', borderColor: paymentMethod === m.id ? m.color : 'transparent' }}
+                          onClick={() => setPaymentMethod(m.id)}
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {paymentMethod !== 'WORKER_WALLET' && finalCash > 0 && (
+                    <>
+                      {/* Payment Account Details Input */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <label className="form-label">
+                          {paymentMethod === 'CARD' ? 'Card Number' : `${paymentMethod} Mobile Number`}
+                        </label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder={paymentMethod === 'CARD' ? '4111 2222 3333 4444' : '01711223344'}
+                          value={paymentAccount}
+                          onChange={e => setPaymentAccount(e.target.value)}
+                        />
+                      </div>
+
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <label className="form-label">PIN / OTP (Simulation)</label>
+                        <input
+                          type="password"
+                          className="form-input"
+                          placeholder="••••"
+                          value={paymentPin}
+                          onChange={e => setPaymentPin(e.target.value)}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Status State Alerts */}
+                  {paymentState === 'PROCESSING' && (
+                    <div style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem', textAlign: 'center' }}>
+                      ⏳ Connecting to Payment Gateway... Verifying transaction.
+                    </div>
+                  )}
+
+                  {paymentState === 'SUCCESSFUL' && (
+                    <div style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem', textAlign: 'center', fontWeight: 'bold' }}>
+                      ✓ Payment Successful! Activating course enrollment...
+                    </div>
+                  )}
+
+                  {/* Footer Buttons */}
+                  <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end' }}>
+                    <button className="btn btn-secondary" disabled={isProcessingPayment} onClick={() => setShowPaymentModal(false)}>Cancel</button>
+                    <button className="btn btn-primary" disabled={isProcessingPayment} onClick={handleProcessPayment}>
+                      {isProcessingPayment ? 'Processing...' : `Confirm & Enroll (৳${finalCash})`}
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
 
           </div>
         </div>

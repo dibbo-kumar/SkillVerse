@@ -44,6 +44,7 @@ import WorkerDashboard from './components/worker/WorkerDashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
 import NotificationBell from './components/notifications/NotificationBell';
 import PostedProblemsHub from './components/bookings/PostedProblemsHub';
+import LandingPage from './components/landing/LandingPage';
 
 const API_BASE = "http://localhost:8081/api";
 
@@ -519,6 +520,7 @@ function App() {
 
   const [authMode, setAuthMode] = useState('login'); // login, signup
   const [loginRole, setLoginRole] = useState('CUSTOMER'); // CUSTOMER, WORKER, ADMIN
+  const [authViewOpen, setAuthViewOpen] = useState(false);
 
   // Credentials
   const [name, setName] = useState('');
@@ -528,8 +530,39 @@ function App() {
   const [password, setPassword] = useState('');
   const [nidNumber, setNidNumber] = useState('');
 
+  // Single Admin Portal Password state
+  const [adminPasswordInput, setAdminPasswordInput] = useState('');
+  const [adminAuthError, setAdminAuthError] = useState('');
+  const [authError, setAuthError] = useState('');
+
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isAdminPath = location.pathname.startsWith('/admin');
+
+  // Single Admin Authentication Handler
+  const handleAdminPasswordSubmit = (e) => {
+    if (e) e.preventDefault();
+    if (adminPasswordInput === '000000') {
+      const adminUser = {
+        id: 1,
+        name: 'System Admin',
+        email: 'admin@skillverse.com',
+        phone: '01800000000',
+        role: 'ADMIN',
+        verified: true,
+        profilePicture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
+      };
+      localStorage.setItem('skillverse_admin_active_tab', 'overview');
+      setCurrentUser(adminUser);
+      setIsLoggedIn(true);
+      setActiveTab('admin');
+      setAdminAuthError('');
+      setAdminPasswordInput('');
+    } else {
+      setAdminAuthError('Incorrect Password! Master Admin password is required.');
+    }
+  };
 
   // Map browser URL paths to logical views
   const getTabFromPath = (path) => {
@@ -577,79 +610,150 @@ function App() {
   const [showPostProblemModal, setShowPostProblemModal] = useState(false);
   const [showPostedProblemsModal, setShowPostedProblemsModal] = useState(false);
   const [contextualBookingStore, setContextualBookingStore] = useState(null);
-  const [notifications, setNotifications] = useState(() => {
-    try {
-      const saved = localStorage.getItem('skillverse_notifications');
-      return saved ? JSON.parse(saved) : [
+  const getUserKey = (prefix, u) => u ? `skillverse_${prefix}_${u.id || u.email}` : `skillverse_${prefix}_guest`;
+
+  const [notifications, setNotifications] = useState([]);
+  const [savedWorkerIds, setSavedWorkerIds] = useState([]);
+  const [properties, setProperties] = useState([]);
+  const [addresses, setAddresses] = useState([]);
+  const [serviceHistory, setServiceHistory] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [rewards, setRewards] = useState({ points: 100, tier: 'Welcome Member', referralCode: 'SKILL-USER' });
+
+  // Load user-isolated data whenever currentUser changes
+  useEffect(() => {
+    if (!currentUser) {
+      setNotifications([]);
+      setSavedWorkerIds([]);
+      setProperties([]);
+      setAddresses([]);
+      setServiceHistory([]);
+      setTransactions([]);
+      setReviews([]);
+      setRewards({ points: 0, tier: 'Guest', referralCode: '' });
+      return;
+    }
+
+    const isDemoAnis = currentUser.email === 'anis@gmail.com';
+
+    // Notifications
+    const savedNotifs = localStorage.getItem(getUserKey('notifications', currentUser));
+    if (savedNotifs) {
+      try { setNotifications(JSON.parse(savedNotifs)); } catch (e) { setNotifications([]); }
+    } else {
+      setNotifications(isDemoAnis ? [
         { id: 1, title: 'Worker Price Offer Received', message: 'Mohammad Rafiq submitted a quote of ৳1100 for your AC Leak problem post.', time: '10m ago', read: false },
         { id: 2, title: 'Technician En-Route', message: 'Technician Kamrul Islam has marked status as On The Way to your address.', time: '1h ago', read: false },
         { id: 3, title: 'Service Completed', message: 'Bathroom Concealed Pipe Leak Repair has been completed.', time: '1d ago', read: true }
-      ];
-    } catch (e) {
-      return [];
+      ] : []);
     }
-  });
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('skillverse_notifications', JSON.stringify(notifications));
-    } catch (e) {
-      console.error("Failed saving notifications", e);
+    // Saved Workers
+    const savedW = localStorage.getItem(getUserKey('saved_workers', currentUser));
+    if (savedW) {
+      try { setSavedWorkerIds(JSON.parse(savedW)); } catch (e) { setSavedWorkerIds([]); }
+    } else {
+      setSavedWorkerIds(isDemoAnis ? [1, 2] : []);
     }
-  }, [notifications]);
 
-  // Customer Management Center States
-  const [savedWorkerIds, setSavedWorkerIds] = useState(() => {
-    const saved = localStorage.getItem('fixconnect_saved_workers');
-    return saved ? JSON.parse(saved) : [1, 2];
-  });
-  const [properties, setProperties] = useState(() => {
-    const saved = localStorage.getItem('fixconnect_properties');
-    return saved ? JSON.parse(saved) : INITIAL_PROPERTIES;
-  });
-  const [addresses, setAddresses] = useState(() => {
-    const saved = localStorage.getItem('fixconnect_addresses');
-    return saved ? JSON.parse(saved) : INITIAL_ADDRESSES;
-  });
-  const [serviceHistory, setServiceHistory] = useState(() => {
-    const saved = localStorage.getItem('fixconnect_service_history');
-    return saved ? JSON.parse(saved) : INITIAL_SERVICE_HISTORY;
-  });
-  const [transactions, setTransactions] = useState(() => {
-    const saved = localStorage.getItem('fixconnect_transactions');
-    return saved ? JSON.parse(saved) : INITIAL_TRANSACTIONS;
-  });
-  const [reviews, setReviews] = useState(() => {
-    const saved = localStorage.getItem('fixconnect_reviews');
-    return saved ? JSON.parse(saved) : INITIAL_REVIEWS;
-  });
-  const [rewards, setRewards] = useState(() => {
-    const saved = localStorage.getItem('fixconnect_rewards');
-    return saved ? JSON.parse(saved) : { points: 450, tier: 'Gold Tier Member', referralCode: 'FIX-ANIS-8821' };
-  });
+    // Properties
+    const savedProps = localStorage.getItem(getUserKey('properties', currentUser));
+    if (savedProps) {
+      try { setProperties(JSON.parse(savedProps)); } catch (e) { setProperties([]); }
+    } else {
+      setProperties(isDemoAnis ? INITIAL_PROPERTIES : []);
+    }
 
-  // Sync to localStorage
+    // Addresses
+    const savedAddr = localStorage.getItem(getUserKey('addresses', currentUser));
+    if (savedAddr) {
+      try { setAddresses(JSON.parse(savedAddr)); } catch (e) { setAddresses([]); }
+    } else {
+      setAddresses(isDemoAnis ? INITIAL_ADDRESSES : (currentUser.address ? [{ id: 1, label: 'Primary Location', fullAddress: currentUser.address, isDefault: true }] : []));
+    }
+
+    // Service History
+    const savedHist = localStorage.getItem(getUserKey('service_history', currentUser));
+    if (savedHist) {
+      try { setServiceHistory(JSON.parse(savedHist)); } catch (e) { setServiceHistory([]); }
+    } else {
+      setServiceHistory(isDemoAnis ? INITIAL_SERVICE_HISTORY : []);
+    }
+
+    // Transactions
+    const savedTx = localStorage.getItem(getUserKey('transactions', currentUser));
+    if (savedTx) {
+      try { setTransactions(JSON.parse(savedTx)); } catch (e) { setTransactions([]); }
+    } else {
+      setTransactions(isDemoAnis ? INITIAL_TRANSACTIONS : []);
+    }
+
+    // Reviews
+    const savedRev = localStorage.getItem(getUserKey('reviews', currentUser));
+    if (savedRev) {
+      try { setReviews(JSON.parse(savedRev)); } catch (e) { setReviews([]); }
+    } else {
+      setReviews(isDemoAnis ? INITIAL_REVIEWS : []);
+    }
+
+    // Rewards
+    const savedRew = localStorage.getItem(getUserKey('rewards', currentUser));
+    if (savedRew) {
+      try { setRewards(JSON.parse(savedRew)); } catch (e) { setRewards({ points: 100, tier: 'Welcome Member', referralCode: 'SKILL-' + (currentUser.id || '1') }); }
+    } else {
+      setRewards(isDemoAnis ? { points: 450, tier: 'Gold Tier Member', referralCode: 'FIX-ANIS-8821' } : { points: 100, tier: 'Welcome Member', referralCode: 'SKILL-' + (currentUser.id || 'NEW') });
+    }
+  }, [currentUser?.id, currentUser?.email]);
+
+  // Sync to user-specific localStorage
   useEffect(() => {
-    localStorage.setItem('fixconnect_saved_workers', JSON.stringify(savedWorkerIds));
-  }, [savedWorkerIds]);
+    if (currentUser) {
+      localStorage.setItem(getUserKey('notifications', currentUser), JSON.stringify(notifications));
+    }
+  }, [notifications, currentUser?.id, currentUser?.email]);
+
   useEffect(() => {
-    localStorage.setItem('fixconnect_properties', JSON.stringify(properties));
-  }, [properties]);
+    if (currentUser) {
+      localStorage.setItem(getUserKey('saved_workers', currentUser), JSON.stringify(savedWorkerIds));
+    }
+  }, [savedWorkerIds, currentUser?.id, currentUser?.email]);
+
   useEffect(() => {
-    localStorage.setItem('fixconnect_addresses', JSON.stringify(addresses));
-  }, [addresses]);
+    if (currentUser) {
+      localStorage.setItem(getUserKey('properties', currentUser), JSON.stringify(properties));
+    }
+  }, [properties, currentUser?.id, currentUser?.email]);
+
   useEffect(() => {
-    localStorage.setItem('fixconnect_service_history', JSON.stringify(serviceHistory));
-  }, [serviceHistory]);
+    if (currentUser) {
+      localStorage.setItem(getUserKey('addresses', currentUser), JSON.stringify(addresses));
+    }
+  }, [addresses, currentUser?.id, currentUser?.email]);
+
   useEffect(() => {
-    localStorage.setItem('fixconnect_transactions', JSON.stringify(transactions));
-  }, [transactions]);
+    if (currentUser) {
+      localStorage.setItem(getUserKey('service_history', currentUser), JSON.stringify(serviceHistory));
+    }
+  }, [serviceHistory, currentUser?.id, currentUser?.email]);
+
   useEffect(() => {
-    localStorage.setItem('fixconnect_reviews', JSON.stringify(reviews));
-  }, [reviews]);
+    if (currentUser) {
+      localStorage.setItem(getUserKey('transactions', currentUser), JSON.stringify(transactions));
+    }
+  }, [transactions, currentUser?.id, currentUser?.email]);
+
   useEffect(() => {
-    localStorage.setItem('fixconnect_rewards', JSON.stringify(rewards));
-  }, [rewards]);
+    if (currentUser) {
+      localStorage.setItem(getUserKey('reviews', currentUser), JSON.stringify(reviews));
+    }
+  }, [reviews, currentUser?.id, currentUser?.email]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(getUserKey('rewards', currentUser), JSON.stringify(rewards));
+    }
+  }, [rewards, currentUser?.id, currentUser?.email]);
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('fixconnect_user', JSON.stringify(currentUser));
@@ -930,9 +1034,7 @@ function App() {
           role: loginRole,
           nidNumber: nidNumber || "N/A",
           verified: loginRole === 'CUSTOMER' ? true : false,
-          profilePicture: loginRole === 'CUSTOMER'
-            ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
-            : "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150"
+          profilePicture: null
         })
       });
 
@@ -951,7 +1053,11 @@ function App() {
   // Login handler
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
-    if (!email || !password) return;
+    setAuthError('');
+    if (!email || !password) {
+      setAuthError('Please enter both email and password.');
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
@@ -963,17 +1069,18 @@ function App() {
       if (res.ok) {
         const user = await res.json();
         if (user.role !== loginRole) {
-          alert(`Selected role (${loginRole}) does not match your registered role (${user.role}).`);
+          setAuthError('Wrong username or password');
           return;
         }
+        setAuthError('');
         setCurrentUser(user);
         setIsLoggedIn(true);
         setActiveTab(user.role === 'ADMIN' ? 'admin' : user.role === 'WORKER' ? 'worker' : 'customer');
       } else {
-        alert("Invalid email credentials!");
+        setAuthError('Wrong username or password');
       }
     } catch (e) {
-      alert("Could not connect to server. Check Spring Boot!");
+      setAuthError('Could not connect to server. Check Spring Boot!');
     }
   };
 
@@ -1681,10 +1788,24 @@ function App() {
       {/* Header Navigation */}
       <header className="header">
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => {
-          if (!isLoggedIn) return;
-          if (currentUser.role === 'CUSTOMER') setActiveTab('customer');
-          else if (currentUser.role === 'WORKER') setActiveTab('worker');
-          else setActiveTab('admin');
+          if (!isLoggedIn) {
+            setAuthViewOpen(false);
+            navigate('/');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+          }
+          if (currentUser.role === 'CUSTOMER') {
+            setActiveTab('customer');
+            navigate('/');
+          } else if (currentUser.role === 'WORKER') {
+            setActiveTab('worker');
+            navigate('/worker');
+          } else {
+            setActiveTab('admin');
+            localStorage.setItem('skillverse_admin_active_tab', 'overview');
+            navigate('/admin');
+          }
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }}>
           <ShieldCheck size={28} color="#10b981" />
           <span>SkillVerse</span>
@@ -1732,6 +1853,22 @@ function App() {
           </div>
         )}
 
+        {!isLoggedIn && !isAdminPath && (
+          <div className="landing-nav-links" style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+            <a href="#features" className="nav-link" onClick={() => setAuthViewOpen(false)}>Features</a>
+            <a href="#services" className="nav-link" onClick={() => setAuthViewOpen(false)}>Services</a>
+            <a href="#how-it-works" className="nav-link" onClick={() => setAuthViewOpen(false)}>How It Works</a>
+            <a href="#academy" className="nav-link" onClick={() => setAuthViewOpen(false)}>Academy</a>
+            <a href="#tools" className="nav-link" onClick={() => setAuthViewOpen(false)}>Tool Store</a>
+          </div>
+        )}
+
+        {!isLoggedIn && isAdminPath && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f59e0b', fontWeight: 600, fontSize: '0.85rem' }}>
+            <Key size={16} /> Restricted Admin Portal
+          </div>
+        )}
+
         {/* User Details & Logout */}
         {isLoggedIn ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -1751,27 +1888,152 @@ function App() {
               <div style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{currentUser.name}</div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Role: {currentUser.role}</div>
             </div>
-            <img
-              src={currentUser.profilePicture}
-              alt="User avatar"
-              style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)', cursor: 'pointer' }}
-              onClick={() => setActiveTab('profile')}
-              title="Go to Profile & Settings"
-            />
+            {currentUser.profilePicture ? (
+              <img
+                src={currentUser.profilePicture}
+                alt="User avatar"
+                style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)', cursor: 'pointer' }}
+                onClick={() => setActiveTab('profile')}
+                title="Go to Profile & Settings"
+              />
+            ) : (
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--primary), #3b82f6)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  border: '2px solid rgba(255,255,255,0.2)'
+                }}
+                onClick={() => setActiveTab('profile')}
+                title="Go to Profile & Settings"
+              >
+                {(currentUser.name || 'U').charAt(0).toUpperCase()}
+              </div>
+            )}
             <button className="btn btn-secondary" style={{ padding: '0.4rem' }} title="Logout" onClick={handleLogout}>
               <LogOut size={16} color="var(--accent-rose)" />
             </button>
           </div>
+        ) : isAdminPath ? (
+          <button className="btn btn-secondary" style={{ fontSize: '0.82rem', padding: '0.45rem 1rem' }} onClick={() => { navigate('/'); setAuthViewOpen(false); }}>
+            ← Return to Public Site
+          </button>
+        ) : authViewOpen ? (
+          <button className="btn btn-secondary" style={{ fontSize: '0.82rem', padding: '0.45rem 1rem' }} onClick={() => setAuthViewOpen(false)}>
+            ← Back to Overview
+          </button>
         ) : (
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className={`btn ${authMode === 'login' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setAuthMode('login')}>Login</button>
-            <button className={`btn ${authMode === 'signup' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setAuthMode('signup')}>Sign Up</button>
+          <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+            <button
+              className="btn btn-secondary"
+              style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
+              onClick={() => { setAuthMode('login'); setLoginRole('CUSTOMER'); setAuthViewOpen(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            >
+              Sign In
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ padding: '0.45rem 1.1rem', fontSize: '0.85rem' }}
+              onClick={() => { setAuthMode('signup'); setLoginRole('CUSTOMER'); setAuthViewOpen(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            >
+              Get Started
+            </button>
           </div>
         )}
       </header>
 
-      {/* --- AUTHENTICATION INTERFACE (LOGIN & SIGN UP) --- */}
-      {!isLoggedIn && (
+      {/* --- PUBLIC LANDING PAGE (WHEN NOT LOGGED IN, NOT ADMIN URL, NOT IN AUTH VIEW) --- */}
+      {!isLoggedIn && !isAdminPath && !authViewOpen && (
+        <LandingPage
+          onOpenAuth={(mode = 'login', role = 'CUSTOMER') => {
+            setAuthMode(mode);
+            setLoginRole(role);
+            setAuthViewOpen(true);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
+      )}
+
+      {/* --- RESTRICTED ADMIN PORTAL LOGIN SCREEN (ONLY AT /admin) --- */}
+      {!isLoggedIn && isAdminPath && (
+        <div style={{ display: 'flex', minHeight: '85vh', background: 'radial-gradient(ellipse at center, rgba(245, 158, 11, 0.08) 0%, var(--bg-primary) 70%)', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '420px', padding: '2.5rem', background: '#0e1526', border: '1px solid rgba(245, 158, 11, 0.3)', boxShadow: '0 20px 40px rgba(0,0,0,0.6)' }}>
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <div style={{ width: 56, height: 56, borderRadius: '14px', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid #f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                <Key size={28} color="#f59e0b" />
+              </div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', marginBottom: '0.3rem', fontFamily: 'var(--font-display)' }}>
+                SkillVerse Command Center
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                Single Administrator Access • Master Security Verification
+              </p>
+            </div>
+
+            <form onSubmit={handleAdminPasswordSubmit}>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label className="form-label" style={{ color: '#f8fafc', fontWeight: 600 }}>Admin Master Password</label>
+                <div style={{ position: 'relative' }}>
+                  <Lock size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-muted)' }} />
+                  <input
+                    type="password"
+                    className="form-input"
+                    style={{
+                      paddingLeft: '2.5rem',
+                      borderColor: adminAuthError ? '#ef4444' : 'rgba(245, 158, 11, 0.3)',
+                      letterSpacing: '0.2rem',
+                      fontSize: '1rem'
+                    }}
+                    placeholder="••••••••"
+                    value={adminPasswordInput}
+                    onChange={e => {
+                      setAdminPasswordInput(e.target.value);
+                      if (adminAuthError) setAdminAuthError('');
+                    }}
+                    autoFocus
+                    required
+                  />
+                </div>
+                {adminAuthError && (
+                  <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    ⚠️ {adminAuthError}
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="btn"
+                style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#000', fontWeight: 'bold', padding: '0.75rem', marginBottom: '1rem', border: 'none', cursor: 'pointer' }}
+              >
+                Unlock Admin Dashboard <ArrowRight size={16} />
+              </button>
+            </form>
+
+            <div style={{ borderTop: '1px solid var(--border-color)', marginTop: '1.2rem', paddingTop: '1.2rem', textAlign: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ width: '100%', padding: '0.45rem', fontSize: '0.78rem', justifyContent: 'center' }}
+                onClick={() => { navigate('/'); setAuthViewOpen(false); }}
+              >
+                ← Return to Public Homepage
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- PUBLIC AUTHENTICATION SCREEN (CUSTOMER & WORKER ONLY, ADMIN HIDDEN) --- */}
+      {!isLoggedIn && !isAdminPath && authViewOpen && (
         <div style={{ display: 'flex', minHeight: '85vh', background: 'var(--bg-primary)', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div className="glass-card" style={{ width: '100%', maxWidth: '460px', padding: '2.5rem', background: '#0e1526' }}>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
@@ -1804,37 +2066,40 @@ function App() {
               </button>
             </div>
 
-            {/* Role selector */}
+            {/* Role selector - Strictly Customer and Worker only */}
             <div style={{ marginBottom: '1.5rem' }}>
-              <label className="form-label">Register/Login Role</label>
+              <label className="form-label">{authMode === 'signup' ? 'I want to join as' : 'Account Type'}</label>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {authMode === 'signup' ? (
-                  ['CUSTOMER', 'WORKER'].map(role => (
-                    <button
-                      key={role}
-                      type="button"
-                      className={`btn ${loginRole === role ? 'btn-primary' : 'btn-secondary'}`}
-                      style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem', justifyContent: 'center' }}
-                      onClick={() => setLoginRole(role)}
-                    >
-                      {role === 'CUSTOMER' ? 'Customer' : 'Technician / Worker'}
-                    </button>
-                  ))
-                ) : (
-                  ['CUSTOMER', 'WORKER', 'ADMIN'].map(role => (
-                    <button
-                      key={role}
-                      type="button"
-                      className={`btn ${loginRole === role ? 'btn-primary' : 'btn-secondary'}`}
-                      style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem', justifyContent: 'center' }}
-                      onClick={() => setLoginRole(role)}
-                    >
-                      {role.charAt(0) + role.slice(1).toLowerCase()}
-                    </button>
-                  ))
-                )}
+                {['CUSTOMER', 'WORKER'].map(role => (
+                  <button
+                    key={role}
+                    type="button"
+                    className={`btn ${loginRole === role ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ flex: 1, padding: '0.5rem', fontSize: '0.82rem', justifyContent: 'center' }}
+                    onClick={() => { setLoginRole(role); setAuthError(''); }}
+                  >
+                    {role === 'CUSTOMER' ? '👤 Customer' : '🛠️ Technician / Worker'}
+                  </button>
+                ))}
               </div>
             </div>
+
+            {/* Inline Red Error Message (No popup alert) */}
+            {authError && (
+              <div style={{
+                color: '#ef4444',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '8px',
+                padding: '0.65rem 1rem',
+                marginBottom: '1rem',
+                fontSize: '0.85rem',
+                fontWeight: 'bold',
+                textAlign: 'center'
+              }}>
+                ⚠️ {authError}
+              </div>
+            )}
 
             <form onSubmit={authMode === 'login' ? handleLogin : handleSignUp}>
               {authMode === 'signup' && (
@@ -1848,7 +2113,7 @@ function App() {
                       style={{ paddingLeft: '2.5rem' }}
                       placeholder="Anisur Rahman"
                       value={name}
-                      onChange={e => setName(e.target.value)}
+                      onChange={e => { setName(e.target.value); setAuthError(''); }}
                       required
                     />
                   </div>
@@ -1865,7 +2130,7 @@ function App() {
                     style={{ paddingLeft: '2.5rem' }}
                     placeholder="name@email.com"
                     value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    onChange={e => { setEmail(e.target.value); setAuthError(''); }}
                     required
                   />
                 </div>
@@ -1902,20 +2167,6 @@ function App() {
                 </div>
               )}
 
-              {authMode === 'signup' && loginRole === 'WORKER' && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <label className="form-label">National NID Number</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. 19932612954712365"
-                    value={nidNumber}
-                    onChange={e => setNidNumber(e.target.value)}
-                    required
-                  />
-                </div>
-              )}
-
               <div style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label">Password</label>
                 <div style={{ position: 'relative' }}>
@@ -1926,7 +2177,7 @@ function App() {
                     style={{ paddingLeft: '2.5rem' }}
                     placeholder="••••••••"
                     value={password}
-                    onChange={e => setPassword(e.target.value)}
+                    onChange={e => { setPassword(e.target.value); setAuthError(''); }}
                     required
                   />
                 </div>
@@ -1942,7 +2193,7 @@ function App() {
               <span style={{ marginRight: '0.4rem', fontWeight: 'bold', color: '#4285F4' }}>G</span> Sign in with Google
             </button>
 
-            {/* Quick simulation helper login options */}
+            {/* Quick simulation helper login options - STRICTLY CUSTOMER & WORKER ONLY */}
             <div style={{ borderTop: '1px solid var(--border-color)', marginTop: '1.5rem', paddingTop: '1.5rem', textAlign: 'center' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold', display: 'block', marginBottom: '0.8rem' }}>
                 ⚡ QUICK TEST DEMO LOGINS
@@ -1963,10 +2214,16 @@ function App() {
                 <button className="btn btn-secondary" style={{ padding: '0.4rem', fontSize: '0.75rem', justifyContent: 'center' }} onClick={() => triggerAutofillLogin('WORKER', 'sajid@gmail.com')}>
                   Login as Unverified Worker (Sajid)
                 </button>
-                <button className="btn btn-secondary" style={{ padding: '0.4rem', fontSize: '0.75rem', justifyContent: 'center' }} onClick={() => triggerAutofillLogin('ADMIN', 'admin@skillverse.com')}>
-                  Login as System Admin
-                </button>
               </div>
+
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ width: '100%', marginTop: '1rem', padding: '0.45rem', fontSize: '0.78rem', justifyContent: 'center' }}
+                onClick={() => setAuthViewOpen(false)}
+              >
+                ← Back to Homepage Overview
+              </button>
             </div>
           </div>
         </div>
@@ -2280,53 +2537,18 @@ function App() {
 
       {/* --- WORKER WORKSPACE TAB --- */}
       {isLoggedIn && activeTab === 'worker' && currentUser.role === 'WORKER' && (
-        <div style={{ padding: '2rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-            <div>
-              <h1 style={{ fontSize: '2rem' }}>Worker Management Dashboard</h1>
-              <p style={{ color: 'var(--text-secondary)' }}>Submit applications, check dispatch orders, and manage account credentials.</p>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <span className={`badge ${currentUser.verified ? 'badge-verified' : 'badge-pending'}`}>
-                {currentUser.verified ? 'Verified Active Worker' : 'Verification Status: Unverified'}
-              </span>
-            </div>
-          </div>
-
-          {!currentUser.verified && (
-            <div className="glass-card" style={{ borderLeft: '4px solid var(--accent-gold)', marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--accent-gold)' }}>🚨 Administrative Verification Required</h2>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                You must submit a work application. Once verified by the System Admin, you will be authorized to accept client bookings.
-              </p>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.2rem', marginBottom: '1.5rem' }}>
-                <div>
-                  <label className="form-label">National NID Number</label>
-                  <input className="form-input" placeholder="e.g. 19932612954712365" value={nidNumber} onChange={e => setNidNumber(e.target.value)} />
-                </div>
-              </div>
-
-              <button className="btn btn-primary" onClick={handleSubmitWorkApplication}>
-                Submit Application to Admin
-              </button>
-            </div>
-          )}
-
-          {/* Worker Dashboard Component */}
-          {currentUser.verified && (
-            <WorkerDashboard
-              currentWorker={currentUser}
-              onShowToast={(title, msg, type) => showToast(title, msg, type)}
-            />
-          )}
-        </div>
+        <WorkerDashboard
+          currentWorker={currentUser}
+          onShowToast={(title, msg, type) => showToast(title, msg, type)}
+        />
       )}
 
       {/* --- ACADEMY & COURSES TAB --- */}
       {isLoggedIn && activeTab === 'courses' && (
         <AcademyCoursesHub
           currentUser={currentUser}
+          rewards={rewards}
+          onUsePoints={(pts) => setRewards(prev => ({ ...prev, points: Math.max(0, (prev.points || 0) - pts) }))}
           onShowToast={(title, msg, type) => showToast(title, msg, type)}
         />
       )}
@@ -2335,6 +2557,8 @@ function App() {
       {isLoggedIn && activeTab === 'marketplace' && (
         <ToolStoreHub
           currentUser={currentUser}
+          rewards={rewards}
+          onUsePoints={(pts) => setRewards(prev => ({ ...prev, points: Math.max(0, (prev.points || 0) - pts) }))}
           onShowToast={(title, msg, type) => showToast(title, msg, type)}
           contextualBooking={contextualBookingStore}
           onCloseContextual={() => setContextualBookingStore(null)}
@@ -2358,6 +2582,8 @@ function App() {
       {isLoggedIn && activeTab === 'my-bookings' && currentUser.role === 'CUSTOMER' && (
         <MyBookingsHub
           currentUser={currentUser}
+          rewards={rewards}
+          onAddPoints={(pts) => setRewards(prev => ({ ...prev, points: (prev.points || 0) + pts }))}
           onShowToast={(title, msg, type) => showToast(title, msg, type)}
           onNavigateToWorkerProfile={(workerId) => {
             const w = workers.find(item => item.user?.id === workerId || item.id === workerId);

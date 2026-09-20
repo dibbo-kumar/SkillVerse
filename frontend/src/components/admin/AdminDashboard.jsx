@@ -15,13 +15,22 @@ import AdminStoreManager from '../store/AdminStoreManager';
 const API_BASE = "http://localhost:8081/api";
 
 export default function AdminDashboard({ currentUser, onShowToast }) {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('skillverse_admin_active_tab') || 'overview';
+  });
   const [loading, setLoading] = useState(true);
+
+  // Sync activeTab to localStorage
+  useEffect(() => {
+    if (activeTab) {
+      localStorage.setItem('skillverse_admin_active_tab', activeTab);
+    }
+  }, [activeTab]);
 
   // Core Data States
   const [overviewData, setOverviewData] = useState(null);
   const [usersList, setUsersList] = useState([]);
-  const [verificationRequests, setVerificationRequests] = useState([]);
+  const [allVerificationRequests, setAllVerificationRequests] = useState([]);
   const [bookingsList, setBookingsList] = useState([]);
   const [financeData, setFinanceData] = useState(null);
   const [analyticsData, setAnalyticsData] = useState(null);
@@ -76,8 +85,8 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
         const res = await fetch(`${API_BASE}/admin/users`);
         if (res.ok) setUsersList(await res.json());
       } else if (activeTab === 'verification') {
-        const res = await fetch(`${API_BASE}/admin/verification/requests?status=${verifStatusFilter}`);
-        if (res.ok) setVerificationRequests(await res.json());
+        const res = await fetch(`${API_BASE}/admin/verification/requests?status=ALL`);
+        if (res.ok) setAllVerificationRequests(await res.json());
       } else if (activeTab === 'bookings') {
         const res = await fetch(`${API_BASE}/admin/bookings?status=${bookingStatusFilter}`);
         if (res.ok) setBookingsList(await res.json());
@@ -107,14 +116,9 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
     }
   };
 
-  // Re-fetch on filter change
-  useEffect(() => {
-    if (activeTab === 'verification') {
-      fetch(`${API_BASE}/admin/verification/requests?status=${verifStatusFilter}`)
-        .then(r => r.ok && r.json().then(data => setVerificationRequests(data)))
-        .catch(console.error);
-    }
-  }, [verifStatusFilter]);
+  const displayedVerifRequests = verifStatusFilter === 'ALL'
+    ? allVerificationRequests
+    : allVerificationRequests.filter(r => r.status === verifStatusFilter);
 
   useEffect(() => {
     if (activeTab === 'bookings') {
@@ -834,12 +838,12 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
             {/* Filter Tabs */}
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.8rem', overflowX: 'auto' }}>
               {[
-                { key: 'PENDING', label: `⏳ Pending Review (${verificationRequests.filter(r => r.status === 'PENDING').length})` },
-                { key: 'CORRECTION_REQUIRED', label: `⚠️ Correction Required (${verificationRequests.filter(r => r.status === 'CORRECTION_REQUIRED').length})` },
-                { key: 'APPROVED', label: `✓ Approved & Certified (${verificationRequests.filter(r => r.status === 'APPROVED').length})` },
-                { key: 'REJECTED', label: `✕ Rejected (${verificationRequests.filter(r => r.status === 'REJECTED').length})` },
-                { key: 'SUSPENDED', label: `🚫 Suspended (${verificationRequests.filter(r => r.status === 'SUSPENDED').length})` },
-                { key: 'ALL', label: `All Applications (${verificationRequests.length})` }
+                { key: 'PENDING', label: `⏳ Pending Review (${allVerificationRequests.filter(r => r.status === 'PENDING').length})` },
+                { key: 'CORRECTION_REQUIRED', label: `⚠️ Correction Required (${allVerificationRequests.filter(r => r.status === 'CORRECTION_REQUIRED').length})` },
+                { key: 'APPROVED', label: `✓ Approved & Certified (${allVerificationRequests.filter(r => r.status === 'APPROVED').length})` },
+                { key: 'REJECTED', label: `✕ Rejected (${allVerificationRequests.filter(r => r.status === 'REJECTED').length})` },
+                { key: 'SUSPENDED', label: `🚫 Suspended (${allVerificationRequests.filter(r => r.status === 'SUSPENDED').length})` },
+                { key: 'ALL', label: `All Applications (${allVerificationRequests.length})` }
               ].map(f => (
                 <button
                   key={f.key}
@@ -852,16 +856,16 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
               ))}
             </div>
 
-            {/* Verification Cards List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {verificationRequests.length === 0 ? (
+            {/* Verification Cards List - Overview Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              {displayedVerifRequests.length === 0 ? (
                 <div className="glass-card" style={{ textAlign: 'center', padding: '3.5rem', color: 'var(--text-muted)' }}>
                   <CheckCircle2 size={44} color="var(--primary)" style={{ margin: '0 auto 0.8rem', opacity: 0.7 }} />
                   <div style={{ fontSize: '1.1rem', fontWeight: 600, color: '#ffffff' }}>No requests in this queue</div>
                   <div style={{ fontSize: '0.85rem' }}>All submitted technician applications in this category have been processed.</div>
                 </div>
               ) : (
-                verificationRequests.map(req => {
+                displayedVerifRequests.map(req => {
                   const applicant = req.user || {};
                   return (
                     <div
@@ -875,180 +879,98 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                           : req.status === 'CORRECTION_REQUIRED'
                           ? '5px solid #f97316'
                           : '5px solid #ef4444',
-                        padding: '1.6rem'
+                        padding: '1.4rem 1.6rem',
+                        transition: 'all 0.2s ease'
                       }}
                     >
-                      {/* 1. Header & Identity */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.2rem' }}>
-                        <div style={{ display: 'flex', gap: '1.2rem', alignItems: 'center' }}>
+                      {/* 1. Header Overview: Avatar, Name, Status & Identity */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', gap: '1.1rem', alignItems: 'center' }}>
                           <img
                             src={req.profileSelfiePhoto || applicant.profilePicture || "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150"}
                             alt={req.fullName || applicant.name}
-                            style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(245,158,11,0.5)' }}
+                            style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(245,158,11,0.5)' }}
                           />
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                              <h3 style={{ fontSize: '1.25rem', margin: 0, color: '#ffffff' }}>{req.fullName || applicant.name || "Technician Candidate"}</h3>
+                              <h3 style={{ fontSize: '1.2rem', margin: 0, color: '#ffffff', fontWeight: 700 }}>
+                                {req.fullName || applicant.name || "Technician Candidate"}
+                              </h3>
                               {renderStatusBadge(req.status)}
                               {req.phoneVerified && (
-                                <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', fontSize: '0.72rem' }}>
-                                  ✓ Phone OTP Verified
+                                <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                  <CheckCircle2 size={12} /> Phone Verified
                                 </span>
                               )}
                             </div>
-                            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>
-                              Phone: <strong style={{ color: '#ffffff' }}>{req.phone || applicant.phone}</strong> • Email: <strong style={{ color: '#ffffff' }}>{applicant.email}</strong> • DOB: {req.dateOfBirth || "1994-08-14"}
+                            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                              Phone: <strong style={{ color: '#ffffff' }}>{req.phone || applicant.phone}</strong> • Email: <strong style={{ color: '#ffffff' }}>{applicant.email}</strong>
                             </div>
                           </div>
                         </div>
 
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>National NID Number</div>
-                          <div style={{ fontFamily: 'monospace', fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>National NID Number</div>
+                          <div style={{ fontFamily: 'monospace', fontSize: '1.05rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
                             {req.nidNumber || applicant.nidNumber || "19942618954712365"}
                           </div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                            Submitted: {req.submittedAt ? new Date(req.submittedAt).toLocaleString() : 'Recently'}
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                            Submitted: {req.submittedAt ? new Date(req.submittedAt).toLocaleDateString() : 'Recently'}
                           </div>
                         </div>
                       </div>
 
-                      {/* 2. Verification Checkpoints Bar */}
-                      <div style={{ background: 'rgba(0,0,0,0.35)', padding: '0.8rem 1.2rem', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '1.2rem' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Verification Checkpoints:
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', fontSize: '0.8rem' }}>
-                          <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                            <CheckCircle2 size={14} /> Identity (NID & Selfie)
-                          </span>
-                          <span style={{ color: '#9ca3af' }}>•</span>
-                          <span style={{ color: req.phoneVerified ? '#34d399' : '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                            <CheckCircle2 size={14} /> Phone OTP Verified
-                          </span>
-                          <span style={{ color: '#9ca3af' }}>•</span>
-                          <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                            <CheckCircle2 size={14} /> Address (Present & Permanent)
-                          </span>
-                          <span style={{ color: '#9ca3af' }}>•</span>
-                          <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                            <CheckCircle2 size={14} /> Professional Experience
-                          </span>
-                          <span style={{ color: '#9ca3af' }}>•</span>
-                          <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                            <CheckCircle2 size={14} /> Documents Audited
-                          </span>
-                          <span style={{ color: '#9ca3af' }}>•</span>
-                          <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                            <CheckCircle2 size={14} /> Payout Account Configured
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* 3. Address & Professional Information Grids */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem', marginBottom: '1.2rem' }}>
-                        {/* Address Box */}
-                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
-                          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
-                            📍 Residential Addresses
-                          </div>
-                          <div><strong>Present:</strong> {req.presentAddress || req.detailedAddress || applicant.address}</div>
-                          <div style={{ marginTop: '0.3rem' }}><strong>Permanent:</strong> {req.permanentAddress || req.presentAddress || applicant.address}</div>
-                          <div style={{ marginTop: '0.3rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                            Division: {req.division || "Dhaka"} • District: {req.district || "Dhaka"} • Area: {req.cityArea || "Uttara"} • Postal: {req.postalCode || "1230"}
-                          </div>
-                        </div>
-
-                        {/* Professional & Payout Box */}
-                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
-                          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-gold)', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
-                            🛠️ Professional & Payout
-                          </div>
-                          <div>
-                            <strong>Skills:</strong> {req.skills || "AC Repair, Electrical, Plumbing"} • <strong>Experience:</strong> {req.experienceYears || 5} Years
-                          </div>
-                          {req.previousEmployer && (
-                            <div style={{ marginTop: '0.2rem', color: 'var(--text-secondary)' }}>
-                              Previous Employer: <strong>{req.previousEmployer}</strong>
-                            </div>
-                          )}
-                          <div style={{ marginTop: '0.4rem', borderTop: '1px dashed var(--border-color)', paddingTop: '0.4rem' }}>
-                            <strong>Payout Method:</strong> <span className="badge badge-gold" style={{ fontSize: '0.7rem' }}>{req.payoutMethod || "bKash"}</span> • Account: <strong style={{ fontFamily: 'monospace' }}>{req.payoutAccount || applicant.phone}</strong> {req.payoutAccountHolder ? `(${req.payoutAccountHolder})` : ''}
-                            {req.payoutBankName && <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Bank: {req.payoutBankName} ({req.payoutBankBranch})</div>}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 4. Document & Photo Previews */}
-                      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px', marginBottom: '1.2rem' }}>
+                      {/* 2. Compact Overview Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', background: 'rgba(255,255,255,0.02)', padding: '0.85rem 1.1rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1rem', fontSize: '0.82rem' }}>
                         <div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>NID Front Card</div>
-                          <img
-                            src={req.nidFrontPhoto || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400"}
-                            alt="NID Front"
-                            style={{ width: 140, height: 90, objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
-                            onClick={() => setSelectedVerifReq(req)}
-                          />
+                          <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>TRADE / SPECIALIZATION</span>
+                          <strong style={{ color: '#ffffff' }}>{req.skills || "AC Repair & Electrical"}</strong>
                         </div>
                         <div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>NID Back Card</div>
-                          <img
-                            src={req.nidBackPhoto || "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400"}
-                            alt="NID Back"
-                            style={{ width: 140, height: 90, objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
-                            onClick={() => setSelectedVerifReq(req)}
-                          />
+                          <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>EXPERIENCE</span>
+                          <strong style={{ color: 'var(--primary)' }}>{req.experienceYears || 5}+ Years Field Exp</strong>
                         </div>
-                        {req.experienceCertPhoto && (
-                          <div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Experience Certificate</div>
-                            <img
-                              src={req.experienceCertPhoto}
-                              alt="Certificate"
-                              style={{ width: 140, height: 90, objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
-                              onClick={() => setSelectedVerifReq(req)}
-                            />
-                          </div>
-                        )}
-                        {req.workProofPhoto && (
-                          <div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Work Proof Photo</div>
-                            <img
-                              src={req.workProofPhoto}
-                              alt="Work Proof"
-                              style={{ width: 140, height: 90, objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', cursor: 'pointer' }}
-                              onClick={() => setSelectedVerifReq(req)}
-                            />
-                          </div>
-                        )}
-                        <div style={{ flex: 1, minWidth: '180px', display: 'flex', flexDirection: 'column', justifyContent: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          Click any document or photo thumbnail to inspect in full resolution.
+                        <div>
+                          <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>SERVICE CITY / AREA</span>
+                          <strong style={{ color: '#ffffff' }}>{req.cityArea || "Uttara"}, {req.division || "Dhaka"}</strong>
+                        </div>
+                        <div>
+                          <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>PAYOUT METHOD</span>
+                          <strong style={{ color: 'var(--accent-gold)' }}>{req.payoutMethod || "bKash"} ({req.payoutAccount || applicant.phone || '019...'})</strong>
                         </div>
                       </div>
 
-                      {/* 5. Admin Remarks (if available) */}
+                      {/* 3. Admin Remarks if present */}
                       {req.adminRemarks && (
-                        <div style={{ background: 'rgba(245, 158, 11, 0.1)', borderLeft: '4px solid #f59e0b', padding: '0.8rem 1rem', borderRadius: '8px', marginBottom: '1.2rem', fontSize: '0.85rem' }}>
-                          <strong style={{ color: '#f59e0b' }}>Admin Note / Correction Feedback:</strong>
-                          <div style={{ color: '#ffffff', marginTop: '0.2rem' }}>{req.adminRemarks}</div>
+                        <div style={{ background: 'rgba(245, 158, 11, 0.08)', borderLeft: '3px solid #f59e0b', padding: '0.6rem 0.9rem', borderRadius: '6px', marginBottom: '1rem', fontSize: '0.8rem' }}>
+                          <strong style={{ color: '#f59e0b' }}>Admin Feedback:</strong> <span style={{ color: '#ffffff' }}>{req.adminRemarks}</span>
                         </div>
                       )}
 
-                      {/* 6. Action Buttons */}
-                      <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                        <button className="btn btn-secondary" style={{ fontSize: '0.8rem' }} onClick={() => setSelectedVerifReq(req)}>
-                          <Eye size={14} /> Full Audit Dossier
+                      {/* 4. Action Bar (Direct Actions + Full Details View) */}
+                      <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid var(--border-color)', paddingTop: '0.9rem' }}>
+                        <button
+                          className="btn btn-primary"
+                          style={{ fontSize: '0.8rem', padding: '0.45rem 1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                          onClick={() => setSelectedVerifReq(req)}
+                        >
+                          <Eye size={14} /> View Full Details & Documents
                         </button>
 
                         {req.status !== 'APPROVED' && (
-                          <button className="btn btn-primary" style={{ fontSize: '0.8rem' }} onClick={() => handleApproveVerification(req.id)}>
-                            <CheckCircle2 size={14} /> Approve & Verify NID
+                          <button
+                            className="btn btn-secondary"
+                            style={{ color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)', fontSize: '0.8rem', padding: '0.45rem 0.9rem' }}
+                            onClick={() => handleApproveVerification(req.id)}
+                            title="Approve without opening details"
+                          >
+                            <CheckCircle2 size={14} /> Quick Approve
                           </button>
                         )}
 
                         <button
                           className="btn btn-secondary"
-                          style={{ color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.5)', fontSize: '0.8rem' }}
+                          style={{ color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.4)', fontSize: '0.8rem', padding: '0.45rem 0.9rem' }}
                           onClick={() => handleDecisionPrompt('CORRECTION_REQUIRED', 'VERIFICATION', req.id)}
                         >
                           <AlertCircle size={14} /> Request Correction
@@ -1056,7 +978,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
 
                         <button
                           className="btn btn-secondary"
-                          style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.5)', fontSize: '0.8rem' }}
+                          style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.4)', fontSize: '0.8rem', padding: '0.45rem 0.9rem' }}
                           onClick={() => handleDecisionPrompt('REJECTED', 'VERIFICATION', req.id)}
                         >
                           <XCircle size={14} /> Reject
@@ -1065,10 +987,10 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                         {req.status === 'APPROVED' && (
                           <button
                             className="btn btn-secondary"
-                            style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.5)', fontSize: '0.8rem' }}
+                            style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.4)', fontSize: '0.8rem', padding: '0.45rem 0.9rem' }}
                             onClick={() => handleDecisionPrompt('SUSPENDED', 'VERIFICATION', req.id)}
                           >
-                            <AlertCircle size={14} /> Suspend Access
+                            <AlertCircle size={14} /> Suspend
                           </button>
                         )}
                       </div>
@@ -1131,19 +1053,51 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                   </div>
 
                   {/* Full Details Breakdown */}
-                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.2rem', borderRadius: '12px', fontSize: '0.85rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.4rem', borderRadius: '12px', fontSize: '0.85rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.2rem', marginBottom: '1.5rem', border: '1px solid var(--border-color)' }}>
                     <div>
-                      <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>FULL LEGAL NAME & PHONE</div>
-                      <div style={{ fontWeight: 600, color: '#ffffff' }}>{selectedVerifReq.fullName || selectedVerifReq.user?.name}</div>
-                      <div>Phone: {selectedVerifReq.phone || selectedVerifReq.user?.phone}</div>
-                      <div style={{ marginTop: '0.6rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>PRESENT ADDRESS</div>
-                      <div>{selectedVerifReq.presentAddress || selectedVerifReq.detailedAddress || selectedVerifReq.user?.address}</div>
+                      <div style={{ color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                        👤 Legal Identity & Contact
+                      </div>
+                      <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '0.95rem' }}>{selectedVerifReq.fullName || selectedVerifReq.user?.name}</div>
+                      <div style={{ marginTop: '0.2rem' }}>Phone: <strong style={{ color: '#ffffff' }}>{selectedVerifReq.phone || selectedVerifReq.user?.phone}</strong> {selectedVerifReq.phoneVerified ? <span style={{ color: '#10b981' }}>✔ (OTP Verified)</span> : <span style={{ color: '#f59e0b' }}>⚠️ Unverified</span>}</div>
+                      <div>Email: <strong style={{ color: '#ffffff' }}>{selectedVerifReq.user?.email || 'N/A'}</strong></div>
+                      <div>Date of Birth: {selectedVerifReq.dateOfBirth || "1994-08-14"}</div>
+                      <div style={{ marginTop: '0.3rem' }}>National NID: <strong style={{ color: 'var(--accent-gold)', fontFamily: 'monospace' }}>{selectedVerifReq.nidNumber || 'Not provided'}</strong></div>
                     </div>
+
                     <div>
-                      <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>SKILLS & EXPERIENCE</div>
-                      <div>{selectedVerifReq.skills || "Technical Service"} ({selectedVerifReq.experienceYears || 5} Years)</div>
-                      <div style={{ marginTop: '0.6rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>PAYOUT METHOD</div>
-                      <div>{selectedVerifReq.payoutMethod || "bKash"}: <strong style={{ fontFamily: 'monospace' }}>{selectedVerifReq.payoutAccount || selectedVerifReq.user?.phone}</strong></div>
+                      <div style={{ color: 'var(--accent-gold)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                        🛠️ Professional Capabilities
+                      </div>
+                      <div>Skills / Specialization: <strong style={{ color: '#ffffff' }}>{selectedVerifReq.skills || "Technical Service"}</strong></div>
+                      <div>Field Experience: <strong style={{ color: 'var(--primary)' }}>{selectedVerifReq.experienceYears || 5} Years</strong></div>
+                      {selectedVerifReq.previousEmployer && <div>Previous Contractor/Employer: <strong>{selectedVerifReq.previousEmployer}</strong></div>}
+                      {selectedVerifReq.experienceDescription && (
+                        <div style={{ marginTop: '0.4rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                          "{selectedVerifReq.experienceDescription}"
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <div style={{ color: '#60a5fa', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                        📍 Residential Address Records
+                      </div>
+                      <div><strong>Present Address:</strong> {selectedVerifReq.presentAddress || selectedVerifReq.detailedAddress || selectedVerifReq.user?.address}</div>
+                      <div style={{ marginTop: '0.3rem' }}><strong>Permanent Address:</strong> {selectedVerifReq.permanentAddress || selectedVerifReq.presentAddress || selectedVerifReq.user?.address}</div>
+                      <div style={{ marginTop: '0.3rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        Area: {selectedVerifReq.cityArea || "Uttara"} • District: {selectedVerifReq.district || "Dhaka"} • Division: {selectedVerifReq.division || "Dhaka"} ({selectedVerifReq.postalCode || '1230'})
+                      </div>
+                    </div>
+
+                    <div>
+                      <div style={{ color: '#34d399', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                        💳 Payout & Financial Routing
+                      </div>
+                      <div>Method: <span className="badge badge-gold" style={{ fontSize: '0.72rem' }}>{selectedVerifReq.payoutMethod || "bKash"}</span></div>
+                      <div style={{ marginTop: '0.2rem' }}>Account Number: <strong style={{ fontFamily: 'monospace', color: '#ffffff' }}>{selectedVerifReq.payoutAccount || selectedVerifReq.user?.phone}</strong></div>
+                      {selectedVerifReq.payoutAccountHolder && <div>Account Holder Name: {selectedVerifReq.payoutAccountHolder}</div>}
+                      {selectedVerifReq.payoutBankName && <div>Bank: {selectedVerifReq.payoutBankName} ({selectedVerifReq.payoutBankBranch || 'Main Branch'})</div>}
                     </div>
                   </div>
 
@@ -1177,7 +1131,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
 
                     {selectedVerifReq.status !== 'APPROVED' && (
                       <button className="btn btn-primary" onClick={() => handleApproveVerification(selectedVerifReq.id)}>
-                        Approve & Unlock Job Access
+                        Approve & Verify Technician
                       </button>
                     )}
                   </div>
@@ -1279,7 +1233,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                             ৳{b.agreedCost || b.estimatedCost}
                           </td>
                           <td style={{ padding: '0.9rem 1rem', color: '#f59e0b', fontSize: '0.8rem' }}>
-                            ৳{b.platformCommission || (Math.round((b.agreedCost || b.estimatedCost || 1000) * 0.05))} (5%)
+                            ৳{b.platformCommission != null ? b.platformCommission : (Math.round((b.agreedCost || b.estimatedCost || 1000) * (Number(settingsForm.platform_commission || 5) / 100)))} ({b.platformCommission ? Math.round((b.platformCommission / (b.agreedCost || b.estimatedCost || 1)) * 100) : (settingsForm.platform_commission || 5)}%)
                           </td>
                           <td style={{ padding: '0.9rem 1rem' }}>
                             {renderStatusBadge(b.status)}

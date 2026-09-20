@@ -7,8 +7,9 @@ import {
 } from 'lucide-react';
 
 const API_BASE = "http://localhost:8081/api/store";
+const MAIN_API_BASE = "http://localhost:8081/api";
 
-function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, onCloseContextual = null }) {
+function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, contextualBooking = null, onCloseContextual = null }) {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -84,6 +85,8 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
   });
 
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [useRewardPoints, setUseRewardPoints] = useState(false);
+  const [workerWalletBalance, setWorkerWalletBalance] = useState(0);
 
   // Sync contextual booking service filter
   useEffect(() => {
@@ -98,7 +101,13 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
     fetchCategories();
     fetchUserOrders();
     fetchUserReviews();
-  }, []);
+    if (currentUser?.role === 'WORKER' && currentUser?.id) {
+      fetch(`${MAIN_API_BASE}/wallet/worker/${currentUser.id}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => data && setWorkerWalletBalance(data.balance || 0))
+        .catch(console.error);
+    }
+  }, [currentUser?.id]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -276,6 +285,16 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
         return;
       }
 
+      const baseTotal = instantBuyProduct ? (instantBuyProduct.price + 60) : cartTotal;
+      const appliedPoints = (currentUser?.role === 'CUSTOMER' && useRewardPoints)
+        ? Math.min(rewards?.points || 0, Math.max(0, Math.floor(baseTotal - 1)))
+        : 0;
+      const finalCashPayable = Math.max(1, baseTotal - appliedPoints);
+
+      const recordedMethod = appliedPoints > 0
+        ? `${deliveryForm.paymentMethod} (৳${finalCashPayable} Cash + ${appliedPoints} pts)`
+        : (deliveryForm.paymentMethod === 'WORKER_WALLET' ? 'WORKER_WALLET_BALANCE' : deliveryForm.paymentMethod);
+
       const orderPayload = {
         userId: currentUser.id,
         serviceBookingId: contextualBooking ? contextualBooking.id : null,
@@ -287,7 +306,8 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
         area: deliveryForm.area,
         postalCode: deliveryForm.postalCode,
         deliveryInstructions: deliveryForm.deliveryInstructions,
-        paymentMethod: deliveryForm.paymentMethod,
+        paymentMethod: recordedMethod,
+        discount: appliedPoints,
         items: itemsPayload
       };
 
@@ -300,7 +320,7 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
       if (res.ok) {
         const orderData = await res.json();
 
-        if (deliveryForm.paymentMethod !== 'CASH_ON_DELIVERY') {
+        if (deliveryForm.paymentMethod !== 'CASH_ON_DELIVERY' && deliveryForm.paymentMethod !== 'WORKER_WALLET') {
           await fetch(`${API_BASE}/payment/verify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -309,6 +329,10 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
               transactionId: `BKASH-TXN-${Date.now().toString().slice(-6)}`
             })
           });
+        }
+
+        if (appliedPoints > 0 && onUsePoints) {
+          onUsePoints(appliedPoints);
         }
 
         setPlacedOrder(orderData);
@@ -320,7 +344,7 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
         setCheckoutModalOpen(false);
         fetchUserOrders();
         fetchProducts();
-        onShowToast && onShowToast("Order Placed 🎉", `Order ${orderData.orderNumber} confirmed!`, "success");
+        onShowToast && onShowToast("Order Placed 🎉", `Order ${orderData.orderNumber} confirmed via ${recordedMethod}!`, "success");
       }
     } catch (err) {
       console.error("Checkout error:", err);
@@ -1347,7 +1371,10 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
               {/* Payment Method Selector */}
               <h4 style={{ fontSize: '0.95rem', color: 'var(--primary)', marginBottom: '0.8rem' }}>Payment Method</h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '1.2rem' }}>
-                {['BKASH', 'NAGAD', 'ROCKET', 'CASH_ON_DELIVERY'].map(method => (
+                {[
+                  ...(currentUser?.role === 'WORKER' ? ['WORKER_WALLET'] : []),
+                  'BKASH', 'NAGAD', 'ROCKET', 'CASH_ON_DELIVERY'
+                ].map(method => (
                   <label key={method} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: deliveryForm.paymentMethod === method ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.02)', border: deliveryForm.paymentMethod === method ? '1px solid var(--primary)' : '1px solid var(--border-color)', padding: '0.6rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
                     <input 
                       type="radio" 
@@ -1355,36 +1382,101 @@ function ToolStoreContent({ currentUser, onShowToast, contextualBooking = null, 
                       checked={deliveryForm.paymentMethod === method}
                       onChange={() => setDeliveryForm({ ...deliveryForm, paymentMethod: method })}
                     />
-                    <span style={{ fontWeight: 'bold' }}>{method.replace('_', ' ')}</span>
+                    <span style={{ fontWeight: 'bold' }}>
+                      {method === 'WORKER_WALLET' ? '💰 Worker Wallet' : method.replace('_', ' ')}
+                    </span>
                   </label>
                 ))}
               </div>
 
+              {/* Worker Wallet Balance Notice */}
+              {currentUser?.role === 'WORKER' && (
+                <div style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px', padding: '0.65rem 0.9rem', marginBottom: '1.2rem', fontSize: '0.82rem' }}>
+                  💰 <strong>Worker Cash Balance: ৳{workerWalletBalance}</strong> — Pay instantly using your service income.
+                </div>
+              )}
+
+              {/* Customer Reward Points Redemption Box */}
+              {currentUser?.role === 'CUSTOMER' && (rewards?.points || 0) > 0 && (
+                <div style={{
+                  background: 'rgba(99, 102, 241, 0.08)',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  borderRadius: '8px',
+                  padding: '0.8rem 1rem',
+                  marginBottom: '1.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.8rem'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Award size={16} /> Apply Reward Points Discount
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                      Available Balance: <strong>{rewards?.points} Points</strong> (1 pt = ৳1 off)
+                    </div>
+                  </div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>
+                    <input
+                      type="checkbox"
+                      checked={useRewardPoints}
+                      onChange={e => setUseRewardPoints(e.target.checked)}
+                      style={{ width: 16, height: 16 }}
+                    />
+                    Apply Discount
+                  </label>
+                </div>
+              )}
+
               {/* Order Amount Breakdown */}
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
-                {instantBuyProduct ? (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                    <span>Instant Item ({instantBuyProduct.title}):</span>
-                    <span>৳{instantBuyProduct.price.toFixed(2)}</span>
+              {(() => {
+                const baseTotal = instantBuyProduct ? (instantBuyProduct.price + 60) : cartTotal;
+                const appliedPoints = (currentUser?.role === 'CUSTOMER' && useRewardPoints)
+                  ? Math.min(rewards?.points || 0, Math.max(0, Math.floor(baseTotal - 1)))
+                  : 0;
+                const finalCash = Math.max(1, baseTotal - appliedPoints);
+
+                return (
+                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
+                    {instantBuyProduct ? (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                        <span>Instant Item ({instantBuyProduct.title}):</span>
+                        <span>৳{instantBuyProduct.price.toFixed(2)}</span>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                        <span>Items Subtotal:</span>
+                        <span>৳{cartSubtotal.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                      <span>Standard Delivery Charge:</span>
+                      <span>৳60.00</span>
+                    </div>
+                    {appliedPoints > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', color: '#10b981' }}>
+                        <span>Reward Points Discount ({appliedPoints} pts):</span>
+                        <span>-৳{appliedPoints.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--primary)' }}>
+                      <span>Total Cash Payable:</span>
+                      <span>৳{finalCash.toFixed(2)}</span>
+                    </div>
                   </div>
-                ) : (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                    <span>Items Subtotal:</span>
-                    <span>৳{cartSubtotal.toFixed(2)}</span>
-                  </div>
-                )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                  <span>Standard Delivery Charge:</span>
-                  <span>৳60.00</span>
-                </div>
-                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--primary)' }}>
-                  <span>Total Amount:</span>
-                  <span>৳{(instantBuyProduct ? instantBuyProduct.price + 60 : cartTotal).toFixed(2)}</span>
-                </div>
-              </div>
+                );
+              })()}
 
               <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.8rem', background: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)' }} disabled={paymentProcessing}>
-                {paymentProcessing ? 'Processing Order...' : `Place Order (৳${(instantBuyProduct ? instantBuyProduct.price + 60 : cartTotal).toFixed(2)})`}
+                {paymentProcessing ? 'Processing Order...' : (() => {
+                  const baseTotal = instantBuyProduct ? (instantBuyProduct.price + 60) : cartTotal;
+                  const appliedPoints = (currentUser?.role === 'CUSTOMER' && useRewardPoints)
+                    ? Math.min(rewards?.points || 0, Math.max(0, Math.floor(baseTotal - 1)))
+                    : 0;
+                  const finalCash = Math.max(1, baseTotal - appliedPoints);
+                  return `Place Order (৳${finalCash.toFixed(2)})`;
+                })()}
               </button>
             </form>
           </div>

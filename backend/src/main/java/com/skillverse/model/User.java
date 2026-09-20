@@ -18,9 +18,9 @@ public class User {
     private boolean isVerified;
     private String profilePicture;
     private Double rating = 5.0;
-    private Double latitude = 23.8759; // Default Uttara Dhaka
-    private Double longitude = 90.3795;
-    private String address = "House 14, Road 4, Sector 12, Uttara, Dhaka";
+    private Double latitude;
+    private Double longitude;
+    private String address = "";
 
     private String status = "ACTIVE"; // ACTIVE, SUSPENDED, DEACTIVATED
     private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();

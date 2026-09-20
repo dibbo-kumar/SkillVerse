@@ -94,9 +94,10 @@ public class AdminController {
                 .mapToDouble(b -> b.getAgreedCost() != null ? b.getAgreedCost() : (b.getEstimatedCost() != null ? b.getEstimatedCost() : 0.0))
                 .sum();
 
+        double defaultCommissionRate = getPlatformCommissionRate();
         double platformRevenue = allBookings.stream()
                 .filter(b -> "COMPLETED".equalsIgnoreCase(b.getStatus()) || "PAID".equalsIgnoreCase(b.getStatus()))
-                .mapToDouble(b -> b.getPlatformCommission() != null && b.getPlatformCommission() > 0 ? b.getPlatformCommission() : (b.getAgreedCost() != null ? b.getAgreedCost() * 0.05 : 0.0))
+                .mapToDouble(b -> b.getPlatformCommission() != null && b.getPlatformCommission() > 0 ? b.getPlatformCommission() : (b.getAgreedCost() != null ? b.getAgreedCost() * defaultCommissionRate : 0.0))
                 .sum();
 
         double workerEarnings = totalRevenue - platformRevenue;
@@ -312,9 +313,10 @@ public class AdminController {
                 .mapToDouble(b -> b.getAgreedCost() != null ? b.getAgreedCost() : (b.getEstimatedCost() != null ? b.getEstimatedCost() : 0.0))
                 .sum();
 
+        double defaultCommissionRate = getPlatformCommissionRate();
         double platformCommission = allBookings.stream()
                 .filter(b -> "COMPLETED".equalsIgnoreCase(b.getStatus()) || "PAID".equalsIgnoreCase(b.getStatus()))
-                .mapToDouble(b -> b.getPlatformCommission() != null && b.getPlatformCommission() > 0 ? b.getPlatformCommission() : (b.getAgreedCost() != null ? b.getAgreedCost() * 0.05 : 0.0))
+                .mapToDouble(b -> b.getPlatformCommission() != null && b.getPlatformCommission() > 0 ? b.getPlatformCommission() : (b.getAgreedCost() != null ? b.getAgreedCost() * defaultCommissionRate : 0.0))
                 .sum();
 
         double workerNetEarnings = totalServiceVolume - platformCommission;
@@ -493,5 +495,15 @@ public class AdminController {
         ));
 
         return ResponseEntity.ok(Map.of("message", "Platform configuration updated successfully", "settings", settingRepository.findAll()));
+    }
+
+    private double getPlatformCommissionRate() {
+        try {
+            return settingRepository.findBySettingKey("platform_commission")
+                    .map(s -> Double.parseDouble(s.getSettingValue()) / 100.0)
+                    .orElse(0.05);
+        } catch (Exception e) {
+            return 0.05;
+        }
     }
 }

@@ -9,7 +9,7 @@ import BookingDetailsModal from './BookingDetailsModal';
 
 const API_BASE = "http://localhost:8081/api";
 
-export default function MyBookingsHub({ currentUser, onShowToast, onNavigateToWorkerProfile }) {
+export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onShowToast, onNavigateToWorkerProfile }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'bookings', 'history', 'saved-technicians'
   const [bookings, setBookings] = useState([]);
   const [problemPosts, setProblemPosts] = useState([]);
@@ -159,9 +159,11 @@ export default function MyBookingsHub({ currentUser, onShowToast, onNavigateToWo
     try {
       const res = await fetch(`${API_BASE}/bookings/${selectedBooking.id}/verify-completion-otp?otp=${completionOtpInput}`, { method: 'PUT' });
       if (res.ok) {
+        if (onAddPoints) onAddPoints(50);
         setShowCompletionOtpModal(false);
         setCompletionOtpInput('');
         fetchCustomerData();
+        if (onShowToast) onShowToast("Job Completed!", "Completion OTP verified & +50 Reward Points added to your balance!", "success");
       } else {
         const err = await res.json();
         if (onShowToast) onShowToast("Error", err.error || "Invalid Completion OTP", "error");
@@ -186,7 +188,8 @@ export default function MyBookingsHub({ currentUser, onShowToast, onNavigateToWo
       });
 
       if (res.ok) {
-        if (onShowToast) onShowToast("Payment Successful!", "Payment processed and receipt saved.", "success");
+        if (onAddPoints) onAddPoints(50);
+        if (onShowToast) onShowToast("Payment Successful!", "Payment processed, receipt saved & +50 Reward Points added!", "success");
         setShowPaymentModal(false);
         fetchCustomerData();
       } else {
@@ -333,8 +336,8 @@ export default function MyBookingsHub({ currentUser, onShowToast, onNavigateToWo
             <div className="glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Reward Points</span>
-                <h3 style={{ fontSize: '1.8rem', color: '#818cf8', margin: '0.2rem 0 0 0' }}>{completedCount * 100 + 150}</h3>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Gained from completed work</span>
+                <h3 style={{ fontSize: '1.8rem', color: '#818cf8', margin: '0.2rem 0 0 0' }}>{rewards?.points !== undefined ? rewards.points : (completedCount * 100 + 150)}</h3>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>1 Point = ৳1 for Courses & Tools</span>
               </div>
               <div style={{ background: 'rgba(99, 102, 241, 0.15)', padding: '0.8rem', borderRadius: '12px', color: '#818cf8' }}>
                 <Award size={24} />

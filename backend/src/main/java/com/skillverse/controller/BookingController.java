@@ -12,24 +12,32 @@ import java.util.*;
 @CrossOrigin(origins = "*")
 public class BookingController {
 
-    private static final double PLATFORM_COMMISSION_RATE = 0.05; // 5% platform commission
-    private static final List<String> ACTIVE_JOB_STATUSES = List.of(
-            "CONFIRMED", "ON_THE_WAY", "ARRIVED", "IN_PROGRESS", "COMPLETION_REQUESTED"
-    );
-
     private final ServiceBookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final WorkerWalletRepository walletRepository;
     private final WalletTransactionRepository transactionRepository;
+    private final PlatformSettingRepository settingRepository;
 
     public BookingController(ServiceBookingRepository bookingRepository,
                              UserRepository userRepository,
                              WorkerWalletRepository walletRepository,
-                             WalletTransactionRepository transactionRepository) {
+                             WalletTransactionRepository transactionRepository,
+                             PlatformSettingRepository settingRepository) {
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
+        this.settingRepository = settingRepository;
+    }
+
+    private double getPlatformCommissionRate() {
+        try {
+            return settingRepository.findBySettingKey("platform_commission")
+                    .map(s -> Double.parseDouble(s.getSettingValue()) / 100.0)
+                    .orElse(0.05);
+        } catch (Exception e) {
+            return 0.05;
+        }
     }
 
     @PostMapping
@@ -126,8 +134,9 @@ public class BookingController {
         Double finalPrice = booking.getWorkerCounterPrice() != null ? booking.getWorkerCounterPrice() : booking.getEstimatedCost();
         booking.setAgreedCost(finalPrice);
 
-        // Lock commission (5% Platform, 95% Worker)
-        double commission = Math.round(finalPrice * PLATFORM_COMMISSION_RATE * 100.0) / 100.0;
+        // Lock commission (Dynamic Platform Rate, Rest to Worker)
+        double commissionRate = getPlatformCommissionRate();
+        double commission = Math.round(finalPrice * commissionRate * 100.0) / 100.0;
         double netEarning = finalPrice - commission;
         booking.setPlatformCommission(commission);
         booking.setWorkerNetEarning(netEarning);
@@ -262,7 +271,10 @@ public class BookingController {
         String txId = payload.getOrDefault("transactionId", "TXN-" + System.currentTimeMillis());
 
         Double agreedAmount = booking.getAgreedCost() != null ? booking.getAgreedCost() : booking.getEstimatedCost();
-        double commission = Math.round(agreedAmount * PLATFORM_COMMISSION_RATE * 100.0) / 100.0;
+        double commissionRate = getPlatformCommissionRate();
+        double commission = booking.getPlatformCommission() != null && booking.getPlatformCommission() > 0 
+                ? booking.getPlatformCommission() 
+                : Math.round(agreedAmount * commissionRate * 100.0) / 100.0;
         double netWorkerEarning = agreedAmount - commission;
 
         booking.setAgreedCost(agreedAmount);
@@ -297,7 +309,7 @@ public class BookingController {
 
                 transactionRepository.save(new WalletTransaction(
                         worker, "COD_PLATFORM_FEE", -commission,
-                        "Platform 5% fee for COD Booking #" + booking.getId(), booking
+                        "Platform fee for COD Booking #" + booking.getId() + " (৳" + commission + ")", booking
                 ));
             } else {
                 // Digital Payment (bKash, Nagad, Rocket, Bank).
@@ -309,7 +321,7 @@ public class BookingController {
 
                 transactionRepository.save(new WalletTransaction(
                         worker, "SERVICE_EARNING", netWorkerEarning,
-                        "Earning for Booking #" + booking.getId() + " (5% platform fee ৳" + commission + " deducted)", booking
+                        "Earning for Booking #" + booking.getId() + " (Platform fee ৳" + commission + " deducted)", booking
                 ));
             }
         }

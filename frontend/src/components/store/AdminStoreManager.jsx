@@ -376,8 +376,18 @@ export default function AdminStoreManager({ onShowToast }) {
                         <div>{o.customerName}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{o.phone}</div>
                       </td>
-                      <td style={{ padding: '0.6rem', fontWeight: 'bold' }}>৳{o.totalAmount}</td>
-                      <td style={{ padding: '0.6rem' }}>{o.paymentMethod} ({o.paymentStatus})</td>
+                      <td style={{ padding: '0.6rem', fontWeight: 'bold' }}>
+                        <div>৳{o.totalAmount}</div>
+                        {o.discount > 0 && (
+                          <div style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 'normal' }}>
+                            (-৳{o.discount} pts used)
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ padding: '0.6rem', fontSize: '0.8rem' }}>
+                        <div>{o.paymentMethod}</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Status: {o.paymentStatus}</div>
+                      </td>
                       <td style={{ padding: '0.6rem' }}>
                         <span className="badge badge-gold">{o.orderStatus.replace('_', ' ')}</span>
                       </td>
@@ -473,9 +483,24 @@ export default function AdminStoreManager({ onShowToast }) {
                 </tbody>
               </table>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '0.6rem', marginTop: '0.6rem', fontWeight: 'bold', color: 'var(--primary)', fontSize: '1rem' }}>
-                <span>Total Amount Paid (Inc. ৳60 Delivery):</span>
-                <span>৳{selectedAdminOrder.totalAmount}</span>
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.6rem', marginTop: '0.6rem', fontSize: '0.85rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                  <span>Delivery Charge:</span>
+                  <span>৳{selectedAdminOrder.deliveryFee || 60}</span>
+                </div>
+                {selectedAdminOrder.discount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', color: '#10b981' }}>
+                    <span>Reward Points Applied:</span>
+                    <span>-৳{selectedAdminOrder.discount}</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', color: 'var(--primary)', fontSize: '1rem', marginTop: '0.4rem', borderTop: '1px dashed var(--border-color)', paddingTop: '0.4rem' }}>
+                  <span>Final Cash Paid:</span>
+                  <span>৳{selectedAdminOrder.totalAmount}</span>
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+                  Payment Method: <strong>{selectedAdminOrder.paymentMethod}</strong>
+                </div>
               </div>
             </div>
 

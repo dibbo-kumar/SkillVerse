@@ -28,8 +28,16 @@ export default function WorkerBookingDetailsModal({
   const isDirectPending = booking.status === 'PENDING' || (booking.status === 'NEGOTIATING' && (booking.lastOfferedBy === 'CUSTOMER' || !booking.lastOfferedBy));
   const isWorkerCounterWaiting = booking.status === 'NEGOTIATING' && booking.lastOfferedBy === 'WORKER';
   
-  const commission = booking.platformCommission || Math.round(currentPrice * 0.05 * 100.0) / 100.0;
-  const netEarning = booking.workerNetEarning || (currentPrice - commission);
+  const commissionRate = booking.platformCommission && currentPrice > 0 
+    ? Math.round((booking.platformCommission / currentPrice) * 100) 
+    : 5;
+  const commission = booking.platformCommission != null 
+    ? booking.platformCommission 
+    : Math.round(currentPrice * (commissionRate / 100.0) * 100.0) / 100.0;
+  const netEarning = booking.workerNetEarning != null 
+    ? booking.workerNetEarning 
+    : (currentPrice - commission);
+  const workerShareRate = 100 - commissionRate;
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -218,11 +226,11 @@ export default function WorkerBookingDetailsModal({
             <strong style={{ fontSize: '1.25rem', color: '#ffffff' }}>৳{currentPrice}</strong>
           </div>
           <div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>Platform Fee (5%)</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>Platform Fee ({commissionRate}%)</span>
             <strong style={{ fontSize: '1.25rem', color: 'var(--accent-gold)' }}>-৳{commission}</strong>
           </div>
           <div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>Worker Net Earning (95%)</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>Worker Net Earning ({workerShareRate}%)</span>
             <strong style={{ fontSize: '1.25rem', color: 'var(--primary)' }}>৳{netEarning}</strong>
           </div>
         </div>

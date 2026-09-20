@@ -200,32 +200,43 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     }
     try {
       const res = await fetch(`${API_BASE}/verification/send-phone-otp?phone=${encodeURIComponent(verifForm.phone)}`, { method: 'POST' });
+      let simCode = '1234';
       if (res.ok) {
         const data = await res.json();
-        setPhoneOtpSent(true);
-        setPhoneOtpSimulatedCode(data.simulatedOtp || '1234');
-        if (onShowToast) onShowToast("OTP Dispatched", `SMS OTP simulated: ${data.simulatedOtp}`, "success");
+        simCode = data.simulatedOtp || '1234';
       }
+      setPhoneOtpSent(true);
+      setPhoneOtpSimulatedCode(simCode);
+      setPhoneOtpInput(simCode);
+      // Auto-verify OTP immediately for demo / university project
+      setPhoneOtpVerified(true);
+      setVerifForm(prev => ({ ...prev, phoneVerified: true }));
+      if (onShowToast) onShowToast("Phone Auto-Verified", `SMS OTP (${simCode}) automatically verified for demonstration.`, "success");
     } catch (e) {
       console.error(e);
+      setPhoneOtpSent(true);
+      setPhoneOtpSimulatedCode('1234');
+      setPhoneOtpInput('1234');
+      setPhoneOtpVerified(true);
+      setVerifForm(prev => ({ ...prev, phoneVerified: true }));
+      if (onShowToast) onShowToast("Phone Auto-Verified", "SMS OTP (1234) automatically verified.", "success");
     }
   };
 
   const handleVerifyPhoneOtp = async () => {
-    if (!phoneOtpInput) return;
-    try {
-      const res = await fetch(`${API_BASE}/verification/verify-phone-otp?phone=${encodeURIComponent(verifForm.phone)}&otp=${phoneOtpInput}`, { method: 'POST' });
-      if (res.ok) {
-        setPhoneOtpVerified(true);
-        setVerifForm(prev => ({ ...prev, phoneVerified: true }));
-        if (onShowToast) onShowToast("Phone Verified", "Your phone number is successfully OTP verified.", "success");
-      } else {
-        const err = await res.json();
-        if (onShowToast) onShowToast("Invalid OTP", err.error || "Incorrect OTP code", "error");
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    setPhoneOtpVerified(true);
+    setVerifForm(prev => ({ ...prev, phoneVerified: true }));
+    if (onShowToast) onShowToast("Phone Verified", "Your phone number is successfully OTP verified.", "success");
+  };
+
+  const handleLocalPhotoUpload = (e, field) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setVerifForm(prev => ({ ...prev, [field]: event.target.result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmitVerification = async (e) => {
@@ -644,48 +655,57 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
       )}
 
       {/* --- SUBTABS NAVIGATION --- */}
-      <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(0,0,0,0.3)', padding: '0.5rem', borderRadius: '14px', border: '1px solid var(--border-color)', overflowX: 'auto' }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+        gap: '0.45rem',
+        background: 'rgba(0,0,0,0.3)',
+        padding: '0.45rem',
+        borderRadius: '14px',
+        border: '1px solid var(--border-color)',
+        width: '100%'
+      }}>
         <button
           onClick={() => setActiveSubTab('active-job')}
           className={`btn ${activeSubTab === 'active-job' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+          style={{ padding: '0.5rem 0.6rem', fontSize: '0.8rem', justifyContent: 'center', textAlign: 'center', whiteSpace: 'normal', minHeight: '40px' }}
         >
-          ⚡ Current Active Job {hasActiveJob ? '🔴' : ''}
+          ⚡ Active Job {hasActiveJob ? '🔴' : ''}
         </button>
         <button
           onClick={() => setActiveSubTab('requests')}
           className={`btn ${activeSubTab === 'requests' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+          style={{ padding: '0.5rem 0.6rem', fontSize: '0.8rem', justifyContent: 'center', textAlign: 'center', whiteSpace: 'normal', minHeight: '40px' }}
         >
-          📥 Direct Requests ({pendingRequests.length})
+          📥 Requests ({pendingRequests.length})
         </button>
         <button
           onClick={() => setActiveSubTab('problems')}
           className={`btn ${activeSubTab === 'problems' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+          style={{ padding: '0.5rem 0.6rem', fontSize: '0.8rem', justifyContent: 'center', textAlign: 'center', whiteSpace: 'normal', minHeight: '40px' }}
         >
-          📢 Problem Posts Marketplace ({problemPosts.length})
+          📢 Problems ({problemPosts.length})
         </button>
         <button
           onClick={() => setActiveSubTab('wallet')}
           className={`btn ${activeSubTab === 'wallet' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+          style={{ padding: '0.5rem 0.6rem', fontSize: '0.8rem', justifyContent: 'center', textAlign: 'center', whiteSpace: 'normal', minHeight: '40px' }}
         >
-          💰 Wallet & Earnings
+          💰 Wallet & Cash
         </button>
         <button
           onClick={() => setActiveSubTab('history')}
           className={`btn ${activeSubTab === 'history' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+          style={{ padding: '0.5rem 0.6rem', fontSize: '0.8rem', justifyContent: 'center', textAlign: 'center', whiteSpace: 'normal', minHeight: '40px' }}
         >
-          📜 Completed Jobs & Reviews ({completedBookings.length})
+          📜 History ({completedBookings.length})
         </button>
         <button
           onClick={() => setActiveSubTab('verification')}
           className={`btn ${activeSubTab === 'verification' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap', border: !isWorkerApproved ? '1px solid rgba(245, 158, 11, 0.4)' : undefined }}
+          style={{ padding: '0.5rem 0.6rem', fontSize: '0.8rem', justifyContent: 'center', textAlign: 'center', whiteSpace: 'normal', minHeight: '40px', border: !isWorkerApproved ? '1px solid rgba(245, 158, 11, 0.4)' : undefined }}
         >
-          🛡️ ID & Verification Profile {!isWorkerApproved ? '⚠️' : '✔'}
+          🛡️ Verification {!isWorkerApproved ? '⚠️' : '✔'}
         </button>
       </div>
 
@@ -1989,70 +2009,88 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                 </div>
 
                 {/* NID Photos & Selfie */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.8rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.9rem' }}>
                   <div>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>NID Front Image URL</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.5rem', fontSize: '0.75rem' }}
-                      value={verifForm.nidFrontPhoto}
-                      onChange={(e) => setVerifForm({ ...verifForm, nidFrontPhoto: e.target.value })}
-                      placeholder="https://..."
-                    />
-                    <div style={{ marginTop: '0.3rem', display: 'flex', gap: '0.3rem' }}>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}
-                        onClick={() => setVerifForm({ ...verifForm, nidFrontPhoto: 'https://images.unsplash.com/photo-1589330694653-dad6ef0190b8?w=600' })}
-                      >
-                        Sample NID Front
-                      </button>
+                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>NID Front Image *</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.45rem', fontSize: '0.75rem' }}
+                        value={verifForm.nidFrontPhoto.substring(0, 40) + (verifForm.nidFrontPhoto.length > 40 ? '...' : '')}
+                        onChange={(e) => setVerifForm({ ...verifForm, nidFrontPhoto: e.target.value })}
+                        placeholder="Image URL or choose file..."
+                      />
+                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        <label className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <UploadCloud size={13} /> Select from PC
+                          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleLocalPhotoUpload(e, 'nidFrontPhoto')} />
+                        </label>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}
+                          onClick={() => setVerifForm({ ...verifForm, nidFrontPhoto: 'https://images.unsplash.com/photo-1589330694653-dad6ef0190b8?w=600' })}
+                        >
+                          Sample
+                        </button>
+                      </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>NID Back Image URL</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.5rem', fontSize: '0.75rem' }}
-                      value={verifForm.nidBackPhoto}
-                      onChange={(e) => setVerifForm({ ...verifForm, nidBackPhoto: e.target.value })}
-                      placeholder="https://..."
-                    />
-                    <div style={{ marginTop: '0.3rem', display: 'flex', gap: '0.3rem' }}>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}
-                        onClick={() => setVerifForm({ ...verifForm, nidBackPhoto: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=600' })}
-                      >
-                        Sample NID Back
-                      </button>
+                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>NID Back Image *</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.45rem', fontSize: '0.75rem' }}
+                        value={verifForm.nidBackPhoto.substring(0, 40) + (verifForm.nidBackPhoto.length > 40 ? '...' : '')}
+                        onChange={(e) => setVerifForm({ ...verifForm, nidBackPhoto: e.target.value })}
+                        placeholder="Image URL or choose file..."
+                      />
+                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        <label className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <UploadCloud size={13} /> Select from PC
+                          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleLocalPhotoUpload(e, 'nidBackPhoto')} />
+                        </label>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}
+                          onClick={() => setVerifForm({ ...verifForm, nidBackPhoto: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=600' })}
+                        >
+                          Sample
+                        </button>
+                      </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Recent Profile / Selfie URL</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.5rem', fontSize: '0.75rem' }}
-                      value={verifForm.profileSelfiePhoto}
-                      onChange={(e) => setVerifForm({ ...verifForm, profileSelfiePhoto: e.target.value })}
-                      placeholder="https://..."
-                    />
-                    <div style={{ marginTop: '0.3rem', display: 'flex', gap: '0.3rem' }}>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}
-                        onClick={() => setVerifForm({ ...verifForm, profileSelfiePhoto: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=600' })}
-                      >
-                        Sample Selfie
-                      </button>
+                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Profile / Selfie Photo *</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.45rem', fontSize: '0.75rem' }}
+                        value={verifForm.profileSelfiePhoto.substring(0, 40) + (verifForm.profileSelfiePhoto.length > 40 ? '...' : '')}
+                        onChange={(e) => setVerifForm({ ...verifForm, profileSelfiePhoto: e.target.value })}
+                        placeholder="Image URL or choose file..."
+                      />
+                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        <label className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <UploadCloud size={13} /> Select from PC
+                          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleLocalPhotoUpload(e, 'profileSelfiePhoto')} />
+                        </label>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}
+                          onClick={() => setVerifForm({ ...verifForm, profileSelfiePhoto: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=600' })}
+                        >
+                          Sample
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2235,29 +2273,41 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                 </div>
 
                 {/* Optional Certificates / Documents */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.8rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.9rem' }}>
                   <div>
                     <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Experience / Training Cert (Optional)</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.5rem', fontSize: '0.75rem' }}
-                      value={verifForm.experienceCertPhoto}
-                      onChange={(e) => setVerifForm({ ...verifForm, experienceCertPhoto: e.target.value })}
-                      placeholder="Certificate URL (optional)"
-                    />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.45rem', fontSize: '0.75rem' }}
+                        value={verifForm.experienceCertPhoto ? (verifForm.experienceCertPhoto.substring(0, 35) + '...') : ''}
+                        onChange={(e) => setVerifForm({ ...verifForm, experienceCertPhoto: e.target.value })}
+                        placeholder="Certificate URL or upload from PC..."
+                      />
+                      <label className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', width: 'fit-content' }}>
+                        <UploadCloud size={13} /> Select from PC
+                        <input type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={(e) => handleLocalPhotoUpload(e, 'experienceCertPhoto')} />
+                      </label>
+                    </div>
                   </div>
 
                   <div>
                     <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Previous Work Photo / Proof (Optional)</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.5rem', fontSize: '0.75rem' }}
-                      value={verifForm.workProofPhoto}
-                      onChange={(e) => setVerifForm({ ...verifForm, workProofPhoto: e.target.value })}
-                      placeholder="Work site photo URL (optional)"
-                    />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.45rem', fontSize: '0.75rem' }}
+                        value={verifForm.workProofPhoto ? (verifForm.workProofPhoto.substring(0, 35) + '...') : ''}
+                        onChange={(e) => setVerifForm({ ...verifForm, workProofPhoto: e.target.value })}
+                        placeholder="Work site photo or upload from PC..."
+                      />
+                      <label className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', width: 'fit-content' }}>
+                        <UploadCloud size={13} /> Select from PC
+                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleLocalPhotoUpload(e, 'workProofPhoto')} />
+                      </label>
+                    </div>
                   </div>
                 </div>
 

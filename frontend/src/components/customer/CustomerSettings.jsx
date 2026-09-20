@@ -18,7 +18,10 @@ import {
   Mail,
   MapPin,
   Compass,
-  Wrench
+  Wrench,
+  Upload,
+  Trash2,
+  Image as ImageIcon
 } from 'lucide-react';
 
 export default function CustomerSettings({
@@ -38,16 +41,16 @@ export default function CustomerSettings({
   const [phone, setPhone] = useState(user?.phone || '');
   const [phoneError, setPhoneError] = useState('');
   const [nidNumber, setNidNumber] = useState(user?.nidNumber || '');
-  const [avatarUrl, setAvatarUrl] = useState(user?.profilePicture || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150');
+  const [avatarUrl, setAvatarUrl] = useState(user?.profilePicture || '');
   const [address, setAddress] = useState(user?.address || '');
   const [skills, setSkills] = useState(workerProfile?.skills || 'Electrical, AC Repair');
   const [hourlyRate, setHourlyRate] = useState(workerProfile?.hourlyRate || 450);
   const [profileSaved, setProfileSaved] = useState(false);
 
   // Location GPS Form
-  const [latitude, setLatitude] = useState(user?.latitude || (isWorker ? 23.8720 : 23.8759));
-  const [longitude, setLongitude] = useState(user?.longitude || (isWorker ? 90.3810 : 90.3795));
-  const [serviceArea, setServiceArea] = useState(workerProfile?.serviceArea || user?.address || 'Sector 12, Uttara, Dhaka');
+  const [latitude, setLatitude] = useState(user?.latitude ?? (isWorker ? 23.8720 : ''));
+  const [longitude, setLongitude] = useState(user?.longitude ?? (isWorker ? 90.3810 : ''));
+  const [serviceArea, setServiceArea] = useState(workerProfile?.serviceArea || user?.address || '');
   const [locationSaved, setLocationSaved] = useState(false);
 
   useEffect(() => {
@@ -56,10 +59,11 @@ export default function CustomerSettings({
       setEmail(user.email || '');
       setPhone(user.phone || '');
       setNidNumber(user.nidNumber || '');
-      setAvatarUrl(user.profilePicture || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150');
+      setAvatarUrl(user.profilePicture || '');
       setAddress(user.address || '');
-      setLatitude(user.latitude || (user.role === 'WORKER' ? 23.8720 : 23.8759));
-      setLongitude(user.longitude || (user.role === 'WORKER' ? 90.3810 : 90.3795));
+      setLatitude(user.latitude != null ? user.latitude : (user.role === 'WORKER' ? 23.8720 : ''));
+      setLongitude(user.longitude != null ? user.longitude : (user.role === 'WORKER' ? 90.3810 : ''));
+      setServiceArea(workerProfile?.serviceArea || user.address || '');
     }
   }, [user]);
 
@@ -109,7 +113,20 @@ export default function CustomerSettings({
     }
   ];
 
-  const validateBdPhone = (num) => /^01[3-9]\d{8}$/.test((num || '').trim());
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Image file size should be less than 5MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        setAvatarUrl(uploadEvent.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
@@ -124,10 +141,10 @@ export default function CustomerSettings({
         email,
         phone,
         nidNumber,
-        profilePicture: avatarUrl,
+        profilePicture: avatarUrl || null,
         address,
-        latitude: Number(latitude),
-        longitude: Number(longitude),
+        latitude: latitude !== '' && latitude != null ? Number(latitude) : null,
+        longitude: longitude !== '' && longitude != null ? Number(longitude) : null,
         skills,
         hourlyRate: Number(hourlyRate)
       });
@@ -271,14 +288,60 @@ export default function CustomerSettings({
               )}
 
               <form onSubmit={handleSaveProfile}>
-                <div className="avatar-edit-section">
-                  <img src={avatarUrl} alt="Avatar" className="avatar-edit-preview" />
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Profile Picture URL</label>
+                <div className="avatar-edit-section" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.02)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Avatar"
+                      className="avatar-edit-preview"
+                      style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)', flexShrink: 0 }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.2))',
+                        border: '2px dashed var(--primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#ffffff',
+                        fontWeight: 'bold',
+                        fontSize: '1.8rem',
+                        flexShrink: 0
+                      }}
+                    >
+                      {(name || user?.name || 'U').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.6rem' }}>
+                      <label className="btn btn-primary" style={{ cursor: 'pointer', padding: '0.45rem 0.9rem', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
+                        <Upload size={15} /> Choose Photo from PC
+                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
+                      </label>
+                      {avatarUrl && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ padding: '0.45rem 0.8rem', fontSize: '0.82rem', color: 'var(--accent-rose)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                          onClick={() => setAvatarUrl('')}
+                        >
+                          <Trash2 size={14} /> Remove Photo
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Select any image (JPG, PNG, WebP) directly from your computer, or paste a URL below.
+                    </div>
                     <input
                       type="text"
                       className="form-input"
-                      style={{ fontSize: '0.85rem' }}
+                      style={{ fontSize: '0.8rem', marginTop: '0.4rem', padding: '0.35rem 0.7rem' }}
+                      placeholder="Or paste image URL (optional)"
                       value={avatarUrl}
                       onChange={(e) => setAvatarUrl(e.target.value)}
                     />

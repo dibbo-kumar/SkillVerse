@@ -16,15 +16,28 @@ public class ProblemPostController {
     private final ProblemOfferRepository problemOfferRepository;
     private final ServiceBookingRepository bookingRepository;
     private final UserRepository userRepository;
+    private final PlatformSettingRepository settingRepository;
 
     public ProblemPostController(ProblemPostRepository problemPostRepository,
                                  ProblemOfferRepository problemOfferRepository,
                                  ServiceBookingRepository bookingRepository,
-                                 UserRepository userRepository) {
+                                 UserRepository userRepository,
+                                 PlatformSettingRepository settingRepository) {
         this.problemPostRepository = problemPostRepository;
         this.problemOfferRepository = problemOfferRepository;
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
+        this.settingRepository = settingRepository;
+    }
+
+    private double getPlatformCommissionRate() {
+        try {
+            return settingRepository.findBySettingKey("platform_commission")
+                    .map(s -> Double.parseDouble(s.getSettingValue()) / 100.0)
+                    .orElse(0.05);
+        } catch (Exception e) {
+            return 0.05;
+        }
     }
 
     @PostMapping
@@ -182,7 +195,8 @@ public class ProblemPostController {
 
         // Convert Method 2 into Common ServiceBooking Entity!
         Double agreedPrice = acceptedOffer.getProposedPrice();
-        double commission = Math.round(agreedPrice * 0.05 * 100.0) / 100.0;
+        double commissionRate = getPlatformCommissionRate();
+        double commission = Math.round(agreedPrice * commissionRate * 100.0) / 100.0;
         double netEarning = agreedPrice - commission;
 
         ServiceBooking booking = new ServiceBooking();

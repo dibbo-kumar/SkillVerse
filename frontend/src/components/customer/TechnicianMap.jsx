@@ -33,7 +33,7 @@ const TechnicianMap = ({
   const layerGroupRef = useRef(null);
   const tileLayerRef = useRef(null);
 
-  const [mapStyle, setMapStyle] = useState('dark'); // 'dark' or 'street'
+  const [mapStyle, setMapStyle] = useState('street'); // 'street' (OpenStreetMap) by default, or 'dark'
   const [isLiveTracking, setIsLiveTracking] = useState(false);
   const [liveLocation, setLiveLocation] = useState(customerLocation);
   const [activeWorkerPopup, setActiveWorkerPopup] = useState(null);

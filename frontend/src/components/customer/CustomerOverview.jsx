@@ -76,11 +76,29 @@ export default function CustomerOverview({
       <div className="glass-card overview-hero-card">
         <div className="overview-hero-content">
           <div className="overview-avatar-wrapper">
-            <img 
-              src={user?.profilePicture || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"} 
-              alt={user?.name} 
-              className="overview-avatar"
-            />
+            {user?.profilePicture ? (
+              <img 
+                src={user.profilePicture} 
+                alt={user?.name} 
+                className="overview-avatar"
+              />
+            ) : (
+              <div
+                className="overview-avatar"
+                style={{
+                  background: 'linear-gradient(135deg, var(--primary), #3b82f6)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: '2rem',
+                  textTransform: 'uppercase'
+                }}
+              >
+                {(user?.name || 'C').charAt(0)}
+              </div>
+            )}
             {user?.verified && (
               <span className="overview-verified-badge" title="NID Verified Citizen">
                 <ShieldCheck size={14} color="#0b0f19" />
