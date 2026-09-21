@@ -1,6 +1,6 @@
 #FileLock
-#Tue Sep 22 02:05:47 BDT 2026
+#Tue Sep 22 02:50:01 BDT 2026
 hostName=DIBRO
-id=1a0c59312afad23f51d5c892a11df175b793fb3bc85
+id=1a0c5bb902313b29e881b6c2cd916ee5ab4b9ed56f9
 method=file
-server=192.168.0.230\:56905
+server=192.168.0.230\:7240

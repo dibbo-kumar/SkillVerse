@@ -588,10 +588,10 @@ function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, cont
         </div>
       </div>
 
-      {/* --- SLEEK SEARCH & CATEGORY FILTERS UI WITH HIGH CONTRAST & ROUNDED CORNERS --- */}
+      {/* --- SLEEK SEARCH & CATEGORY FILTERS UI WITH THEME HARMONIZATION --- */}
       {activeTab === 'browse' && (
         <>
-          <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', background: 'linear-gradient(135deg, rgba(14, 21, 38, 0.95) 0%, rgba(20, 30, 55, 0.95) 100%)', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.12)' }}>
+          <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', alignItems: 'center' }}>
               
@@ -604,7 +604,7 @@ function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, cont
                   placeholder="Search tools, capacitors, brand, model or SKU (e.g. AC capacitor, multimeter)..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ paddingLeft: '2.8rem', height: '46px', fontSize: '0.95rem', background: '#131b2e', color: '#ffffff', borderRadius: '12px', borderColor: 'rgba(16,185,129,0.5)' }}
+                  style={{ paddingLeft: '2.8rem', height: '46px', fontSize: '0.95rem', background: 'var(--input-bg)', color: 'var(--input-text)', borderRadius: '12px', borderColor: 'var(--input-border)' }}
                 />
                 {searchQuery && (
                   <button onClick={() => setSearchQuery('')} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
@@ -613,37 +613,37 @@ function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, cont
                 )}
               </div>
 
-              {/* Service Filter Dropdown (Bright white text, dark background, rounded corners) */}
+              {/* Service Filter Dropdown */}
               <div>
                 <select 
                   className="form-input" 
-                  style={{ height: '46px', background: '#131b2e', color: '#ffffff', borderRadius: '12px', borderColor: 'rgba(255,255,255,0.2)', fontWeight: '600', paddingLeft: '1rem' }}
+                  style={{ height: '46px', background: 'var(--input-bg)', color: 'var(--input-text)', borderRadius: '12px', borderColor: 'var(--input-border)', fontWeight: '600', paddingLeft: '1rem' }}
                   value={selectedService}
                   onChange={(e) => setSelectedService(e.target.value)}
                 >
-                  <option value="All" style={{ background: '#131b2e', color: '#ffffff' }}>All Compatible Services</option>
-                  <option value="AC Servicing / Repair" style={{ background: '#131b2e', color: '#ffffff' }}>AC Servicing / Repair</option>
-                  <option value="Refrigerator Repair" style={{ background: '#131b2e', color: '#ffffff' }}>Refrigerator Repair</option>
-                  <option value="Electrical Wiring / Circuit Repair" style={{ background: '#131b2e', color: '#ffffff' }}>Electrical Wiring</option>
-                  <option value="Plumbing & Water-Line Repair" style={{ background: '#131b2e', color: '#ffffff' }}>Plumbing & Water Line</option>
-                  <option value="Fan Servicing / Repair" style={{ background: '#131b2e', color: '#ffffff' }}>Fan Servicing</option>
+                  <option value="All">All Compatible Services</option>
+                  <option value="AC Servicing / Repair">AC Servicing / Repair</option>
+                  <option value="Refrigerator Repair">Refrigerator Repair</option>
+                  <option value="Electrical Wiring / Circuit Repair">Electrical Wiring</option>
+                  <option value="Plumbing & Water-Line Repair">Plumbing & Water Line</option>
+                  <option value="Fan Servicing / Repair">Fan Servicing</option>
                 </select>
               </div>
 
-              {/* Price / Rating Sort Dropdown (Bright white text, dark background, rounded corners) */}
+              {/* Price / Rating Sort Dropdown */}
               <div>
                 <select 
                   className="form-input" 
-                  style={{ height: '46px', background: '#131b2e', color: '#ffffff', borderRadius: '12px', borderColor: 'rgba(255,255,255,0.2)', fontWeight: '600', paddingLeft: '1rem' }}
+                  style={{ height: '46px', background: 'var(--input-bg)', color: 'var(--input-text)', borderRadius: '12px', borderColor: 'var(--input-border)', fontWeight: '600', paddingLeft: '1rem' }}
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                 >
-                  <option value="recommended" style={{ background: '#131b2e', color: '#ffffff' }}>Sort: Recommended</option>
-                  <option value="price_asc" style={{ background: '#131b2e', color: '#ffffff' }}>Price: Low → High</option>
-                  <option value="price_desc" style={{ background: '#131b2e', color: '#ffffff' }}>Price: High → Low</option>
-                  <option value="rating" style={{ background: '#131b2e', color: '#ffffff' }}>Highest Rated</option>
-                  <option value="discount" style={{ background: '#131b2e', color: '#ffffff' }}>Biggest Discount</option>
-                  <option value="popular" style={{ background: '#131b2e', color: '#ffffff' }}>Most Popular</option>
+                  <option value="recommended">Sort: Recommended</option>
+                  <option value="price_asc">Price: Low → High</option>
+                  <option value="price_desc">Price: High → Low</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="discount">Biggest Discount</option>
+                  <option value="popular">Most Popular</option>
                 </select>
               </div>
 
@@ -1080,7 +1080,7 @@ function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, cont
       {/* --- PRODUCT DETAILS MODAL (WITH BOTH CART & DIRECT BUY BUTTONS) --- */}
       {selectedProduct && (
         <div className="toast-popup-overlay" onClick={() => setSelectedProduct(null)}>
-          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', background: '#0e1526' }}>
+          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', background: 'var(--bg-card)' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
               <div>
@@ -1217,7 +1217,7 @@ function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, cont
       {/* --- REVIEW SUBMISSION MODAL (DEVICE FILE PICKER + ONE REVIEW LIMIT) --- */}
       {reviewModalProduct && (
         <div className="toast-popup-overlay">
-          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '500px', padding: '2rem', background: '#0e1526' }}>
+          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '500px', padding: '2rem', background: 'var(--bg-card)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '1.2rem', margin: 0 }}>Review Product — {reviewModalProduct.title}</h3>
               <button className="btn-icon" onClick={() => { setReviewModalOrder(null); setReviewModalProduct(null); }}>
@@ -1318,7 +1318,7 @@ function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, cont
       {/* --- BANGLADESH CHECKOUT POPUP OVERLAY (PROMPTED DIRECTLY BY BUY NOW) --- */}
       {checkoutModalOpen && (
         <div className="toast-popup-overlay">
-          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '600px', padding: '2rem', background: '#0e1526', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '600px', padding: '2rem', background: 'var(--bg-card)', maxHeight: '90vh', overflowY: 'auto' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.4rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1486,7 +1486,7 @@ function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, cont
       {/* --- ORDER CONFIRMATION CELEBRATION MODAL --- */}
       {placedOrder && (
         <div className="toast-popup-overlay">
-          <div className="glass-card" style={{ width: '100%', maxWidth: '550px', padding: '2.5rem', textAlign: 'center', background: '#0e1526' }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '550px', padding: '2.5rem', textAlign: 'center', background: 'var(--bg-card)' }}>
             <CheckCircle size={56} color="var(--primary)" style={{ marginBottom: '1rem' }} />
             <h2 style={{ fontSize: '1.8rem', marginBottom: '0.4rem' }}>🎉 Order Placed Successfully!</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>

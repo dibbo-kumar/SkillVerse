@@ -427,7 +427,7 @@ export default function AdminStoreManager({ onShowToast }) {
       {/* --- ADMIN ORDER DETAILS MODAL --- */}
       {selectedAdminOrder && (
         <div className="toast-popup-overlay">
-          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '650px', padding: '2rem', background: '#0e1526', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '650px', padding: '2rem', background: 'var(--bg-card)', maxHeight: '90vh', overflowY: 'auto' }}>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
               <div>
@@ -543,7 +543,7 @@ export default function AdminStoreManager({ onShowToast }) {
       {/* --- ADD/EDIT PRODUCT MODAL --- */}
       {productModalOpen && (
         <div className="toast-popup-overlay" onClick={() => setProductModalOpen(false)}>
-          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '650px', padding: '2rem', background: '#0e1526' }}>
+          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '650px', padding: '2rem', background: 'var(--bg-card)' }}>
             <h3 style={{ fontSize: '1.2rem', marginBottom: '1.2rem' }}>
               {editingProduct ? 'Edit Tool Store Product' : 'Add New Tool Store Product'}
             </h3>

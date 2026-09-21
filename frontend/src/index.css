@@ -246,9 +246,11 @@ a {
   box-shadow: var(--shadow-md);
 }
 
-/* Light theme specific typography enhancements */
+/* Light theme comprehensive typography & contrast enforcement */
 [data-theme='light'] .glass-card {
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
 }
 
 [data-theme='light'] h1, 
@@ -257,16 +259,42 @@ a {
 [data-theme='light'] h4, 
 [data-theme='light'] h5, 
 [data-theme='light'] h6 {
-  color: var(--text-heading);
+  color: var(--text-heading) !important;
 }
 
-[data-theme='light'] p {
-  color: var(--text-secondary);
+[data-theme='light'] p:not(.btn *):not(.badge *) {
+  color: var(--text-secondary) !important;
 }
 
-[data-theme='light'] strong, 
-[data-theme='light'] b {
-  color: var(--text-primary);
+[data-theme='light'] strong:not(.btn *):not(.badge *), 
+[data-theme='light'] b:not(.btn *):not(.badge *) {
+  color: var(--text-heading) !important;
+}
+
+[data-theme='light'] .form-label {
+  color: var(--text-muted) !important;
+}
+
+[data-theme='light'] .nav-link {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme='light'] .nav-link.active,
+[data-theme='light'] .nav-link:hover {
+  color: var(--primary) !important;
+}
+
+[data-theme='light'] .btn-primary {
+  background-color: var(--primary);
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+[data-theme='light'] .btn-secondary {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-primary) !important;
+  font-weight: 600;
 }
 
 /* Dashboard Grid */

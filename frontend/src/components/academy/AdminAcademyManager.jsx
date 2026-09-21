@@ -280,7 +280,7 @@ export default function AdminAcademyManager({ onShowToast }) {
         </div>
 
         {/* Tab Switcher */}
-        <div style={{ display: 'flex', background: '#0e1526', padding: '0.3rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', background: 'var(--bg-card)', padding: '0.3rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
           <button className={`btn ${activeTab === 'overview' ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => setActiveTab('overview')}>
             <BarChart3 size={15} /> Overview
           </button>
@@ -469,7 +469,7 @@ export default function AdminAcademyManager({ onShowToast }) {
           <div className="glass-card" style={{ padding: 0, overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
               <thead>
-                <tr style={{ background: '#0e1526', borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                <tr style={{ background: 'var(--bg-card-hover)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
                   <th style={{ padding: '0.8rem 1rem' }}>Student User ID</th>
                   <th style={{ padding: '0.8rem 1rem' }}>Course ID</th>
                   <th style={{ padding: '0.8rem 1rem' }}>Payment Method</th>
@@ -505,7 +505,7 @@ export default function AdminAcademyManager({ onShowToast }) {
                     <td style={{ padding: '0.8rem 1rem' }}>
                       <select
                         className="form-select"
-                        style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem', background: '#0e1526' }}
+                        style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem', background: 'var(--input-bg)', color: 'var(--text-primary)' }}
                         value={e.paymentStatus}
                         onChange={ev => handleUpdateEnrollmentStatus(e.id, ev.target.value)}
                       >
@@ -538,7 +538,7 @@ export default function AdminAcademyManager({ onShowToast }) {
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
             <thead>
-              <tr style={{ background: '#0e1526', borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+              <tr style={{ background: 'var(--bg-card-hover)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
                 <th style={{ padding: '0.8rem 1rem' }}>Course Title</th>
                 <th style={{ padding: '0.8rem 1rem' }}>Category</th>
                 <th style={{ padding: '0.8rem 1rem' }}>Total Enrollments</th>

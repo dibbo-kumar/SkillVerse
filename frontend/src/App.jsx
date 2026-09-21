@@ -2229,7 +2229,7 @@ function App() {
       {/* --- PUBLIC AUTHENTICATION SCREEN (CUSTOMER & WORKER ONLY, ADMIN HIDDEN) --- */}
       {!isLoggedIn && !isAdminPath && authViewOpen && (
         <div style={{ display: 'flex', minHeight: '85vh', background: 'var(--bg-primary)', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '460px', padding: '2.5rem', background: '#0e1526' }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '460px', padding: '2.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)' }}>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
                 <ShieldCheck size={36} color="var(--primary)" />
@@ -2387,33 +2387,11 @@ function App() {
               <span style={{ marginRight: '0.4rem', fontWeight: 'bold', color: '#4285F4' }}>G</span> Sign in with Google
             </button>
 
-            {/* Quick simulation helper login options - STRICTLY CUSTOMER & WORKER ONLY */}
-            <div style={{ borderTop: '1px solid var(--border-color)', marginTop: '1.5rem', paddingTop: '1.5rem', textAlign: 'center' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold', display: 'block', marginBottom: '0.8rem' }}>
-                ⚡ QUICK TEST DEMO LOGINS
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <button className="btn btn-secondary" style={{ padding: '0.4rem', fontSize: '0.75rem', justifyContent: 'center' }} onClick={() => triggerAutofillLogin('CUSTOMER', 'anis@gmail.com')}>
-                  Login as Customer (Anisur)
-                </button>
-                <button className="btn btn-secondary" style={{ padding: '0.4rem', fontSize: '0.75rem', justifyContent: 'center' }} onClick={() => triggerAutofillLogin('WORKER', 'kamrul@gmail.com')}>
-                  Login as Verified Worker (Kamrul - AC & Electrical)
-                </button>
-                <button className="btn btn-secondary" style={{ padding: '0.4rem', fontSize: '0.75rem', justifyContent: 'center' }} onClick={() => triggerAutofillLogin('WORKER', 'tariq@gmail.com')}>
-                  Login as Verified Worker (Tariqul - AC Specialist)
-                </button>
-                <button className="btn btn-secondary" style={{ padding: '0.4rem', fontSize: '0.75rem', justifyContent: 'center' }} onClick={() => triggerAutofillLogin('WORKER', 'rafiq@gmail.com')}>
-                  Login as Verified Worker (Rafiq - Plumbing)
-                </button>
-                <button className="btn btn-secondary" style={{ padding: '0.4rem', fontSize: '0.75rem', justifyContent: 'center' }} onClick={() => triggerAutofillLogin('WORKER', 'sajid@gmail.com')}>
-                  Login as Unverified Worker (Sajid)
-                </button>
-              </div>
-
+            <div style={{ borderTop: '1px solid var(--border-color)', marginTop: '1.5rem', paddingTop: '1.2rem', textAlign: 'center' }}>
               <button
                 type="button"
                 className="btn btn-secondary"
-                style={{ width: '100%', marginTop: '1rem', padding: '0.45rem', fontSize: '0.78rem', justifyContent: 'center' }}
+                style={{ width: '100%', padding: '0.6rem', fontSize: '0.85rem', justifyContent: 'center' }}
                 onClick={() => setAuthViewOpen(false)}
               >
                 ← Back to Homepage Overview
@@ -2426,112 +2404,155 @@ function App() {
       {/* --- CUSTOMER FIND SERVICES TAB --- */}
       {isLoggedIn && activeTab === 'customer' && currentUser.role === 'CUSTOMER' && (
         <div>
-          {/* Hero & AI Verdict Pricing widget */}
-          <div className="ai-widget">
-            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2rem' }}>
-              <div style={{ flex: '1 1 500px' }}>
-                <h1 style={{ fontSize: '2.2rem', marginBottom: '0.5rem', fontFamily: 'var(--font-display)' }}>
-                  Hire <span style={{ color: 'var(--primary)' }}>Verified</span> Skilled Workers in Bangladesh
-                </h1>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                  AI-powered pricing estimation, verified identity tracking, and escrow payments for hassle-free home maintenance.
-                </p>
-
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                  <input
-                    className="form-input"
-                    placeholder="Describe your issue (e.g. AC not cooling, bathroom pipe leak, broken circuit breaker)"
-                    value={issueDesc}
-                    onChange={(e) => setIssueDesc(e.target.value)}
-                  />
-                  <button className="btn btn-primary" onClick={handleEstimateCost} disabled={aiLoading}>
-                    <Sparkles size={16} /> {aiLoading ? 'Analyzing...' : 'Verdict Price'}
-                  </button>
+          {/* Smart AI Diagnostic Assistant Hub */}
+          <div className="glass-card" style={{ margin: '1.5rem 2rem', padding: '1.75rem', borderRadius: '16px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-md)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                <div style={{ width: 42, height: 42, borderRadius: '12px', background: 'var(--primary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles size={22} color="var(--primary)" />
                 </div>
-
-                {aiEstimate && (
-                  <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                      <strong style={{ color: 'var(--primary)' }}>AI Verdict & Price Estimation:</strong>
-                      <span className="badge badge-verified">Accuracy {Math.round(aiEstimate.confidenceScore * 100)}%</span>
-                    </div>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.8rem' }}>
-                      {aiEstimate.diagnosticSummary}
-                    </p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.8rem' }}>
-                      <div>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Base Service Rate:</span>
-                        <div style={{ fontWeight: 'bold' }}>BDT {aiEstimate.baseServiceCost}</div>
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Spare Parts:</span>
-                        <div style={{ fontWeight: 'bold' }}>BDT {aiEstimate.estimatedSparePartsCost}</div>
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total Cost:</span>
-                        <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>BDT {aiEstimate.totalEstimatedCost}</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Chatbot Column */}
-              <div style={{ flex: '1 1 300px', background: 'rgba(10, 15, 29, 0.5)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', height: '280px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', marginBottom: '0.5rem' }}>
-                  <MessageSquare size={16} color="var(--primary)" />
-                  <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Smart Diagnostic Chat</span>
-                </div>
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  {chatMessages.map((m, idx) => (
-                    <div key={idx} style={{
-                      alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start',
-                      background: m.sender === 'user' ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-                      color: m.sender === 'user' ? '#0b0f19' : 'var(--text-primary)',
-                      padding: '0.4rem 0.8rem',
-                      borderRadius: '8px',
-                      maxWidth: '85%',
-                      fontSize: '0.8rem'
-                    }}>
-                      {m.text}
-                    </div>
-                  ))}
-                </div>
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  <input
-                    className="form-input"
-                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                    placeholder="Ask AI assistant..."
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  />
-                  <button className="btn btn-primary" style={{ padding: '0.4rem' }} onClick={handleSendMessage}>
-                    <ArrowRight size={16} />
-                  </button>
+                <div>
+                  <h2 style={{ fontSize: '1.25rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-heading)' }}>
+                    Smart AI Diagnostic Assistant
+                    <span style={{ fontSize: '0.72rem', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--accent-emerald)', padding: '0.2rem 0.6rem', borderRadius: '20px', fontWeight: 'bold' }}>
+                      🟢 Online 24/7
+                    </span>
+                  </h2>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    Describe any household breakdown or service question for instant AI troubleshooting, safety advice, and cost guidance.
+                  </p>
                 </div>
               </div>
+              <button
+                className="btn btn-secondary"
+                style={{ fontSize: '0.8rem', padding: '0.35rem 0.8rem' }}
+                onClick={() => {
+                  setChatMessages([{ sender: 'ai', text: 'Salam! I am your SkillVerse AI Diagnostic Assistant 🤖. How can I help you troubleshoot your home maintenance today?' }]);
+                }}
+              >
+                Clear History
+              </button>
+            </div>
+
+            {/* Quick Diagnostic Suggestion Chips */}
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', alignSelf: 'center', marginRight: '0.2rem' }}>
+                Quick Diagnostics:
+              </span>
+              {[
+                { label: '❄️ AC Warm Air / Leak', query: 'My AC is blowing warm air and leaking water' },
+                { label: '⚡ Tripped Circuit Breaker', query: 'Main electrical circuit breaker keeps tripping' },
+                { label: '💧 Concealed Pipe Leak', query: 'Concealed bathroom pipe leak and low water pressure' },
+                { label: '🔥 Gas Stove / Geyser', query: 'Gas burner not igniting and geyser not heating' },
+                { label: '🧹 Tank Wash / Cleaning', query: 'Overhead water tank jet wash and deep sofa cleaning' },
+                { label: '💳 How Escrow Works', query: 'How does SkillVerse secure escrow and advance payment work?' },
+                { label: '🛡️ 30-Day Guarantee', query: 'What is covered under the 30-Day FixConnect Guarantee?' }
+              ].map((chip, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={async () => {
+                    const userMsg = { sender: 'user', text: chip.query };
+                    setChatMessages(prev => [...prev, userMsg]);
+                    try {
+                      const res = await fetch(`${API_BASE}/ai/chatbot`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: chip.query })
+                      });
+                      const data = await res.json();
+                      setChatMessages(prev => [...prev, { sender: 'ai', text: data.response }]);
+                    } catch (e) {
+                      setChatMessages(prev => [...prev, { sender: 'ai', text: 'Diagnostic system offline.' }]);
+                    }
+                  }}
+                  style={{
+                    background: 'var(--bg-card-hover)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)',
+                    borderRadius: '20px',
+                    padding: '0.35rem 0.75rem',
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Chat Messages Log */}
+            <div style={{
+              background: 'var(--input-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '12px',
+              padding: '1rem',
+              minHeight: '200px',
+              maxHeight: '340px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.8rem',
+              marginBottom: '1rem'
+            }}>
+              {chatMessages.map((m, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start',
+                    background: m.sender === 'user' ? 'var(--primary)' : 'var(--bg-card)',
+                    color: m.sender === 'user' ? '#ffffff' : 'var(--text-primary)',
+                    border: m.sender === 'user' ? 'none' : '1px solid var(--border-color)',
+                    padding: '0.75rem 1rem',
+                    borderRadius: m.sender === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
+                    maxWidth: '85%',
+                    fontSize: '0.88rem',
+                    lineHeight: 1.6,
+                    whiteSpace: 'pre-line',
+                    boxShadow: 'var(--shadow-sm)'
+                  }}
+                >
+                  {m.text}
+                </div>
+              ))}
+            </div>
+
+            {/* Chat Input Row */}
+            <div style={{ display: 'flex', gap: '0.6rem' }}>
+              <input
+                className="form-input"
+                style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
+                placeholder="Ask Smart AI Assistant anything about your repair, maintenance, or pricing..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+              />
+              <button className="btn btn-primary" style={{ padding: '0.75rem 1.4rem', borderRadius: '10px', fontWeight: 700 }} onClick={handleSendMessage}>
+                <span>Send</span> <ArrowRight size={16} />
+              </button>
             </div>
           </div>
 
           {/* Post Your Problem Entry Point */}
           <div style={{ padding: '0 2rem', marginBottom: '1.5rem' }}>
-            <div className="glass-card" style={{ background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(79, 70, 229, 0.12))', border: '1px solid rgba(59, 130, 246, 0.35)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', padding: '1.2rem 1.5rem' }}>
+            <div className="glass-card" style={{ background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(79, 70, 229, 0.08))', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', padding: '1.25rem 1.5rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.2rem', margin: '0 0 0.3rem 0', color: '#ffffff', fontWeight: 'bold' }}>Can't find the right technician?</h3>
-                <p style={{ fontSize: '0.85rem', color: '#cbd5e1', margin: 0 }}>Post your maintenance problem publicly with preferred date & budget. Technicians will respond with custom offers!</p>
+                <h3 style={{ fontSize: '1.2rem', margin: '0 0 0.3rem 0', color: 'var(--text-heading)', fontWeight: 'bold' }}>Can't find the right technician?</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>Post your maintenance problem publicly with preferred date & budget. Technicians will respond with custom offers!</p>
               </div>
               <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
                 <button
                   className="btn btn-secondary"
-                  style={{ padding: '0.7rem 1.2rem', fontWeight: 'bold', fontSize: '0.9rem', border: '1px solid var(--accent-blue)', color: 'var(--accent-blue)' }}
+                  style={{ padding: '0.7rem 1.2rem', fontWeight: 'bold', fontSize: '0.9rem', border: '1px solid var(--primary)', color: 'var(--primary)' }}
                   onClick={() => setShowPostedProblemsModal(true)}
                 >
                   📋 Your Posted Problems
                 </button>
                 <button
                   className="btn btn-primary"
-                  style={{ background: 'linear-gradient(90deg, #2563eb, #4f46e5)', border: 'none', padding: '0.7rem 1.4rem', fontWeight: 'bold', fontSize: '0.9rem', boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)' }}
+                  style={{ padding: '0.7rem 1.4rem', fontWeight: 'bold', fontSize: '0.9rem' }}
                   onClick={() => setShowPostProblemModal(true)}
                 >
                   📢 Post Your Problem Now

@@ -409,7 +409,7 @@ export default function AcademyCoursesHub({ currentUser, rewards, onUsePoints, o
       {isStudioMode && viewingCourse && (
         <div style={{ padding: '1.5rem', maxWidth: '1400px', margin: '0 auto' }}>
           {/* Studio Top Navigation Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: '#0e1526', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'var(--bg-card)', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <button 
                 className="btn btn-secondary" 
@@ -647,7 +647,7 @@ export default function AcademyCoursesHub({ currentUser, rewards, onUsePoints, o
             </div>
 
             {/* Sub-Tab Navigation Switcher */}
-            <div style={{ display: 'flex', background: '#0e1526', padding: '0.3rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', background: 'var(--bg-card)', padding: '0.3rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
               <button
                 className={`btn ${activeTab === 'browse' ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem' }}
