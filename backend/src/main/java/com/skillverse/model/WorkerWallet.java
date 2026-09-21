@@ -41,20 +41,20 @@ public class WorkerWallet {
     public User getWorker() { return worker; }
     public void setWorker(User worker) { this.worker = worker; }
 
-    public Double getBalance() { return balance; }
-    public void setBalance(Double balance) { this.balance = balance; }
+    public Double getBalance() { return balance != null ? Math.max(0.0, balance) : 0.0; }
+    public void setBalance(Double balance) { this.balance = balance != null ? Math.max(0.0, Math.round(balance * 100.0) / 100.0) : 0.0; }
 
-    public Double getTotalEarnings() { return totalEarnings; }
-    public void setTotalEarnings(Double totalEarnings) { this.totalEarnings = totalEarnings; }
+    public Double getTotalEarnings() { return totalEarnings != null ? totalEarnings : 0.0; }
+    public void setTotalEarnings(Double totalEarnings) { this.totalEarnings = totalEarnings != null ? Math.max(0.0, totalEarnings) : 0.0; }
 
-    public Double getTotalPlatformFees() { return totalPlatformFees; }
-    public void setTotalPlatformFees(Double totalPlatformFees) { this.totalPlatformFees = totalPlatformFees; }
+    public Double getTotalPlatformFees() { return totalPlatformFees != null ? totalPlatformFees : 0.0; }
+    public void setTotalPlatformFees(Double totalPlatformFees) { this.totalPlatformFees = totalPlatformFees != null ? Math.max(0.0, totalPlatformFees) : 0.0; }
 
-    public Double getTotalWithdrawals() { return totalWithdrawals; }
-    public void setTotalWithdrawals(Double totalWithdrawals) { this.totalWithdrawals = totalWithdrawals; }
+    public Double getTotalWithdrawals() { return totalWithdrawals != null ? totalWithdrawals : 0.0; }
+    public void setTotalWithdrawals(Double totalWithdrawals) { this.totalWithdrawals = totalWithdrawals != null ? Math.max(0.0, totalWithdrawals) : 0.0; }
 
-    public Double getOutstandingFees() { return outstandingFees; }
-    public void setOutstandingFees(Double outstandingFees) { this.outstandingFees = outstandingFees; }
+    public Double getOutstandingFees() { return outstandingFees != null ? outstandingFees : 0.0; }
+    public void setOutstandingFees(Double outstandingFees) { this.outstandingFees = outstandingFees != null ? Math.max(0.0, outstandingFees) : 0.0; }
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }

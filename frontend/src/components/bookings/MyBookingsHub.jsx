@@ -30,9 +30,17 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
   // Payment Modal
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentBooking, setPaymentBooking] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('BKASH');
-  const [paymentTxId, setPaymentTxId] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('bKash');
+  const [paymentMobile, setPaymentMobile] = useState('');
+  const [customFinalAmount, setCustomFinalAmount] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Advance Payment Modal
+  const [showAdvanceModal, setShowAdvanceModal] = useState(false);
+  const [advanceBooking, setAdvanceBooking] = useState(null);
+  const [advancePaymentMethod, setAdvancePaymentMethod] = useState('bKash');
+  const [advanceMobileNumber, setAdvanceMobileNumber] = useState('');
+  const [isPayingAdvance, setIsPayingAdvance] = useState(false);
 
   // Review Modal
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -53,11 +61,15 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
 
   useEffect(() => {
     fetchCustomerData();
+    const interval = setInterval(() => {
+      fetchCustomerData(true);
+    }, 3500);
+    return () => clearInterval(interval);
   }, [currentUser?.id]);
 
-  const fetchCustomerData = async () => {
+  const fetchCustomerData = async (isBackground = false) => {
     if (!currentUser?.id) return;
-    setLoading(true);
+    if (!isBackground) setLoading(true);
     try {
       // 1. Fetch Bookings
       const resBookings = await fetch(`${API_BASE}/bookings/customer/${currentUser.id}`);
@@ -85,7 +97,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
     } catch (err) {
       console.error("Failed to load customer bookings data:", err);
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   };
 
@@ -93,6 +105,8 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
     switch (status) {
       case 'PENDING': return <span className="badge badge-pending">Pending Response</span>;
       case 'NEGOTIATING': return <span className="badge" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', border: '1px solid rgba(99, 102, 241, 0.3)' }}>Counter Offer</span>;
+      case 'AWAITING_ADVANCE': return <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.4)' }}>Awaiting Base Advance</span>;
+      case 'ACCEPTED':
       case 'PRICE_AGREED':
       case 'CONFIRMED': return <span className="badge badge-verified">Confirmed</span>;
       case 'ON_THE_WAY': return <span className="badge" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)' }}>On The Way</span>;
@@ -115,7 +129,13 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
     try {
       const res = await fetch(`${API_BASE}/bookings/${bId}/accept-price?acceptedBy=CUSTOMER`, { method: 'PUT' });
       if (res.ok) {
+        const updatedBooking = await res.json();
         fetchCustomerData();
+        if (!updatedBooking.advancePaid) {
+          setAdvanceBooking(updatedBooking);
+          setShowAdvanceModal(true);
+        }
+        if (onShowToast) onShowToast("Price Agreed!", `Agreed on ৳${updatedBooking.agreedCost || updatedBooking.estimatedCost}. Please pay the minimum base advance (৳${((updatedBooking.basePrice || 300) * 1.05).toFixed(0)}) to confirm dispatch.`, "success");
       } else {
         const err = await res.json();
         if (onShowToast) onShowToast("Error", err.error || "Failed to accept price", "error");
@@ -177,20 +197,28 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
     e.preventDefault();
     if (!paymentBooking) return;
     setIsProcessingPayment(true);
+    const amountToPay = customFinalAmount ? Number(customFinalAmount) : (paymentBooking.agreedCost || paymentBooking.estimatedCost);
+
     try {
       const res = await fetch(`${API_BASE}/bookings/${paymentBooking.id}/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           paymentMethod: paymentMethod,
-          transactionId: paymentTxId || `TXN-${paymentMethod}-${Date.now().toString().slice(-6)}`
+          mobileNumber: paymentMobile || '01711223344',
+          finalAmount: amountToPay
         })
       });
 
       if (res.ok) {
+        const completedData = await res.json();
+        setBookings(prev => prev.map(b => b.id === paymentBooking.id ? { ...b, ...completedData, status: 'COMPLETED', paymentStatus: 'PAID' } : b));
         if (onAddPoints) onAddPoints(50);
-        if (onShowToast) onShowToast("Payment Successful!", "Payment processed, receipt saved & +50 Reward Points added!", "success");
+        if (onShowToast) onShowToast("Payment Successful!", `৳${amountToPay} payment processed instantly & +50 Reward Points added!`, "success");
         setShowPaymentModal(false);
+        setCustomFinalAmount('');
+        setPaymentMobile('');
+        setActiveTab('history');
         fetchCustomerData();
       } else {
         if (onShowToast) onShowToast("Payment Failed", "Could not process transaction", "error");
@@ -199,6 +227,63 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
       console.error(e);
     } finally {
       setIsProcessingPayment(false);
+    }
+  };
+
+  const handlePayAdvanceSubmit = async (e) => {
+    e.preventDefault();
+    if (!advanceBooking) return;
+    setIsPayingAdvance(true);
+    const base = advanceBooking.basePrice || 300.0;
+    const vat = Math.round(base * 0.05 * 100.0) / 100.0;
+
+    try {
+      const res = await fetch(`${API_BASE}/bookings/${advanceBooking.id}/pay-advance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethod: advancePaymentMethod,
+          mobileNumber: advanceMobileNumber || '01711223344',
+          amount: base,
+          vatAmount: vat
+        })
+      });
+
+      if (res.ok) {
+        const confirmedData = await res.json();
+        setBookings(prev => prev.map(b => b.id === advanceBooking.id ? { ...b, ...confirmedData, status: 'CONFIRMED', advancePaid: true, advancePaidAmount: base, advanceVatAmount: vat } : b));
+        if (onShowToast) onShowToast("Advance Paid & Confirmed!", `Advance ৳${base + vat} paid. Booking is officially confirmed & technician dispatched!`, "success");
+        setShowAdvanceModal(false);
+        setAdvanceMobileNumber('');
+        fetchCustomerData();
+      } else {
+        if (onShowToast) onShowToast("Payment Error", "Failed to process advance payment.", "error");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsPayingAdvance(false);
+    }
+  };
+
+  const handleTimeoutRefund = async (booking) => {
+    if (!window.confirm(`Confirm cancellation and trigger instant cashback refund of ৳${(booking.advancePaidAmount || booking.basePrice || 300) * 1.05} back to your account?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/bookings/${booking.id}/timeout-refund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (res.ok) {
+        if (onShowToast) onShowToast("Instant Cashback Refunded!", "Advance payment has been refunded to your account due to delay.", "success");
+        fetchCustomerData();
+      } else {
+        const err = await res.json();
+        if (onShowToast) onShowToast("Refund Error", err.error || "Could not process refund.", "error");
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -217,6 +302,10 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
         setShowReviewModal(false);
         setReviewComment('');
         fetchCustomerData();
+      } else {
+        const err = await res.json();
+        if (onShowToast) onShowToast("Cannot Submit", err.error || "Review already submitted.", "error");
+        setShowReviewModal(false);
       }
     } catch (e) {
       console.error(e);
@@ -234,7 +323,10 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
     return true;
   });
 
-  const activeBooking = bookings.find((b) => ['CONFIRMED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'COMPLETION_REQUESTED'].includes(b.status));
+  const activeBooking = bookings.find((b) =>
+    ['AWAITING_ADVANCE', 'CONFIRMED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'COMPLETION_REQUESTED'].includes(b.status) &&
+    b.status !== 'COMPLETED' && b.status !== 'PAID' && b.status !== 'CANCELLED'
+  );
   const completedCount = bookings.filter((b) => b.status === 'COMPLETED' || b.status === 'PAID').length;
 
   return (
@@ -349,7 +441,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
           {activeBooking ? (
             <div className="glass-card" style={{ background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(16, 185, 129, 0.1))', border: '1px solid rgba(59, 130, 246, 0.4)', padding: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', flex: 1 }}>
                   <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
                     {getStatusBadge(activeBooking.status)}
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Booking #{activeBooking.id}</span>
@@ -363,6 +455,24 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                     <div>Location: <strong>{activeBooking.address}</strong></div>
                     <div>Agreed Price: <strong style={{ color: 'var(--primary)' }}>৳{activeBooking.agreedCost || activeBooking.estimatedCost}</strong></div>
                   </div>
+
+                  {(!activeBooking.advancePaid && (activeBooking.status === 'AWAITING_ADVANCE' || ['PRICE_AGREED', 'ACCEPTED'].includes(activeBooking.status))) && (
+                    <div style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '10px', padding: '0.8rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.6rem', flexWrap: 'wrap', gap: '0.6rem' }}>
+                      <span style={{ fontSize: '0.85rem', color: '#f59e0b' }}>
+                        ⏳ <strong>Deal Agreed!</strong> Pay minimum base advance (৳{((activeBooking.basePrice || 300) * 1.05).toFixed(0)}) to confirm booking & activate technician dispatch timer.
+                      </span>
+                      <button
+                        className="btn btn-primary"
+                        style={{ background: 'linear-gradient(90deg, #f59e0b, #d97706)', padding: '0.45rem 1rem', fontSize: '0.82rem', fontWeight: 'bold' }}
+                        onClick={() => {
+                          setAdvanceBooking(activeBooking);
+                          setShowAdvanceModal(true);
+                        }}
+                      >
+                        💳 Pay Base Advance Now →
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -391,9 +501,13 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
               {bookings.slice(0, 5).map((b) => {
-                const isWorkerCounter = (b.status === 'NEGOTIATING' || b.status === 'PENDING') && b.lastOfferedBy === 'WORKER';
+                const isWorkerCounter = (b.status === 'NEGOTIATING' || b.status === 'COUNTERED' || b.status === 'PENDING') && (b.lastOfferedBy === 'WORKER' || (!b.lastOfferedBy && b.workerCounterPrice));
                 const isCustomerWaiting = (b.status === 'PENDING' || b.status === 'NEGOTIATING') && (b.lastOfferedBy === 'CUSTOMER' || !b.lastOfferedBy);
-                const currentPrice = b.agreedCost || b.workerCounterPrice || b.customerOfferPrice || b.estimatedCost;
+                const currentPrice = (b.status === 'NEGOTIATING' || b.status === 'COUNTERED' || b.status === 'PENDING')
+                  ? (b.lastOfferedBy === 'WORKER' 
+                      ? (b.workerCounterPrice || b.estimatedCost || b.agreedCost) 
+                      : (b.customerOfferPrice || b.estimatedCost || b.agreedCost))
+                  : (b.agreedCost || b.estimatedCost || b.workerCounterPrice || b.customerOfferPrice);
 
                 return (
                   <div
@@ -470,6 +584,20 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                         </>
                       )}
 
+                      {(!b.advancePaid && (b.status === 'AWAITING_ADVANCE' || b.status === 'ACCEPTED' || b.status === 'PRICE_AGREED')) && (
+                        <button
+                          className="btn btn-primary"
+                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', background: 'linear-gradient(90deg, #f59e0b, #d97706)', color: '#ffffff', fontWeight: 'bold' }}
+                          onClick={() => {
+                            setAdvanceBooking(b);
+                            setShowAdvanceModal(true);
+                          }}
+                          title="Pay minimum base advance to confirm technician dispatch"
+                        >
+                          💳 Pay Base Advance (৳{((b.basePrice || 300) * 1.05).toFixed(0)})
+                        </button>
+                      )}
+
                       {isCustomerWaiting && (
                         <button
                           className="btn btn-secondary"
@@ -544,9 +672,13 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
           {/* ROW-WISE BOOKINGS TABLE / LIST */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {filteredBookings.map((b) => {
-              const isWorkerCounter = (b.status === 'NEGOTIATING' || b.status === 'PENDING') && b.lastOfferedBy === 'WORKER';
+              const isWorkerCounter = (b.status === 'NEGOTIATING' || b.status === 'COUNTERED' || b.status === 'PENDING') && (b.lastOfferedBy === 'WORKER' || (!b.lastOfferedBy && b.workerCounterPrice));
               const isCustomerWaiting = (b.status === 'PENDING' || b.status === 'NEGOTIATING') && (b.lastOfferedBy === 'CUSTOMER' || !b.lastOfferedBy);
-              const currentPrice = b.agreedCost || b.workerCounterPrice || b.customerOfferPrice || b.estimatedCost;
+              const currentPrice = (b.status === 'NEGOTIATING' || b.status === 'COUNTERED' || b.status === 'PENDING')
+                ? (b.lastOfferedBy === 'WORKER' 
+                    ? (b.workerCounterPrice || b.estimatedCost || b.agreedCost) 
+                    : (b.customerOfferPrice || b.estimatedCost || b.agreedCost))
+                : (b.agreedCost || b.estimatedCost || b.workerCounterPrice || b.customerOfferPrice);
 
               return (
                 <div
@@ -648,6 +780,20 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                       </>
                     )}
 
+                      {(!b.advancePaid && (b.status === 'AWAITING_ADVANCE' || b.status === 'ACCEPTED' || b.status === 'PRICE_AGREED')) && (
+                        <button
+                          className="btn btn-primary"
+                          style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', background: 'linear-gradient(90deg, #f59e0b, #d97706)', color: '#ffffff', fontWeight: 'bold' }}
+                          onClick={() => {
+                            setAdvanceBooking(b);
+                            setShowAdvanceModal(true);
+                          }}
+                          title="Pay minimum base advance to confirm technician dispatch"
+                        >
+                          💳 Pay Base Advance (৳{((b.basePrice || 300) * 1.05).toFixed(0)})
+                        </button>
+                      )}
+
                     {isCustomerWaiting && (
                       <button
                         className="btn btn-secondary"
@@ -684,20 +830,30 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                       </button>
                     )}
 
-                    {b.status === 'PAID' && (
+                    {(b.status === 'COMPLETED' || b.status === 'PAID') && (
                       <>
-                        <button
-                          className="btn btn-secondary"
-                          style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
-                          onClick={() => {
-                            setReviewBooking(b);
-                            setRating(b.reviewRating || 5);
-                            setReviewComment(b.reviewComment || '');
-                            setShowReviewModal(true);
-                          }}
-                        >
-                          <Star size={13} /> Review
-                        </button>
+                        {b.reviewRating ? (
+                          <span
+                            className="badge badge-gold"
+                            style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                            title={b.reviewComment ? `Review: "${b.reviewComment}"` : 'Reviewed'}
+                          >
+                            <Star size={12} fill="currentColor" /> Rated {b.reviewRating}/5
+                          </span>
+                        ) : (
+                          <button
+                            className="btn btn-secondary"
+                            style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
+                            onClick={() => {
+                              setReviewBooking(b);
+                              setRating(5);
+                              setReviewComment('');
+                              setShowReviewModal(true);
+                            }}
+                          >
+                            <Star size={13} /> Review
+                          </button>
+                        )}
                         <button
                           className="btn btn-secondary"
                           style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
@@ -753,7 +909,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                   </p>
                 </div>
                 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <button
                     className="btn btn-secondary"
                     style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
@@ -764,18 +920,28 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                   >
                     <FileText size={14} /> Receipt
                   </button>
-                  <button
-                    className="btn btn-secondary"
-                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                    onClick={() => {
-                      setReviewBooking(b);
-                      setRating(b.reviewRating || 5);
-                      setReviewComment(b.reviewComment || '');
-                      setShowReviewModal(true);
-                    }}
-                  >
-                    <Star size={14} /> {b.reviewRating ? 'Update Review' : 'Review'}
-                  </button>
+                  {b.reviewRating ? (
+                    <span
+                      className="badge badge-gold"
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                      title={b.reviewComment ? `Review: "${b.reviewComment}"` : 'Reviewed'}
+                    >
+                      <Star size={13} fill="currentColor" /> Rated {b.reviewRating}/5
+                    </span>
+                  ) : (
+                    <button
+                      className="btn btn-primary"
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                      onClick={() => {
+                        setReviewBooking(b);
+                        setRating(5);
+                        setReviewComment('');
+                        setShowReviewModal(true);
+                      }}
+                    >
+                      <Star size={14} /> Review
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -839,6 +1005,11 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
           setPaymentBooking(b);
           setShowPaymentModal(true);
         }}
+        onOpenAdvanceModal={(b) => {
+          setAdvanceBooking(b);
+          setShowAdvanceModal(true);
+        }}
+        onTimeoutRefund={handleTimeoutRefund}
         onOpenCompletionOtp={(b) => {
           setSelectedBooking(b);
           setShowCompletionOtpModal(true);
@@ -952,39 +1123,52 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
         </div>
       )}
 
-      {/* --- PAYMENT MODAL --- */}
+      {/* --- PAYMENT MODAL (FINAL COMPLETION PAYMENT) --- */}
       {showPaymentModal && paymentBooking && (
         <div className="toast-popup-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(5, 10, 20, 0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={(e) => e.target.className.includes('toast-popup-overlay') && setShowPaymentModal(false)}>
-          <div className="glass-card" style={{ maxWidth: '440px', width: '100%', background: 'var(--bg-secondary)', padding: '1.8rem', borderRadius: '18px', border: '1px solid var(--border-color)' }} onClick={(e) => e.stopPropagation()}>
+          <div className="glass-card" style={{ maxWidth: '450px', width: '100%', background: 'var(--bg-secondary)', padding: '1.8rem', borderRadius: '18px', border: '1px solid var(--border-color)' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <CreditCard size={20} color="var(--primary)" />
-                <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Pay Service Bill</h3>
+                <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Complete & Pay Service Bill</h3>
               </div>
               <button onClick={() => setShowPaymentModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <XCircle size={22} />
               </button>
             </div>
 
-            <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '1rem', borderRadius: '12px', marginBottom: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Total Due</span>
-                <strong style={{ fontSize: '1.4rem', color: 'var(--primary)' }}>৳{paymentBooking.agreedCost || paymentBooking.estimatedCost}</strong>
-              </div>
-              <span className="badge badge-verified">{paymentBooking.serviceType}</span>
-            </div>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              Finalize payment for <strong>{paymentBooking.serviceType}</strong> with technician <strong>{paymentBooking.worker?.name}</strong>.
+            </p>
 
             <form onSubmit={handleProcessPayment}>
               <div style={{ marginBottom: '1rem' }}>
-                <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Payment Gateway</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginTop: '0.3rem' }}>
-                  {['BKASH', 'NAGAD', 'CASH'].map((pm) => (
+                <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Final Payable Amount (BDT ৳)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="50"
+                  required
+                  className="form-input"
+                  style={{ width: '100%', padding: '0.7rem', fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--primary)' }}
+                  value={customFinalAmount || (paymentBooking.agreedCost || paymentBooking.estimatedCost)}
+                  onChange={(e) => setCustomFinalAmount(e.target.value)}
+                />
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                  Deal cost: ৳{paymentBooking.agreedCost || paymentBooking.estimatedCost} {paymentBooking.advancePaidAmount ? `(৳${paymentBooking.advancePaidAmount} advance already paid)` : ''}
+                </span>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Payment Channel</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem', marginTop: '0.3rem' }}>
+                  {['bKash', 'Nagad', 'Rocket', 'Cash'].map((pm) => (
                     <button
                       key={pm}
                       type="button"
                       onClick={() => setPaymentMethod(pm)}
                       className={`btn ${paymentMethod === pm ? 'btn-primary' : 'btn-secondary'}`}
-                      style={{ padding: '0.5rem', fontSize: '0.8rem', justifyContent: 'center' }}
+                      style={{ padding: '0.4rem 0.2rem', fontSize: '0.75rem', justifyContent: 'center' }}
                     >
                       {pm}
                     </button>
@@ -992,16 +1176,17 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                 </div>
               </div>
 
-              {paymentMethod !== 'CASH' && (
+              {paymentMethod !== 'Cash' && (
                 <div style={{ marginBottom: '1.2rem' }}>
-                  <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Transaction ID</label>
+                  <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{paymentMethod} Mobile Number</label>
                   <input
                     type="text"
+                    required
                     className="form-input"
                     style={{ width: '100%', padding: '0.7rem' }}
-                    value={paymentTxId}
-                    onChange={(e) => setPaymentTxId(e.target.value)}
-                    placeholder={`e.g. ${paymentMethod}-TXN-884920`}
+                    value={paymentMobile}
+                    onChange={(e) => setPaymentMobile(e.target.value)}
+                    placeholder="e.g. 01711223344"
                   />
                 </div>
               )}
@@ -1011,7 +1196,82 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                   Cancel
                 </button>
                 <button type="submit" disabled={isProcessingPayment} className="btn btn-primary" style={{ background: 'linear-gradient(90deg, #10b981, #059669)' }}>
-                  {isProcessingPayment ? 'Processing...' : `Pay ৳${paymentBooking.agreedCost || paymentBooking.estimatedCost} ✔`}
+                  {isProcessingPayment ? 'Processing...' : `Confirm & Pay ৳${customFinalAmount || paymentBooking.agreedCost || paymentBooking.estimatedCost} ✔`}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- ADVANCE PAYMENT MODAL --- */}
+      {showAdvanceModal && advanceBooking && (
+        <div className="toast-popup-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(5, 10, 20, 0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={(e) => e.target.className.includes('toast-popup-overlay') && setShowAdvanceModal(false)}>
+          <div className="glass-card" style={{ maxWidth: '440px', width: '100%', background: 'var(--bg-secondary)', padding: '1.8rem', borderRadius: '18px', border: '1px solid var(--border-color)' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <DollarSign size={20} color="var(--accent-gold)" />
+                <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Pay Minimum Base Advance</h3>
+              </div>
+              <button onClick={() => setShowAdvanceModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <XCircle size={22} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              Technician accepted your booking! Pay the required base advance to confirm dispatch.
+            </p>
+
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.9rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.2rem', fontSize: '0.85rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Worker Base Price (Advance):</span>
+                <strong style={{ color: '#ffffff' }}>৳{advanceBooking.basePrice || 300}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>SkillVerse VAT (5%):</span>
+                <strong style={{ color: 'var(--accent-gold)' }}>+৳{((advanceBooking.basePrice || 300) * 0.05).toFixed(1)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '0.4rem', marginTop: '0.3rem', fontSize: '1rem' }}>
+                <span style={{ fontWeight: 'bold', color: '#ffffff' }}>Total Advance Required:</span>
+                <strong style={{ color: 'var(--primary)' }}>৳{((advanceBooking.basePrice || 300) * 1.05).toFixed(1)}</strong>
+              </div>
+            </div>
+
+            <form onSubmit={handlePayAdvanceSubmit}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Payment Channel</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem', marginTop: '0.3rem' }}>
+                  {['bKash', 'Nagad', 'Rocket', 'Card'].map((pm) => (
+                    <button
+                      key={pm}
+                      type="button"
+                      onClick={() => setAdvancePaymentMethod(pm)}
+                      className={`btn ${advancePaymentMethod === pm ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ padding: '0.4rem 0.2rem', fontSize: '0.75rem', justifyContent: 'center' }}
+                    >
+                      {pm}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1.2rem' }}>
+                <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{advancePaymentMethod} Mobile Number</label>
+                <input
+                  type="text"
+                  required
+                  className="form-input"
+                  style={{ width: '100%', padding: '0.7rem' }}
+                  value={advanceMobileNumber}
+                  onChange={(e) => setAdvanceMobileNumber(e.target.value)}
+                  placeholder="e.g. 01711223344"
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowAdvanceModal(false)}>Cancel</button>
+                <button type="submit" disabled={isPayingAdvance} className="btn btn-primary" style={{ background: 'linear-gradient(90deg, #f59e0b, #d97706)' }}>
+                  {isPayingAdvance ? 'Processing...' : `Pay ৳${((advanceBooking.basePrice || 300) * 1.05).toFixed(1)} & Confirm`}
                 </button>
               </div>
             </form>

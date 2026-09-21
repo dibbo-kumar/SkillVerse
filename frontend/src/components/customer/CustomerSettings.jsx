@@ -21,7 +21,11 @@ import {
   Wrench,
   Upload,
   Trash2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Palette,
+  Sun,
+  Moon,
+  Sparkles
 } from 'lucide-react';
 
 export default function CustomerSettings({
@@ -29,9 +33,11 @@ export default function CustomerSettings({
   workerProfile,
   onUpdateProfile,
   onUpdateWorkerLocation,
-  onLogout
+  onLogout,
+  currentTheme = 'light',
+  onThemeChange
 }) {
-  const [activeTab, setActiveTab] = useState('personal'); // personal, location, security, notifications, language, privacy, help
+  const [activeTab, setActiveTab] = useState('personal'); // personal, location, theme, security, notifications, language, privacy, help
 
   const isWorker = user?.role === 'WORKER';
 
@@ -45,6 +51,7 @@ export default function CustomerSettings({
   const [address, setAddress] = useState(user?.address || '');
   const [skills, setSkills] = useState(workerProfile?.skills || 'Electrical, AC Repair');
   const [hourlyRate, setHourlyRate] = useState(workerProfile?.hourlyRate || 450);
+  const [basePrice, setBasePrice] = useState(workerProfile?.basePrice || 300);
   const [profileSaved, setProfileSaved] = useState(false);
 
   // Location GPS Form
@@ -71,6 +78,7 @@ export default function CustomerSettings({
     if (workerProfile) {
       setSkills(workerProfile.skills || '');
       setHourlyRate(workerProfile.hourlyRate || 450);
+      setBasePrice(workerProfile.basePrice || 300);
       setServiceArea(workerProfile.serviceArea || '');
     }
   }, [workerProfile]);
@@ -146,7 +154,8 @@ export default function CustomerSettings({
         latitude: latitude !== '' && latitude != null ? Number(latitude) : null,
         longitude: longitude !== '' && longitude != null ? Number(longitude) : null,
         skills,
-        hourlyRate: Number(hourlyRate)
+        hourlyRate: Number(hourlyRate),
+        basePrice: Number(basePrice)
       });
     }
     setProfileSaved(true);
@@ -229,6 +238,12 @@ export default function CustomerSettings({
             onClick={() => setActiveTab('location')}
           >
             <MapPin size={18} /> Location & GPS Map
+          </button>
+          <button
+            className={`settings-nav-item ${activeTab === 'theme' ? 'active' : ''}`}
+            onClick={() => setActiveTab('theme')}
+          >
+            <Palette size={18} /> Appearance & Theme
           </button>
           <button
             className={`settings-nav-item ${activeTab === 'security' ? 'active' : ''}`}
@@ -442,6 +457,17 @@ export default function CustomerSettings({
                         onChange={(e) => setHourlyRate(e.target.value)}
                       />
                     </div>
+                    <div>
+                      <label className="form-label">Base Price / Min. Advance (BDT)</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={basePrice}
+                        onChange={(e) => setBasePrice(e.target.value)}
+                        placeholder="e.g. 300"
+                      />
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Required minimum advance payment to confirm your booking (+5% VAT).</span>
+                    </div>
                   </div>
                 )}
 
@@ -543,7 +569,205 @@ export default function CustomerSettings({
             </div>
           )}
 
-          {/* TAB 3: Security */}
+          {/* TAB 3: Appearance & Theme */}
+          {activeTab === 'theme' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <h3 className="settings-tab-title" style={{ marginBottom: '0.3rem' }}>
+                    <Palette size={20} color="var(--primary)" /> Appearance & System Theme
+                  </h3>
+                  <p className="settings-tab-desc" style={{ marginBottom: 0 }}>
+                    Select your preferred visual mode for SkillVerse. Changes are saved automatically and applied system-wide.
+                  </p>
+                </div>
+                <span className="badge badge-verified" style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem' }}>
+                  Active: {currentTheme === 'light' ? '☀️ Professional Light (Primary)' : '🌙 Midnight Dark'}
+                </span>
+              </div>
+
+              {/* Visual Theme Selection Cards Grid */}
+              <div className="theme-selection-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginTop: '1.5rem', marginBottom: '2rem' }}>
+                
+                {/* 1. PROFESSIONAL SLATE LIGHT THEME (PRIMARY / DEFAULT) */}
+                <div
+                  className={`theme-selection-card ${currentTheme === 'light' ? 'active-theme' : ''}`}
+                  onClick={() => onThemeChange && onThemeChange('light')}
+                  style={{
+                    background: '#e5e7eb',
+                    color: '#0f172a',
+                    border: currentTheme === 'light' ? '2px solid #1d4ed8' : '1px solid #94a3b8',
+                    borderRadius: '16px',
+                    padding: '1.5rem',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    transition: 'all 0.25s ease',
+                    boxShadow: currentTheme === 'light' ? '0 8px 25px rgba(29, 78, 216, 0.22)' : '0 2px 8px rgba(0,0,0,0.08)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Sun size={20} color="#1d4ed8" />
+                      </div>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#0f172a' }}>Professional Slate Light</h4>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1d4ed8', background: '#dbeafe', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                          Primary / Default
+                        </span>
+                      </div>
+                    </div>
+                    {currentTheme === 'light' && (
+                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                        <Check size={14} />
+                      </div>
+                    )}
+                  </div>
+
+                  <p style={{ fontSize: '0.85rem', color: '#1e293b', lineHeight: 1.5, marginBottom: '1.25rem', fontWeight: 500 }}>
+                    Comfortable slate-gray (#d3d3d3) base with high-contrast pitch dark typography, vivid royal blue buttons, and crystal-clear borders.
+                  </p>
+
+                  {/* Mini Mockup Visual Preview */}
+                  <div style={{ background: '#d3d3d3', borderRadius: '10px', padding: '0.75rem', border: '1px solid #94a3b8' }}>
+                    <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }}></div>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b' }}></div>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }}></div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#e5e7eb', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #94a3b8', marginBottom: '0.4rem' }}>
+                      <div style={{ width: '45%', height: 7, background: '#0f172a', borderRadius: 3 }}></div>
+                      <div style={{ width: 40, height: 14, background: '#1d4ed8', borderRadius: 4 }}></div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                      <div style={{ background: '#e5e7eb', padding: '0.4rem', borderRadius: '6px', border: '1px solid #94a3b8' }}>
+                        <div style={{ width: '70%', height: 6, background: '#1e293b', borderRadius: 3, marginBottom: 4 }}></div>
+                        <div style={{ width: '40%', height: 8, background: '#059669', borderRadius: 3 }}></div>
+                      </div>
+                      <div style={{ background: '#e5e7eb', padding: '0.4rem', borderRadius: '6px', border: '1px solid #94a3b8' }}>
+                        <div style={{ width: '70%', height: 6, background: '#1e293b', borderRadius: 3, marginBottom: 4 }}></div>
+                        <div style={{ width: '50%', height: 8, background: '#1d4ed8', borderRadius: 3 }}></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{
+                      width: '100%',
+                      marginTop: '1.25rem',
+                      justifyContent: 'center',
+                      background: currentTheme === 'light' ? '#1d4ed8' : '#e2e8f0',
+                      color: currentTheme === 'light' ? '#ffffff' : '#0f172a',
+                      border: '1px solid #94a3b8',
+                      fontWeight: 700,
+                      fontSize: '0.85rem'
+                    }}
+                    onClick={() => onThemeChange && onThemeChange('light')}
+                  >
+                    {currentTheme === 'light' ? '✓ Currently Applied' : 'Set as Theme'}
+                  </button>
+                </div>
+
+                {/* 2. MIDNIGHT DARK THEME */}
+                <div
+                  className={`theme-selection-card ${currentTheme === 'dark' ? 'active-theme' : ''}`}
+                  onClick={() => onThemeChange && onThemeChange('dark')}
+                  style={{
+                    background: '#0a0f1d',
+                    color: '#f8fafc',
+                    border: currentTheme === 'dark' ? '2px solid #10b981' : '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '16px',
+                    padding: '1.5rem',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    transition: 'all 0.25s ease',
+                    boxShadow: currentTheme === 'dark' ? '0 8px 25px rgba(16, 185, 129, 0.25)' : '0 2px 8px rgba(0,0,0,0.4)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <div style={{ width: 36, height: 36, borderRadius: '10px', background: 'rgba(16, 185, 129, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Moon size={20} color="#10b981" />
+                      </div>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#ffffff' }}>Midnight Dark</h4>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                          Night Mode
+                        </span>
+                      </div>
+                    </div>
+                    {currentTheme === 'dark' && (
+                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0b0f19' }}>
+                        <Check size={14} />
+                      </div>
+                    )}
+                  </div>
+
+                  <p style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5, marginBottom: '1.25rem' }}>
+                    Deep obsidian palette with luminous emerald accents, subtle dark glassmorphism, and optimized battery usage on OLED screens.
+                  </p>
+
+                  {/* Mini Mockup Visual Preview */}
+                  <div style={{ background: '#111827', borderRadius: '10px', padding: '0.75rem', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }}></div>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b' }}></div>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }}></div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.04)', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', marginBottom: '0.4rem' }}>
+                      <div style={{ width: '45%', height: 7, background: '#475569', borderRadius: 3 }}></div>
+                      <div style={{ width: 40, height: 14, background: '#10b981', borderRadius: 4 }}></div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                      <div style={{ background: 'rgba(255,255,255,0.04)', padding: '0.4rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <div style={{ width: '70%', height: 6, background: '#64748b', borderRadius: 3, marginBottom: 4 }}></div>
+                        <div style={{ width: '40%', height: 8, background: '#10b981', borderRadius: 3 }}></div>
+                      </div>
+                      <div style={{ background: 'rgba(255,255,255,0.04)', padding: '0.4rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <div style={{ width: '70%', height: 6, background: '#64748b', borderRadius: 3, marginBottom: 4 }}></div>
+                        <div style={{ width: '50%', height: 8, background: '#3b82f6', borderRadius: 3 }}></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{
+                      width: '100%',
+                      marginTop: '1.25rem',
+                      justifyContent: 'center',
+                      background: currentTheme === 'dark' ? '#10b981' : 'rgba(255,255,255,0.08)',
+                      color: currentTheme === 'dark' ? '#0b0f19' : '#e2e8f0',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      fontWeight: 600,
+                      fontSize: '0.85rem'
+                    }}
+                    onClick={() => onThemeChange && onThemeChange('dark')}
+                  >
+                    {currentTheme === 'dark' ? '✓ Currently Applied' : 'Set as Theme'}
+                  </button>
+                </div>
+
+              </div>
+
+              {/* Theme Details Card */}
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '1.25rem', marginTop: '1rem' }}>
+                <h4 style={{ fontSize: '0.95rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Sparkles size={16} color="var(--accent-gold)" /> Theme Features & Accessibility
+                </h4>
+                <ul style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <li><strong>Instant Sync:</strong> Theme changes take effect instantly across all tabs, modals, maps, and forms without page reload.</li>
+                  <li><strong>Persistent Memory:</strong> Your selected theme preference is automatically remembered on this browser.</li>
+                  <li><strong>Quick Switcher:</strong> You can also toggle between Light and Dark mode anytime using the Sun/Moon button in the top navigation bar.</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: Security */}
           {activeTab === 'security' && (
             <div>
               <h3 className="settings-tab-title">

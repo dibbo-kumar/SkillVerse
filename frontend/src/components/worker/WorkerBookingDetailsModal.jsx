@@ -21,12 +21,18 @@ export default function WorkerBookingDetailsModal({
 }) {
   const [photoType, setPhotoType] = useState('before'); // 'before' or 'after'
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [workerPhotoUrl, setWorkerPhotoUrl] = useState('');
 
   if (!isOpen || !booking) return null;
 
-  const currentPrice = booking.agreedCost || booking.workerCounterPrice || booking.customerOfferPrice || booking.estimatedCost;
-  const isDirectPending = booking.status === 'PENDING' || (booking.status === 'NEGOTIATING' && (booking.lastOfferedBy === 'CUSTOMER' || !booking.lastOfferedBy));
-  const isWorkerCounterWaiting = booking.status === 'NEGOTIATING' && booking.lastOfferedBy === 'WORKER';
+  const currentPrice = (booking.status === 'NEGOTIATING' || booking.status === 'COUNTERED' || booking.status === 'PENDING')
+    ? (booking.lastOfferedBy === 'WORKER' 
+        ? (booking.workerCounterPrice || booking.estimatedCost || booking.agreedCost) 
+        : (booking.customerOfferPrice || booking.estimatedCost || booking.agreedCost))
+    : (booking.agreedCost || booking.estimatedCost || booking.workerCounterPrice || booking.customerOfferPrice);
+  const isAwaitingAdvance = booking.status === 'AWAITING_ADVANCE' || (booking.status === 'ACCEPTED' && !booking.advancePaid);
+  const isDirectPending = !isAwaitingAdvance && (booking.status === 'PENDING' || (booking.status === 'NEGOTIATING' && (booking.lastOfferedBy === 'CUSTOMER' || !booking.lastOfferedBy)));
+  const isWorkerCounterWaiting = !isAwaitingAdvance && (booking.status === 'NEGOTIATING' || booking.status === 'COUNTERED') && (booking.lastOfferedBy === 'WORKER' || (!booking.lastOfferedBy && booking.workerCounterPrice));
   
   const commissionRate = booking.platformCommission && currentPrice > 0 
     ? Math.round((booking.platformCommission / currentPrice) * 100) 
@@ -43,6 +49,7 @@ export default function WorkerBookingDetailsModal({
     switch (status) {
       case 'PENDING': return <span className="badge badge-pending">New Direct Request</span>;
       case 'NEGOTIATING': return <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: 'var(--accent-gold)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>Price Negotiation</span>;
+      case 'AWAITING_ADVANCE': return <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.2)', color: 'var(--accent-gold)', border: '1px solid rgba(245, 158, 11, 0.4)' }}>Awaiting Base Advance</span>;
       case 'CONFIRMED': return <span className="badge badge-verified">Confirmed Job</span>;
       case 'ON_THE_WAY': return <span className="badge" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)' }}>On The Way</span>;
       case 'ARRIVED': return <span className="badge" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.3)' }}>Arrived at Site</span>;
@@ -139,16 +146,9 @@ export default function WorkerBookingDetailsModal({
               <strong style={{ fontSize: '1.3rem', color: 'var(--accent-gold)' }}>৳{currentPrice}</strong>
             </div>
 
-            {hasActiveJob && (
-              <div style={{ marginTop: '0.6rem', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.15)', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', fontSize: '0.75rem' }}>
-                ⚠️ You currently have another active job in progress. You must complete your active job before accepting this new booking.
-              </div>
-            )}
-
             <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.8rem', flexWrap: 'wrap' }}>
               <button
                 className="btn btn-primary"
-                disabled={hasActiveJob}
                 style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }}
                 onClick={() => {
                   if (onAcceptBooking) onAcceptBooking(booking.id);
@@ -183,6 +183,18 @@ export default function WorkerBookingDetailsModal({
           </div>
         )}
 
+        {isAwaitingAdvance && (
+          <div style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.35)', borderRadius: '12px', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--accent-gold)', display: 'block' }}>Awaiting Client Minimum Advance Payment</strong>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                Agreed Price: <strong>৳{currentPrice}</strong>. When client pays base advance of ৳{booking.basePrice || 300} (+5% VAT), this job will confirm & activate.
+              </span>
+            </div>
+            <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.2)', color: 'var(--accent-gold)' }}>Awaiting Advance</span>
+          </div>
+        )}
+
         {/* Customer & Location Card */}
         <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '14px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
@@ -203,11 +215,25 @@ export default function WorkerBookingDetailsModal({
           </div>
         </div>
 
-        {/* Service Description & Address */}
+        {/* Service Description & Address & Customer Attached Photo */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
           <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.9rem', borderRadius: '12px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>PROBLEM DESCRIPTION</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>PROBLEM DESCRIPTION & SCOPE</span>
             <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>{booking.description}</p>
+            
+            {/* Customer Attached Issue Image */}
+            {booking.beforePhoto && (
+              <div style={{ marginTop: '0.8rem', padding: '0.6rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.4rem', fontWeight: 'bold' }}>
+                  <Camera size={13} /> Customer Attached Issue Photo:
+                </span>
+                <img 
+                  src={booking.beforePhoto} 
+                  alt="Customer Attached Diagnostic" 
+                  style={{ width: '100%', maxHeight: '180px', objectFit: 'contain', borderRadius: '6px', background: '#000' }} 
+                />
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: 'rgba(255,255,255,0.02)', padding: '0.8rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
@@ -284,18 +310,67 @@ export default function WorkerBookingDetailsModal({
               </div>
             </div>
 
-            {/* Upload Button */}
-            <div style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'flex-end' }}>
-              <label className="btn btn-secondary" style={{ padding: '0.35rem 0.8rem', fontSize: '0.75rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Camera size={14} />
-                {isUploadingPhoto ? 'Uploading...' : `Upload ${photoType === 'before' ? 'Before' : 'After'} Photo`}
+            {/* Upload & URL Controls */}
+            <div style={{ marginTop: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <label className="btn btn-secondary" style={{ padding: '0.35rem 0.8rem', fontSize: '0.75rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Camera size={14} />
+                  {isUploadingPhoto ? 'Uploading...' : `Upload File`}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={handleDevicePhotoChange}
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ padding: '0.35rem 0.8rem', fontSize: '0.75rem', color: '#60a5fa', borderColor: 'rgba(59, 130, 246, 0.4)' }}
+                  onClick={() => {
+                    const demoUrl = photoType === 'before' 
+                      ? "https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?w=600"
+                      : "https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600";
+                    if (onUploadPhotos) {
+                      setIsUploadingPhoto(true);
+                      onUploadPhotos(booking.id, {
+                        [photoType === 'before' ? 'beforePhoto' : 'afterPhoto']: demoUrl
+                      }).finally(() => setIsUploadingPhoto(false));
+                    }
+                  }}
+                >
+                  💡 Use Demo Servicing Photo
+                </button>
+              </div>
+
+              {/* URL input */}
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
                 <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={handleDevicePhotoChange}
+                  type="text"
+                  className="form-input"
+                  style={{ fontSize: '0.78rem', padding: '0.35rem 0.6rem' }}
+                  placeholder={`Or paste ${photoType === 'before' ? 'before' : 'after'} image URL...`}
+                  value={workerPhotoUrl}
+                  onChange={e => setWorkerPhotoUrl(e.target.value)}
                 />
-              </label>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ padding: '0.35rem 0.8rem', fontSize: '0.75rem' }}
+                  disabled={!workerPhotoUrl || isUploadingPhoto}
+                  onClick={() => {
+                    if (onUploadPhotos && workerPhotoUrl) {
+                      setIsUploadingPhoto(true);
+                      onUploadPhotos(booking.id, {
+                        [photoType === 'before' ? 'beforePhoto' : 'afterPhoto']: workerPhotoUrl
+                      }).then(() => setWorkerPhotoUrl('')).finally(() => setIsUploadingPhoto(false));
+                    }
+                  }}
+                >
+                  Save Photo
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -357,29 +432,9 @@ export default function WorkerBookingDetailsModal({
             )}
 
             {booking.status === 'IN_PROGRESS' && (
-              <button
-                className="btn btn-primary"
-                style={{ fontSize: '0.8rem', padding: '0.45rem 1rem', background: 'linear-gradient(90deg, #10b981, #059669)' }}
-                onClick={() => {
-                  if (onRequestCompletion) onRequestCompletion(booking.id);
-                  onClose();
-                }}
-              >
-                ✔ Request Job Completion
-              </button>
-            )}
-
-            {booking.status === 'COMPLETION_REQUESTED' && (
-              <button
-                className="btn btn-primary"
-                style={{ fontSize: '0.8rem', padding: '0.45rem 1rem' }}
-                onClick={() => {
-                  if (onOpenCompletionOtpModal) onOpenCompletionOtpModal(booking);
-                  onClose();
-                }}
-              >
-                🔑 Verify Completion OTP
-              </button>
+              <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#22d3ee', border: '1px solid rgba(6, 182, 212, 0.3)', padding: '0.45rem 0.8rem', fontSize: '0.8rem' }}>
+                ⚡ Work In Progress (Awaiting Customer Payment & Completion)
+              </span>
             )}
           </div>
 

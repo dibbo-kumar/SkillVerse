@@ -326,9 +326,8 @@ const TechnicianMap = ({
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.7rem' }}>
               <div><strong>Specialty:</strong> {w.skills}</div>
-              <div><strong>Distance:</strong> <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{formatDistanceString(dist)}</span></div>
-              <div><strong>Hourly Rate:</strong> BDT {w.hourlyRate}/hr</div>
-              <div><strong>Area:</strong> {w.serviceArea}</div>
+              <div><strong>Base Price:</strong> <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>BDT {w.basePrice || 300}</span></div>
+              <div><strong>Fixed Advance:</strong> BDT {w.basePrice || 300}</div>
             </div>
 
             <button 

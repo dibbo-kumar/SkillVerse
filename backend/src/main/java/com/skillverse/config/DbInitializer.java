@@ -310,7 +310,7 @@ public class DbInitializer implements CommandLineRunner {
                 userRepository.save(worker1);
 
                 WorkerProfile profile1 = new WorkerProfile(worker1, "Electrical, AC Repair, Smart Home", 6,
-                                "Dhaka North (Gulshan, Banani, Uttara)", "Gold", 450.0);
+                                "Dhaka North (Gulshan, Banani, Uttara)", "Gold", 450.0, 300.0);
                 profile1.setLatitude(23.8720);
                 profile1.setLongitude(90.3810);
                 workerProfileRepository.save(profile1);
@@ -327,15 +327,31 @@ public class DbInitializer implements CommandLineRunner {
                 userRepository.save(worker2);
 
                 WorkerProfile profile2 = new WorkerProfile(worker2, "Plumbing, Water Pump Repair", 10,
-                                "Dhaka South (Dhanmondi, Lalbagh, Motijheel)", "Master", 500.0);
+                                "Dhaka South (Dhanmondi, Lalbagh, Motijheel)", "Master", 500.0, 350.0);
                 profile2.setLatitude(23.7461);
                 profile2.setLongitude(90.3742);
                 workerProfileRepository.save(profile2);
 
-                // Pre-populate bookings
+                // Pre-populate bookings with past completed review
+                ServiceBooking bookingPast1 = new ServiceBooking(customer, worker1, "Electrical Circuit Diagnostic",
+                                LocalDateTime.now().minusDays(5), 1200.0,
+                                "Main DB circuit breaker tripped and kitchen socket replaced.");
+                bookingPast1.setStatus("COMPLETED");
+                bookingPast1.setPaymentStatus("PAID");
+                bookingPast1.setAgreedCost(1200.0);
+                bookingPast1.setBasePrice(300.0);
+                bookingPast1.setAdvancePaid(true);
+                bookingPast1.setAdvancePaidAmount(300.0);
+                bookingPast1.setAdvanceVatAmount(15.0);
+                bookingPast1.setReviewRating(5);
+                bookingPast1.setReviewComment("Kamrul bhai is exceptionally skilled and punctual! Fixed the wiring issue within 40 mins.");
+                bookingPast1.setReviewedAt(LocalDateTime.now().minusDays(4));
+                bookingRepository.save(bookingPast1);
+
                 ServiceBooking booking1 = new ServiceBooking(customer, worker1, "AC Repair & Servicing",
                                 LocalDateTime.now().plusDays(1), 1500.0,
                                 "AC unit not cooling effectively and makes noise.");
+                booking1.setBasePrice(300.0);
                 booking1.setStartVerificationCode("4829");
                 booking1.setCompletionVerificationCode("9143");
                 booking1.setLiveLocation("23.8103, 90.4125");

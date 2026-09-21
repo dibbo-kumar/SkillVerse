@@ -33,6 +33,12 @@ public class WorkerWalletController {
         WorkerWallet wallet = walletRepository.findByWorkerId(workerId)
                 .orElseGet(() -> walletRepository.save(new WorkerWallet(worker)));
 
+        // Guarantee balance is never negative
+        if (wallet.getBalance() == null || wallet.getBalance() < 0.0) {
+            wallet.setBalance(0.0);
+            walletRepository.save(wallet);
+        }
+
         return ResponseEntity.ok(wallet);
     }
 
@@ -47,31 +53,50 @@ public class WorkerWalletController {
         Double amount = Double.valueOf(req.get("amount").toString());
         String method = req.getOrDefault("method", "bKash").toString();
         String accountNo = req.getOrDefault("accountNo", "").toString();
+        String bankName = req.getOrDefault("bankName", "").toString();
+        String branchName = req.getOrDefault("branchName", "").toString();
+        String accountHolder = req.getOrDefault("accountHolder", "").toString();
 
         User worker = userRepository.findById(workerId).orElse(null);
         if (worker == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Worker not found"));
         }
 
+        if (amount == null || amount <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Cashout amount must be greater than 0."));
+        }
+
         WorkerWallet wallet = walletRepository.findByWorkerId(workerId)
                 .orElseGet(() -> walletRepository.save(new WorkerWallet(worker)));
 
-        if (wallet.getBalance() < amount) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Insufficient available balance for withdrawal. Current balance: ৳" + wallet.getBalance()));
+        double currentBal = wallet.getBalance() != null ? Math.max(0.0, wallet.getBalance()) : 0.0;
+        if (currentBal < amount) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Insufficient available balance for cashout. Available balance: ৳" + currentBal));
         }
 
-        wallet.setBalance(wallet.getBalance() - amount);
-        wallet.setTotalWithdrawals(wallet.getTotalWithdrawals() + amount);
+        // Deduct from main wallet, ensuring balance can never be negative
+        double newBalance = Math.max(0.0, Math.round((currentBal - amount) * 100.0) / 100.0);
+        wallet.setBalance(newBalance);
+        double totalWithdrawn = (wallet.getTotalWithdrawals() != null ? wallet.getTotalWithdrawals() : 0.0) + amount;
+        wallet.setTotalWithdrawals(Math.round(totalWithdrawn * 100.0) / 100.0);
+        wallet.setUpdatedAt(java.time.LocalDateTime.now());
         walletRepository.save(wallet);
 
+        String desc;
+        if ("Bank".equalsIgnoreCase(method) || "Bank Transfer".equalsIgnoreCase(method)) {
+            desc = "Bank Cashout to " + (bankName.isEmpty() ? "Bank" : bankName) + " (A/C: " + accountNo + ", Branch: " + (branchName.isEmpty() ? "Principal" : branchName) + ", Holder: " + accountHolder + ")";
+        } else {
+            desc = "Cashout via " + method + " (" + accountNo + ")";
+        }
+
         WalletTransaction tx = new WalletTransaction(
-                worker, "WITHDRAWAL", -amount,
-                "Withdrawal to " + method + " (" + accountNo + ")", null
+                worker, "WITHDRAWAL", -amount, desc, null
         );
+        tx.setStatus("COMPLETED");
         transactionRepository.save(tx);
 
         return ResponseEntity.ok(Map.of(
-                "message", "Withdrawal of ৳" + amount + " requested successfully.",
+                "message", "Cashout of ৳" + amount + " via " + method + " processed successfully.",
                 "wallet", wallet,
                 "transaction", tx
         ));

@@ -66,7 +66,9 @@ export default function CustomerProfileHub({
   onUpdateWorkerLocation,
   onLogout,
   onOpenBookingModal,
-  onShopPartsForBooking
+  onShopPartsForBooking,
+  currentTheme = 'light',
+  onThemeChange
 }) {
   const [subTab, setSubTab] = useState(initialSubTab);
 
@@ -340,6 +342,8 @@ export default function CustomerProfileHub({
             onUpdateProfile={onUpdateProfile}
             onUpdateWorkerLocation={onUpdateWorkerLocation}
             onLogout={onLogout}
+            currentTheme={currentTheme}
+            onThemeChange={onThemeChange}
           />
         )}
       </div>

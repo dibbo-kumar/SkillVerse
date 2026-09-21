@@ -19,6 +19,7 @@ public class WorkerProfile {
     private String serviceArea;
     private String careerLevel; // Beginner, Bronze, Silver, Gold, Platinum, Master
     private Double hourlyRate;
+    private Double basePrice = 300.0;
     private boolean isAvailable;
     private Double latitude = 23.8720;
     private Double longitude = 90.3810;
@@ -32,6 +33,18 @@ public class WorkerProfile {
         this.serviceArea = serviceArea;
         this.careerLevel = careerLevel;
         this.hourlyRate = hourlyRate;
+        this.basePrice = 300.0;
+        this.isAvailable = true;
+    }
+
+    public WorkerProfile(User user, String skills, Integer experienceYears, String serviceArea, String careerLevel, Double hourlyRate, Double basePrice) {
+        this.user = user;
+        this.skills = skills;
+        this.experienceYears = experienceYears;
+        this.serviceArea = serviceArea;
+        this.careerLevel = careerLevel;
+        this.hourlyRate = hourlyRate;
+        this.basePrice = basePrice != null ? basePrice : 300.0;
         this.isAvailable = true;
     }
 
@@ -55,6 +68,9 @@ public class WorkerProfile {
 
     public Double getHourlyRate() { return hourlyRate; }
     public void setHourlyRate(Double hourlyRate) { this.hourlyRate = hourlyRate; }
+
+    public Double getBasePrice() { return basePrice != null ? basePrice : 300.0; }
+    public void setBasePrice(Double basePrice) { this.basePrice = basePrice; }
 
     public boolean isAvailable() { return isAvailable; }
     public void setAvailable(boolean available) { isAvailable = available; }

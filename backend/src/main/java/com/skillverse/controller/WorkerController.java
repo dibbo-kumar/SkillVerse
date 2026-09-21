@@ -69,6 +69,7 @@ public class WorkerController {
                     if (updatedProfile.getExperienceYears() != null) profile.setExperienceYears(updatedProfile.getExperienceYears());
                     if (updatedProfile.getServiceArea() != null) profile.setServiceArea(updatedProfile.getServiceArea());
                     if (updatedProfile.getHourlyRate() != null) profile.setHourlyRate(updatedProfile.getHourlyRate());
+                    if (updatedProfile.getBasePrice() != null) profile.setBasePrice(updatedProfile.getBasePrice());
                     profile.setAvailable(updatedProfile.isAvailable());
                     if (updatedProfile.getLatitude() != null) profile.setLatitude(updatedProfile.getLatitude());
                     if (updatedProfile.getLongitude() != null) profile.setLongitude(updatedProfile.getLongitude());

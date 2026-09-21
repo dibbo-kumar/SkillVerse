@@ -116,8 +116,8 @@ export default function SavedTechnicians({
 
                 <div className="worker-pricing-row">
                   <div>
-                    <span className="price-label">Starting Rate</span>
-                    <div className="hourly-rate">৳{w.hourlyRate || 450} <span className="rate-unit">/ hour</span></div>
+                    <span className="price-label">Fixed Base Price</span>
+                    <div className="hourly-rate" style={{ color: 'var(--primary)' }}>৳{w.basePrice || 300} <span className="rate-unit">(Min. Advance)</span></div>
                   </div>
 
                   <button 
@@ -126,7 +126,7 @@ export default function SavedTechnicians({
                       onOpenBookingModal({
                         worker: w,
                         serviceType: (w.skills || 'General Repair').split(',')[0],
-                        suggestedCost: (w.hourlyRate || 450) * 3
+                        suggestedCost: (w.basePrice || 300) * 2
                       });
                     }}
                   >

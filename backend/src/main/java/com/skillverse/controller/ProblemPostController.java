@@ -62,37 +62,6 @@ public class ProblemPostController {
         post.setStatus("OPEN");
 
         ProblemPost saved = problemPostRepository.save(post);
-
-        // Auto-generate competitive technician quotes from registered technicians in the platform
-        List<User> workers = userRepository.findAll().stream()
-                .filter(u -> "WORKER".equalsIgnoreCase(u.getRole()))
-                .limit(2)
-                .toList();
-
-        if (workers.size() >= 1) {
-            User w1 = workers.get(0);
-            ProblemOffer off1 = new ProblemOffer();
-            off1.setProblemPost(saved);
-            off1.setWorker(w1);
-            off1.setProposedPrice(Math.round(saved.getBudgetPrice() * 0.95 * 100.0) / 100.0);
-            off1.setMessage("Hello! I am a verified technician available at your requested time. I will bring standard replacement parts and professional tools.");
-            off1.setEstimatedArrival("Within 45-60 mins");
-            off1.setStatus("PENDING");
-            problemOfferRepository.save(off1);
-        }
-
-        if (workers.size() >= 2) {
-            User w2 = workers.get(1);
-            ProblemOffer off2 = new ProblemOffer();
-            off2.setProblemPost(saved);
-            off2.setWorker(w2);
-            off2.setProposedPrice(Math.round(saved.getBudgetPrice() * 1.05 * 100.0) / 100.0);
-            off2.setMessage("Certified specialist with 8+ years experience. Quality guarantee with 30-day post-service warranty on all repairs.");
-            off2.setEstimatedArrival("Same day available");
-            off2.setStatus("PENDING");
-            problemOfferRepository.save(off2);
-        }
-
         return ResponseEntity.ok(saved);
     }
 
@@ -131,6 +100,14 @@ public class ProblemPostController {
 
         if (!Boolean.TRUE.equals(worker.isVerified()) || !"ACTIVE".equalsIgnoreCase(worker.getStatus())) {
             return ResponseEntity.badRequest().body(Map.of("error", "Worker is unverified or under review. Admin verification is required to submit quotes on problem posts."));
+        }
+
+        // Check if worker already has an active job in progress
+        List<String> activeStatuses = List.of("CONFIRMED", "ON_THE_WAY", "ARRIVED", "IN_PROGRESS", "COMPLETION_REQUESTED");
+        List<ServiceBooking> workerBookings = bookingRepository.findByWorkerId(workerId);
+        boolean isBusy = workerBookings.stream().anyMatch(b -> activeStatuses.contains(b.getStatus()));
+        if (isBusy) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Worker already has an active job in progress. Complete or finalize the current job before submitting offers on new problems."));
         }
 
         Double price = Double.valueOf(req.get("proposedPrice").toString());
@@ -179,12 +156,12 @@ public class ProblemPostController {
             return ResponseEntity.badRequest().body(Map.of("error", "Cannot assign problem to an unverified technician."));
         }
 
-        // Enforce: Worker cannot take job if already has active job
+        // Check if technician currently has an active job in progress
         List<String> activeStatuses = List.of("CONFIRMED", "ON_THE_WAY", "ARRIVED", "IN_PROGRESS", "COMPLETION_REQUESTED");
-        boolean isBusy = bookingRepository.findByWorkerId(worker.getId()).stream()
-                .anyMatch(b -> activeStatuses.contains(b.getStatus()));
+        List<ServiceBooking> workerBookings = bookingRepository.findByWorkerId(worker.getId());
+        boolean isBusy = workerBookings.stream().anyMatch(b -> activeStatuses.contains(b.getStatus()));
         if (isBusy) {
-            return ResponseEntity.badRequest().body(Map.of("error", "This technician currently has an active job in progress. Please choose another technician or wait until they finish."));
+            return ResponseEntity.badRequest().body(Map.of("error", "This technician currently has an active job in progress and cannot accept new jobs at this time."));
         }
 
         acceptedOffer.setStatus("ACCEPTED");

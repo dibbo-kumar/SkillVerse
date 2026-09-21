@@ -64,6 +64,30 @@ public class ServiceBooking {
     private String transactionId;
     private LocalDateTime paidAt;
 
+    // Base Price & Minimum Advance Payment (5% VAT)
+    private Double basePrice = 300.0;
+    private Double advancePaidAmount = 0.0;
+    private Double advanceVatAmount = 0.0;
+    private Boolean advancePaid = false;
+    private String advancePaymentMethod;
+    private String advancePaymentMobile;
+    private LocalDateTime advancePaidAt;
+
+    // Final Completion Payment (Custom adjusted amount, instant, no OTP)
+    private Double finalPaymentAmount;
+    private String finalPaymentMobile;
+
+    // Distance-Based Arrival & Timer
+    private Double distanceMeters = 1500.0; // Default distance in meters (e.g. 1.5 km)
+    private Double arrivalTimeHours = 1.5;  // 1 hour per 1000m
+    private LocalDateTime arrivalDeadline;
+
+    // Instant Cashback / Refund on Timeout Rejection
+    private Boolean isRefunded = false;
+    private Double refundAmount = 0.0;
+    private String refundMobile;
+    private LocalDateTime refundedAt;
+
     // Customer Review
     private Integer reviewRating;
     private String reviewComment;
@@ -211,6 +235,54 @@ public class ServiceBooking {
 
     public LocalDateTime getReviewedAt() { return reviewedAt; }
     public void setReviewedAt(LocalDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
+
+    public Double getBasePrice() { return basePrice != null ? basePrice : 300.0; }
+    public void setBasePrice(Double basePrice) { this.basePrice = basePrice; }
+
+    public Double getAdvancePaidAmount() { return advancePaidAmount; }
+    public void setAdvancePaidAmount(Double advancePaidAmount) { this.advancePaidAmount = advancePaidAmount; }
+
+    public Double getAdvanceVatAmount() { return advanceVatAmount; }
+    public void setAdvanceVatAmount(Double advanceVatAmount) { this.advanceVatAmount = advanceVatAmount; }
+
+    public Boolean getAdvancePaid() { return advancePaid != null && advancePaid; }
+    public void setAdvancePaid(Boolean advancePaid) { this.advancePaid = advancePaid; }
+
+    public String getAdvancePaymentMethod() { return advancePaymentMethod; }
+    public void setAdvancePaymentMethod(String advancePaymentMethod) { this.advancePaymentMethod = advancePaymentMethod; }
+
+    public String getAdvancePaymentMobile() { return advancePaymentMobile; }
+    public void setAdvancePaymentMobile(String advancePaymentMobile) { this.advancePaymentMobile = advancePaymentMobile; }
+
+    public LocalDateTime getAdvancePaidAt() { return advancePaidAt; }
+    public void setAdvancePaidAt(LocalDateTime advancePaidAt) { this.advancePaidAt = advancePaidAt; }
+
+    public Double getFinalPaymentAmount() { return finalPaymentAmount; }
+    public void setFinalPaymentAmount(Double finalPaymentAmount) { this.finalPaymentAmount = finalPaymentAmount; }
+
+    public String getFinalPaymentMobile() { return finalPaymentMobile; }
+    public void setFinalPaymentMobile(String finalPaymentMobile) { this.finalPaymentMobile = finalPaymentMobile; }
+
+    public Double getDistanceMeters() { return distanceMeters != null ? distanceMeters : 1500.0; }
+    public void setDistanceMeters(Double distanceMeters) { this.distanceMeters = distanceMeters; }
+
+    public Double getArrivalTimeHours() { return arrivalTimeHours != null ? arrivalTimeHours : 1.5; }
+    public void setArrivalTimeHours(Double arrivalTimeHours) { this.arrivalTimeHours = arrivalTimeHours; }
+
+    public LocalDateTime getArrivalDeadline() { return arrivalDeadline; }
+    public void setArrivalDeadline(LocalDateTime arrivalDeadline) { this.arrivalDeadline = arrivalDeadline; }
+
+    public Boolean getIsRefunded() { return isRefunded != null && isRefunded; }
+    public void setIsRefunded(Boolean isRefunded) { this.isRefunded = isRefunded; }
+
+    public Double getRefundAmount() { return refundAmount != null ? refundAmount : 0.0; }
+    public void setRefundAmount(Double refundAmount) { this.refundAmount = refundAmount; }
+
+    public String getRefundMobile() { return refundMobile; }
+    public void setRefundMobile(String refundMobile) { this.refundMobile = refundMobile; }
+
+    public LocalDateTime getRefundedAt() { return refundedAt; }
+    public void setRefundedAt(LocalDateTime refundedAt) { this.refundedAt = refundedAt; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

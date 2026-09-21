@@ -48,6 +48,9 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState('bKash');
   const [withdrawAccount, setWithdrawAccount] = useState('');
+  const [withdrawBankName, setWithdrawBankName] = useState('Dutch-Bangla Bank');
+  const [withdrawBranchName, setWithdrawBranchName] = useState('Uttara Branch');
+  const [withdrawAccountHolder, setWithdrawAccountHolder] = useState(currentWorker?.name || '');
 
   // Verification State
   const [verifDossier, setVerifDossier] = useState(null);
@@ -94,10 +97,14 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
   useEffect(() => {
     fetchWorkerData();
+    const interval = setInterval(() => {
+      fetchWorkerData(true);
+    }, 4000);
+    return () => clearInterval(interval);
   }, [workerId]);
 
-  const fetchWorkerData = async () => {
-    setLoading(true);
+  const fetchWorkerData = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     try {
       // 1. Fetch Worker Bookings
       const resB = await fetch(`${API_BASE}/bookings/worker/${workerId}`);
@@ -183,9 +190,16 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
   const currentVerifStatus = verifDossier ? verifDossier.status : (currentWorker?.status || (currentWorker?.isVerified ? 'APPROVED' : 'UNVERIFIED'));
 
   const activeJob = workerBookings.find(b =>
-    ['CONFIRMED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'COMPLETION_REQUESTED'].includes(b.status)
+    ['CONFIRMED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(b.status) &&
+    b.status !== 'COMPLETED' && b.status !== 'PAID' && b.status !== 'CANCELLED'
   );
   const hasActiveJob = !!activeJob;
+
+  useEffect(() => {
+    if (hasActiveJob && activeSubTab === 'requests') {
+      setActiveSubTab('active-job');
+    }
+  }, [hasActiveJob]);
 
   const handleOpenDetails = (b) => {
     setDetailsBooking(b);
@@ -275,11 +289,16 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
       setShowVerifModal(true);
       return;
     }
+    if (hasActiveJob) {
+      if (onShowToast) onShowToast("Worker Busy", "You already have an active job in progress. Complete your current active job before accepting new bookings.", "error");
+      return;
+    }
     try {
       const res = await fetch(`${API_BASE}/bookings/${bId}/accept-price?acceptedBy=WORKER`, { method: 'PUT' });
       if (res.ok) {
+        const data = await res.json();
         fetchWorkerData();
-        setActiveSubTab('active-job');
+        if (onShowToast) onShowToast("Booking Accepted!", `Price agreed! Awaiting customer base advance payment (BDT ${data.basePrice || 300} + 5% VAT) to activate dispatch.`, "success");
       } else {
         const err = await res.json();
         if (onShowToast) onShowToast("Cannot Accept", err.error || "You already have an active job in progress or need verification.", "error");
@@ -310,8 +329,12 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
   const handleDeclineBooking = async (bId) => {
     try {
-      const res = await fetch(`${API_BASE}/bookings/${bId}/cancel?reason=WorkerDeclined`, { method: 'PUT' });
+      let res = await fetch(`${API_BASE}/bookings/${bId}/cancel?reason=WorkerDeclined`, { method: 'PUT' });
+      if (!res.ok) {
+        res = await fetch(`${API_BASE}/bookings/${bId}/status?status=CANCELLED`, { method: 'PUT' });
+      }
       if (res.ok) {
+        if (onShowToast) onShowToast("Request Cancelled", "Service request removed.", "info");
         fetchWorkerData();
       }
     } catch (e) {
@@ -421,6 +444,10 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
       setShowVerifModal(true);
       return;
     }
+    if (hasActiveJob) {
+      if (onShowToast) onShowToast("Worker Busy", "You already have an active job in progress (#BK-" + activeJob?.id + "). Complete or finalize the current job before quoting on new problems.", "error");
+      return;
+    }
     if (!selectedProblem || !offerPrice) return;
     try {
       const res = await fetch(`${API_BASE}/problems/${selectedProblem.id}/offers`, {
@@ -448,36 +475,72 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
   const handleWithdrawal = async (e) => {
     e.preventDefault();
-    if (!withdrawAmount) return;
+    const amountNum = parseFloat(withdrawAmount);
+    const availableBal = wallet?.balance != null ? Math.max(0, wallet.balance) : 0;
+
+    if (!amountNum || isNaN(amountNum) || amountNum <= 0) {
+      if (onShowToast) onShowToast("Invalid Amount", "Please enter a valid cashout amount greater than ৳0.", "error");
+      return;
+    }
+
+    if (amountNum > availableBal) {
+      if (onShowToast) onShowToast("Insufficient Balance", `Cannot cashout ৳${amountNum}. Available wallet balance is only ৳${availableBal}.`, "error");
+      return;
+    }
+
+    if (withdrawMethod === 'Bank' && (!withdrawBankName || !withdrawAccount || !withdrawAccountHolder)) {
+      if (onShowToast) onShowToast("Bank Details Required", "Please provide Bank Name, Account Number, and Account Holder Name.", "error");
+      return;
+    }
+
+    if (['bKash', 'Rocket', 'Nagad'].includes(withdrawMethod) && !withdrawAccount) {
+      if (onShowToast) onShowToast("Mobile Number Required", `Please enter your valid ${withdrawMethod} mobile number.`, "error");
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/wallet/withdraw`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           workerId: workerId,
-          amount: parseFloat(withdrawAmount),
+          amount: amountNum,
           method: withdrawMethod,
-          accountNo: withdrawAccount
+          accountNo: withdrawAccount,
+          bankName: withdrawBankName,
+          branchName: withdrawBranchName,
+          accountHolder: withdrawAccountHolder
         })
       });
 
       if (res.ok) {
-        if (onShowToast) onShowToast("Withdrawal Requested", `৳${withdrawAmount} withdrawal to ${withdrawMethod} processed successfully.`, "success");
+        const data = await res.json();
+        const updatedBal = data.wallet?.balance != null ? Math.max(0, data.wallet.balance) : Math.max(0, availableBal - amountNum);
+        if (onShowToast) onShowToast("Cashout Successful!", `৳${amountNum} successfully withdrawn via ${withdrawMethod}. Remaining balance: ৳${updatedBal}.`, "success");
         setShowWithdrawModal(false);
         setWithdrawAmount('');
         setWithdrawAccount('');
         fetchWorkerData();
       } else {
         const err = await res.json();
-        if (onShowToast) onShowToast("Withdrawal Failed", err.error || "Insufficient funds", "error");
+        if (onShowToast) onShowToast("Cashout Failed", err.error || "Insufficient funds", "error");
       }
     } catch (e) {
       console.error(e);
+      if (onShowToast) onShowToast("Network Error", "Unable to complete cashout. Please try again.", "error");
     }
   };
 
-  const pendingRequests = workerBookings.filter(b => b.status === 'PENDING' || b.status === 'NEGOTIATING');
+  const pendingRequests = workerBookings.filter(b => 
+    !b.advancePaid &&
+    !['CONFIRMED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'COMPLETION_REQUESTED', 'COMPLETED', 'PAID', 'CANCELLED'].includes(b.status) &&
+    ['PENDING', 'NEGOTIATING', 'AWAITING_ADVANCE', 'ACCEPTED', 'COUNTERED'].includes(b.status)
+  );
   const completedBookings = workerBookings.filter(b => b.status === 'COMPLETED' || b.status === 'PAID');
+  const completedReviews = workerBookings.filter(b => b.reviewRating != null);
+  const dynamicRating = completedReviews.length > 0
+    ? (completedReviews.reduce((sum, b) => sum + b.reviewRating, 0) / completedReviews.length).toFixed(1)
+    : (currentWorker?.rating ? Number(currentWorker.rating).toFixed(1) : "5.0");
 
   const filteredProblems = problemPosts.filter(p => {
     if (problemCategoryFilter === 'ALL') return true;
@@ -493,8 +556,8 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
           <div style={{ position: 'relative' }}>
             <img
               src={currentWorker?.profilePicture || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=150"}
-              alt={currentWorker?.name}
-              style={{ width: 62, height: 62, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }}
+              alt={currentWorker?.name || "Worker"}
+              style={{ width: 62, height: 62, borderRadius: '50%', objectFit: 'cover', border: '2.5px solid var(--primary)' }}
             />
             <span
               style={{
@@ -553,6 +616,10 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
         {/* Quick KPI Badges */}
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1rem', borderRadius: '12px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Rating</span>
+            <strong style={{ fontSize: '1.2rem', color: 'var(--accent-gold)' }}>⭐ {dynamicRating}</strong>
+          </div>
           <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1rem', borderRadius: '12px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Wallet Balance</span>
             <strong style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>৳{wallet?.balance || 0}</strong>
@@ -741,14 +808,13 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
               {/* Progress Stepper Visualizer */}
               <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.2rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.5rem', textAlign: 'center', fontSize: '0.75rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem', textAlign: 'center', fontSize: '0.75rem' }}>
                   {[
                     { key: 'CONFIRMED', label: '1. Confirmed', icon: CheckCircle2, done: true },
-                    { key: 'ON_THE_WAY', label: '2. On The Way', icon: Navigation, done: ['ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'COMPLETION_REQUESTED', 'COMPLETED', 'PAID'].includes(activeJob.status) },
-                    { key: 'ARRIVED', label: '3. Arrived', icon: MapPin, done: ['ARRIVED', 'IN_PROGRESS', 'COMPLETION_REQUESTED', 'COMPLETED', 'PAID'].includes(activeJob.status) },
-                    { key: 'IN_PROGRESS', label: '4. In Progress (OTP)', icon: Wrench, done: ['IN_PROGRESS', 'COMPLETION_REQUESTED', 'COMPLETED', 'PAID'].includes(activeJob.status) },
-                    { key: 'COMPLETION_REQUESTED', label: '5. Verify Finish', icon: KeyRound, done: ['COMPLETION_REQUESTED', 'COMPLETED', 'PAID'].includes(activeJob.status) },
-                    { key: 'COMPLETED', label: '6. Payment Settled', icon: DollarSign, done: ['COMPLETED', 'PAID'].includes(activeJob.status) }
+                    { key: 'ON_THE_WAY', label: '2. On The Way', icon: Navigation, done: ['ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED', 'PAID'].includes(activeJob.status) },
+                    { key: 'ARRIVED', label: '3. Arrived', icon: MapPin, done: ['ARRIVED', 'IN_PROGRESS', 'COMPLETED', 'PAID'].includes(activeJob.status) },
+                    { key: 'IN_PROGRESS', label: '4. Work In Progress', icon: Wrench, done: ['IN_PROGRESS', 'COMPLETED', 'PAID'].includes(activeJob.status) },
+                    { key: 'COMPLETED', label: '5. Payment Settled', icon: DollarSign, done: ['COMPLETED', 'PAID'].includes(activeJob.status) }
                   ].map((st, idx) => (
                     <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem' }}>
                       <div
@@ -849,46 +915,18 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                 )}
 
                 {activeJob.status === 'IN_PROGRESS' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                       <div>
                         <h4 style={{ fontSize: '1.1rem', color: '#22d3ee', margin: 0 }}>Stage 4: Work In Progress</h4>
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
-                          Carry out inspection and repairs. When complete, request completion to generate customer code.
+                          Service is underway. Once you complete inspection and repairs, the customer will review and complete direct payment to settle the bill.
                         </p>
                       </div>
-                      <button className="btn btn-primary" style={{ padding: '0.7rem 1.4rem', fontSize: '0.9rem', background: 'linear-gradient(90deg, #10b981, #059669)' }} onClick={() => handleRequestCompletion(activeJob.id)}>
-                        ✔ Request Job Completion
-                      </button>
+                      <div style={{ background: 'rgba(34, 211, 238, 0.1)', padding: '0.6rem 1.1rem', borderRadius: '10px', border: '1px solid rgba(34, 211, 238, 0.3)', color: '#22d3ee', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
+                        <CheckCircle2 size={16} /> Awaiting Customer Payment & Completion
+                      </div>
                     </div>
-                  </div>
-                )}
-
-                {activeJob.status === 'COMPLETION_REQUESTED' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div>
-                      <h4 style={{ fontSize: '1.1rem', color: 'var(--primary)', margin: 0 }}>Stage 5: Verify Completion OTP</h4>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
-                        Completion requested! Customer was provided their 4-digit Completion Code. Enter it below:
-                      </p>
-                    </div>
-
-                    <form onSubmit={handleVerifyCompletionOtp} style={{ display: 'flex', gap: '0.8rem', maxWidth: '400px' }}>
-                      <input
-                        type="text"
-                        maxLength="4"
-                        required
-                        autoFocus
-                        className="form-input"
-                        style={{ flex: 1, padding: '0.8rem', fontSize: '1.3rem', fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.3rem', fontFamily: 'monospace' }}
-                        placeholder="0000"
-                        value={completionOtpInput}
-                        onChange={(e) => setCompletionOtpInput(e.target.value)}
-                      />
-                      <button type="submit" className="btn btn-primary" style={{ padding: '0.8rem 1.4rem' }}>
-                        Confirm Finish ✔
-                      </button>
-                    </form>
                   </div>
                 )}
 
@@ -934,9 +972,14 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {pendingRequests.map((b) => {
-              const isCustomerOffer = b.status === 'PENDING' || (b.status === 'NEGOTIATING' && (b.lastOfferedBy === 'CUSTOMER' || !b.lastOfferedBy));
-              const isWorkerCounter = b.status === 'NEGOTIATING' && b.lastOfferedBy === 'WORKER';
-              const currentPrice = b.agreedCost || b.workerCounterPrice || b.customerOfferPrice || b.estimatedCost;
+              const isAwaitingAdvance = b.status === 'AWAITING_ADVANCE' || (b.status === 'ACCEPTED' && !b.advancePaid);
+              const isCustomerOffer = !isAwaitingAdvance && (b.status === 'PENDING' || (b.status === 'NEGOTIATING' && (b.lastOfferedBy === 'CUSTOMER' || !b.lastOfferedBy)));
+              const isWorkerCounter = !isAwaitingAdvance && (b.status === 'NEGOTIATING' || b.status === 'COUNTERED') && (b.lastOfferedBy === 'WORKER' || (!b.lastOfferedBy && b.workerCounterPrice));
+              const currentPrice = (b.status === 'NEGOTIATING' || b.status === 'COUNTERED' || b.status === 'PENDING')
+                ? (b.lastOfferedBy === 'WORKER' 
+                    ? (b.workerCounterPrice || b.estimatedCost || b.agreedCost) 
+                    : (b.customerOfferPrice || b.estimatedCost || b.agreedCost))
+                : (b.agreedCost || b.estimatedCost || b.workerCounterPrice || b.customerOfferPrice);
 
               return (
                 <div
@@ -949,8 +992,8 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                     gap: '1rem',
                     padding: '1.2rem',
                     borderRadius: '14px',
-                    border: isCustomerOffer ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid var(--border-color)',
-                    background: isCustomerOffer ? 'rgba(245, 158, 11, 0.05)' : 'rgba(255,255,255,0.02)'
+                    border: isAwaitingAdvance ? '1px solid rgba(245, 158, 11, 0.4)' : isCustomerOffer ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid var(--border-color)',
+                    background: isAwaitingAdvance ? 'rgba(245, 158, 11, 0.05)' : isCustomerOffer ? 'rgba(59, 130, 246, 0.05)' : 'rgba(255,255,255,0.02)'
                   }}
                 >
                   {/* Column 1: ID & Status */}
@@ -965,6 +1008,12 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
                       {b.description?.length > 50 ? `${b.description.slice(0, 50)}...` : b.description}
                     </p>
+                    {b.beforePhoto && (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.3rem', background: 'rgba(59, 130, 246, 0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                        <Camera size={12} color="#60a5fa" />
+                        <span style={{ fontSize: '0.72rem', color: '#93c5fd' }}>Problem Photo Attached</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Column 3: Customer info */}
@@ -973,10 +1022,11 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>📍 {b.address}</span>
                   </div>
 
-                  {/* Column 4: Offered Price */}
+                  {/* Column 4: Offered & Base Price */}
                   <div>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Offered Price</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>{isAwaitingAdvance ? 'Agreed Deal' : 'Client Offer / Deal'}</span>
                     <strong style={{ fontSize: '1.1rem', color: 'var(--primary)' }}>৳{currentPrice}</strong>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', display: 'block' }}>Base Adv: ৳{b.basePrice || 300}</span>
                   </div>
 
                   {/* Column 5: Action Buttons */}
@@ -985,17 +1035,23 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                       <>
                         <button
                           className="btn btn-primary"
-                          disabled={hasActiveJob || !isWorkerApproved}
+                          disabled={!isWorkerApproved || hasActiveJob}
                           style={{
                             padding: '0.35rem 0.65rem',
                             fontSize: '0.75rem',
                             opacity: (!isWorkerApproved || hasActiveJob) ? 0.6 : 1,
                             cursor: (!isWorkerApproved || hasActiveJob) ? 'not-allowed' : 'pointer'
                           }}
-                          onClick={() => handleAcceptBooking(b.id)}
-                          title={!isWorkerApproved ? 'Verification approval required' : hasActiveJob ? 'Finish current job first' : 'Accept offered price'}
+                          onClick={() => {
+                            if (hasActiveJob) {
+                              if (onShowToast) onShowToast("Worker Busy", "You already have an active job in progress (#BK-" + activeJob?.id + "). Complete it before accepting new requests.", "error");
+                              return;
+                            }
+                            handleAcceptBooking(b.id);
+                          }}
+                          title={hasActiveJob ? 'Busy: active job in progress' : !isWorkerApproved ? 'Verification approval required' : 'Accept offered price'}
                         >
-                          <CheckCircle2 size={13} /> Accept {!isWorkerApproved && '🔒'}
+                          <CheckCircle2 size={13} /> {hasActiveJob ? 'Busy 🔴' : 'Accept'} {!isWorkerApproved && '🔒'}
                         </button>
                         <button
                           className="btn btn-secondary"
@@ -1026,9 +1082,35 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                     )}
 
                     {isWorkerCounter && (
-                      <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', fontSize: '0.75rem' }}>
-                        Waiting Customer (৳{currentPrice})
-                      </span>
+                      <>
+                        <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', fontSize: '0.75rem' }}>
+                          Waiting Customer (৳{currentPrice})
+                        </span>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                          onClick={() => handleDeclineBooking(b.id)}
+                          title="Cancel request"
+                        >
+                          <XCircle size={13} />
+                        </button>
+                      </>
+                    )}
+
+                    {isAwaitingAdvance && (
+                      <>
+                        <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', fontSize: '0.75rem' }}>
+                          ⏳ Awaiting Base Advance (৳{b.basePrice || 300} + 5% VAT)
+                        </span>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                          onClick={() => handleDeclineBooking(b.id)}
+                          title="Cancel request"
+                        >
+                          <XCircle size={13} />
+                        </button>
+                      </>
                     )}
 
                     <button
@@ -1120,16 +1202,22 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
                   <button
                     className="btn btn-primary"
+                    disabled={!isWorkerApproved || hasActiveJob}
                     style={{
                       padding: '0.65rem',
                       fontSize: '0.85rem',
                       justifyContent: 'center',
-                      opacity: !isWorkerApproved ? 0.7 : 1
+                      opacity: (!isWorkerApproved || hasActiveJob) ? 0.6 : 1,
+                      cursor: hasActiveJob ? 'not-allowed' : 'pointer'
                     }}
                     onClick={() => {
                       if (!isWorkerApproved) {
                         if (onShowToast) onShowToast("Verification Required", "You must be approved to submit problem quotes.", "warning");
                         setShowVerifModal(true);
+                        return;
+                      }
+                      if (hasActiveJob) {
+                        if (onShowToast) onShowToast("Worker Busy", "You already have an active job in progress (#BK-" + activeJob?.id + "). Complete or finalize your current job before quoting on other problems.", "error");
                         return;
                       }
                       setSelectedProblem(p);
@@ -1138,7 +1226,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                       setShowProblemOfferModal(true);
                     }}
                   >
-                    <Send size={14} /> {!isWorkerApproved ? 'Submit Quote (🔒 Approval Required)' : myOffer ? 'Update Quote ৳' : 'Submit Price Quote →'}
+                    <Send size={14} /> {hasActiveJob ? '🔴 Busy on Active Job' : !isWorkerApproved ? 'Submit Quote (🔒 Approval Required)' : myOffer ? 'Update Quote ৳' : 'Submit Price Quote →'}
                   </button>
                 </div>
               );
@@ -1753,73 +1841,225 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
         </div>
       )}
 
-      {/* --- WITHDRAWAL MODAL --- */}
+      {/* --- WITHDRAWAL / CASHOUT MODAL --- */}
       {showWithdrawModal && (
         <div className="toast-popup-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(5, 10, 20, 0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={(e) => e.target.className.includes('toast-popup-overlay') && setShowWithdrawModal(false)}>
-          <div className="glass-card" style={{ maxWidth: '440px', width: '100%', background: 'var(--bg-secondary)', padding: '1.8rem', borderRadius: '18px', border: '1px solid var(--border-color)' }} onClick={(e) => e.stopPropagation()}>
+          <div className="glass-card" style={{ maxWidth: '480px', width: '100%', background: 'var(--bg-secondary)', padding: '1.8rem', borderRadius: '20px', border: '1px solid var(--border-color)' }} onClick={(e) => e.stopPropagation()}>
+            
+            {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <Wallet size={20} color="var(--primary)" />
-                <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Withdraw Wallet Earnings</h3>
+                <Wallet size={22} color="var(--primary)" />
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', color: '#ffffff', margin: 0 }}>Cashout Wallet Balance</h3>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Direct disbursement to Mobile Wallet or Bank</span>
+                </div>
               </div>
               <button onClick={() => setShowWithdrawModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <XCircle size={22} />
               </button>
             </div>
 
-            <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '0.8rem 1rem', borderRadius: '10px', marginBottom: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Available Balance:</span>
-              <strong style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>৳{wallet?.balance || 0}</strong>
+            {/* Balance Summary Header */}
+            <div style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.25)', padding: '0.9rem 1.1rem', borderRadius: '12px', marginBottom: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Available Main Wallet</span>
+                <strong style={{ fontSize: '1.4rem', color: 'var(--primary)' }}>৳{wallet?.balance != null ? Math.max(0, wallet.balance) : 0}</strong>
+              </div>
+              <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                <span>Min: ৳50 • No Max</span>
+                <div style={{ color: '#34d399', fontWeight: 600 }}>Instant Cashout</div>
+              </div>
             </div>
 
-            <form onSubmit={handleWithdrawal}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Withdraw Amount (৳)</label>
+            <form onSubmit={handleWithdrawal} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              
+              {/* Withdrawal Method Selector */}
+              <div>
+                <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.4rem', display: 'block' }}>Select Cashout Method</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>
+                  {[
+                    { id: 'bKash', label: 'bKash', color: '#e2136e' },
+                    { id: 'Nagad', label: 'Nagad', color: '#f7941d' },
+                    { id: 'Rocket', label: 'Rocket', color: '#8c3494' },
+                    { id: 'Bank', label: 'Bank', color: '#3b82f6' }
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setWithdrawMethod(m.id)}
+                      className={`btn ${withdrawMethod === m.id ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{
+                        padding: '0.5rem 0.3rem',
+                        fontSize: '0.8rem',
+                        justifyContent: 'center',
+                        borderColor: withdrawMethod === m.id ? m.color : undefined
+                      }}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Amount & Quick Pills */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Cashout Amount (৳)</label>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Cannot exceed available balance</span>
+                </div>
+
                 <input
                   type="number"
                   min="50"
-                  max={wallet?.balance || 100000}
+                  max={wallet?.balance || 0}
                   required
                   className="form-input"
-                  style={{ width: '100%', padding: '0.7rem' }}
-                  placeholder="e.g. 1000"
+                  style={{ width: '100%', padding: '0.7rem', fontSize: '1rem' }}
+                  placeholder="e.g. 500"
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
                 />
+
+                {/* Quick amount shortcuts */}
+                <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                  {[500, 1000, 2000].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setWithdrawAmount(amt.toString())}
+                      className="btn btn-secondary"
+                      style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                      disabled={(wallet?.balance || 0) < amt}
+                    >
+                      ৳{amt}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setWithdrawAmount(Math.max(0, wallet?.balance || 0).toString())}
+                    className="btn btn-secondary"
+                    style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', color: 'var(--primary)', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+                    disabled={(wallet?.balance || 0) <= 0}
+                  >
+                    Cashout All (৳{wallet?.balance || 0})
+                  </button>
+                </div>
               </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Withdrawal Method</label>
-                <select
-                  value={withdrawMethod}
-                  onChange={(e) => setWithdrawMethod(e.target.value)}
-                  className="form-input"
-                  style={{ width: '100%', padding: '0.7rem' }}
+              {/* Mobile / Account Details */}
+              {['bKash', 'Nagad', 'Rocket'].includes(withdrawMethod) ? (
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.4rem', display: 'block' }}>
+                    {withdrawMethod} Mobile Number
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="form-input"
+                    style={{ width: '100%', padding: '0.7rem' }}
+                    placeholder="017XXXXXXXX / 019XXXXXXXX"
+                    value={withdrawAccount}
+                    onChange={(e) => setWithdrawAccount(e.target.value)}
+                  />
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                    Funds will be directly transferred to your {withdrawMethod} Personal/Agent account.
+                  </span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.2rem', display: 'block' }}>Bank Name</label>
+                    <select
+                      className="form-input"
+                      style={{ width: '100%', padding: '0.6rem' }}
+                      value={withdrawBankName}
+                      onChange={(e) => setWithdrawBankName(e.target.value)}
+                    >
+                      <option value="Dutch-Bangla Bank" style={{ background: '#111827' }}>Dutch-Bangla Bank Limited (DBBL)</option>
+                      <option value="BRAC Bank" style={{ background: '#111827' }}>BRAC Bank PLC</option>
+                      <option value="Islami Bank" style={{ background: '#111827' }}>Islami Bank Bangladesh</option>
+                      <option value="City Bank" style={{ background: '#111827' }}>The City Bank Limited</option>
+                      <option value="Eastern Bank" style={{ background: '#111827' }}>Eastern Bank PLC (EBL)</option>
+                      <option value="Sonali Bank" style={{ background: '#111827' }}>Sonali Bank Limited</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.2rem', display: 'block' }}>Branch Name</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.6rem' }}
+                        placeholder="e.g. Uttara Branch"
+                        value={withdrawBranchName}
+                        onChange={(e) => setWithdrawBranchName(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.2rem', display: 'block' }}>Account Number</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.6rem' }}
+                        placeholder="1234567890"
+                        value={withdrawAccount}
+                        onChange={(e) => setWithdrawAccount(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.2rem', display: 'block' }}>Account Holder Name</label>
+                    <input
+                      type="text"
+                      required
+                      className="form-input"
+                      style={{ width: '100%', padding: '0.6rem' }}
+                      placeholder="Full Name as in Bank"
+                      value={withdrawAccountHolder}
+                      onChange={(e) => setWithdrawAccountHolder(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Deduction & Remaining Balance Ledger Preview */}
+              {withdrawAmount && parseFloat(withdrawAmount) > 0 && (
+                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                    <span>Current Wallet Balance:</span>
+                    <strong>৳{wallet?.balance != null ? Math.max(0, wallet.balance) : 0}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#ef4444' }}>
+                    <span>Deducted for Cashout:</span>
+                    <strong>-৳{parseFloat(withdrawAmount) || 0}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#34d399', borderTop: '1px solid var(--border-color)', paddingTop: '0.3rem', fontWeight: 600 }}>
+                    <span>Remaining Wallet Balance:</span>
+                    <strong>৳{Math.max(0, Math.round(((wallet?.balance || 0) - (parseFloat(withdrawAmount) || 0)) * 100) / 100)}</strong>
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end', marginTop: '0.4rem' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowWithdrawModal(false)}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={(wallet?.balance || 0) <= 0 || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > (wallet?.balance || 0)}
+                  style={{ background: 'linear-gradient(90deg, #10b981, #059669)', padding: '0.7rem 1.4rem' }}
                 >
-                  <option value="bKash" style={{ background: '#111827' }}>bKash</option>
-                  <option value="Nagad" style={{ background: '#111827' }}>Nagad</option>
-                  <option value="Rocket" style={{ background: '#111827' }}>Rocket</option>
-                  <option value="Bank" style={{ background: '#111827' }}>Bank Transfer</option>
-                </select>
+                  Confirm Cashout ৳{withdrawAmount || 0} →
+                </button>
               </div>
 
-              <div style={{ marginBottom: '1.2rem' }}>
-                <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Account / Mobile Number</label>
-                <input
-                  type="text"
-                  required
-                  className="form-input"
-                  style={{ width: '100%', padding: '0.7rem' }}
-                  placeholder="01911223344"
-                  value={withdrawAccount}
-                  onChange={(e) => setWithdrawAccount(e.target.value)}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowWithdrawModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Process Withdrawal →</button>
-              </div>
             </form>
           </div>
         </div>
