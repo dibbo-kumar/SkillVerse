@@ -445,7 +445,7 @@ export default function AdminStoreManager({ onShowToast }) {
 
             {/* Customer & Delivery Section */}
             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px', marginBottom: '1.2rem', fontSize: '0.85rem' }}>
-              <h4 style={{ fontSize: '0.95rem', color: '#fff', marginBottom: '0.5rem' }}>Customer & Delivery Info</h4>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--text-heading)', marginBottom: '0.5rem' }}>Customer & Delivery Info</h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginBottom: '0.4rem' }}>
                 <div><strong>Name:</strong> {selectedAdminOrder.customerName}</div>
                 <div><strong>Phone:</strong> {selectedAdminOrder.phone}</div>
@@ -458,7 +458,7 @@ export default function AdminStoreManager({ onShowToast }) {
 
             {/* Products Table */}
             <div style={{ marginBottom: '1.2rem' }}>
-              <h4 style={{ fontSize: '0.95rem', color: '#fff', marginBottom: '0.5rem' }}>Purchased Products</h4>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--text-heading)', marginBottom: '0.5rem' }}>Purchased Products</h4>
               <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>

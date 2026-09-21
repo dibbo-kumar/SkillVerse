@@ -144,7 +144,7 @@ export default function PostProblemModal({ isOpen, onClose, currentUser, onProbl
               <Sparkles size={24} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.3rem', color: '#ffffff', margin: 0 }}>Post Your Problem</h2>
+              <h2 style={{ fontSize: '1.3rem', color: 'var(--text-heading)', margin: 0 }}>Post Your Problem</h2>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>Technicians will view your post and send custom price offers</p>
             </div>
           </div>
@@ -166,7 +166,7 @@ export default function PostProblemModal({ isOpen, onClose, currentUser, onProbl
               style={{ width: '100%', padding: '0.7rem' }}
             >
               {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat} style={{ background: '#111827', color: '#fff' }}>{cat}</option>
+                <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
           </div>
@@ -308,7 +308,7 @@ export default function PostProblemModal({ isOpen, onClose, currentUser, onProbl
                   <Upload size={22} />
                 </div>
                 <div>
-                  <strong style={{ fontSize: '0.9rem', color: '#ffffff', display: 'block' }}>Upload problem photo from your device</strong>
+                  <strong style={{ fontSize: '0.9rem', color: 'var(--text-heading)', display: 'block' }}>Upload problem photo from your device</strong>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>PNG, JPG, JPEG, WEBP up to 5MB</span>
                 </div>
                 <button type="button" className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '0.35rem 0.9rem', pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -320,7 +320,7 @@ export default function PostProblemModal({ isOpen, onClose, currentUser, onProbl
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                   <img src={photoPreview} alt="Problem preview" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)' }} />
                   <div>
-                    <strong style={{ fontSize: '0.85rem', color: '#ffffff', display: 'block' }}>{fileName || 'problem-photo.jpg'}</strong>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-heading)', display: 'block' }}>{fileName || 'problem-photo.jpg'}</strong>
                     <span style={{ fontSize: '0.75rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                       <CheckCircle2 size={13} /> Attached from device
                     </span>

@@ -72,7 +72,7 @@ function ArrivalCountdownTimer({ booking, onTimeoutRefund }) {
       </div>
 
       <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.4rem 0 0.6rem 0' }}>
-        Distance: <strong style={{ color: '#ffffff' }}>{distanceKm} km</strong> • Arrival Rate: <strong style={{ color: '#ffffff' }}>1 hour per 1000 meters ({hoursAllowed}h max)</strong>.
+        Distance: <strong style={{ color: 'var(--text-heading)' }}>{distanceKm} km</strong> • Arrival Rate: <strong style={{ color: 'var(--text-heading)' }}>1 hour per 1000 meters ({hoursAllowed}h max)</strong>.
         {isExpired ? ' Technician failed to reach within the allowed arrival window.' : ' If technician cannot reach within this time, you can cancel and receive an instant cashback refund.'}
       </p>
 
@@ -445,7 +445,7 @@ export default function CustomerBookings({
                   <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '0.8rem 1rem', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                       <CheckCircle2 size={16} color="var(--primary)" />
-                      <span style={{ fontSize: '0.85rem', color: '#ffffff' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-heading)' }}>
                         Booking Confirmed with Technician <strong>{b.worker?.name}</strong>. Direct Contact Unlocked:
                       </span>
                     </div>
@@ -590,7 +590,7 @@ export default function CustomerBookings({
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <span style={{ fontSize: '1.4rem', fontWeight: 'bold', fontFamily: 'monospace', color: '#ffffff', background: '#000', padding: '0.3rem 1rem', borderRadius: '8px', border: '1px solid var(--accent-gold)' }}>
+                        <span style={{ fontSize: '1.4rem', fontWeight: 'bold', fontFamily: 'monospace', color: 'var(--text-heading)', background: '#000', padding: '0.3rem 1rem', borderRadius: '8px', border: '1px solid var(--accent-gold)' }}>
                           {b.startVerificationCode || '4829'}
                         </span>
                       </div>
@@ -660,7 +660,7 @@ export default function CustomerBookings({
         <div className="toast-popup-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(5, 10, 20, 0.88)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={(e) => e.target.className.includes('toast-popup-overlay') && setAdvanceModalBooking(null)}>
           <div className="glass-card" style={{ maxWidth: '440px', width: '100%', background: 'var(--bg-secondary)', padding: '1.8rem', borderRadius: '18px', border: '1px solid var(--border-color)' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1.2rem', color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <CreditCard size={20} color="var(--primary)" /> Pay Minimum Base Advance
               </h3>
               <button onClick={() => setAdvanceModalBooking(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
@@ -675,14 +675,14 @@ export default function CustomerBookings({
             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>Worker Base Price (Advance):</span>
-                <strong style={{ color: '#ffffff' }}>৳{advanceModalBooking.basePrice || 300}</strong>
+                <strong style={{ color: 'var(--text-heading)' }}>৳{advanceModalBooking.basePrice || 300}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>SkillVerse Platform VAT (5%):</span>
                 <strong style={{ color: 'var(--accent-gold)' }}>+৳{((advanceModalBooking.basePrice || 300) * 0.05).toFixed(1)}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '0.4rem', marginTop: '0.2rem', fontSize: '1rem' }}>
-                <span style={{ fontWeight: 'bold', color: '#ffffff' }}>Total Payable Advance:</span>
+                <span style={{ fontWeight: 'bold', color: 'var(--text-heading)' }}>Total Payable Advance:</span>
                 <strong style={{ color: 'var(--primary)' }}>৳{((advanceModalBooking.basePrice || 300) * 1.05).toFixed(1)}</strong>
               </div>
             </div>
@@ -742,7 +742,7 @@ export default function CustomerBookings({
         <div className="toast-popup-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(5, 10, 20, 0.88)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={(e) => e.target.className.includes('toast-popup-overlay') && setCounterModalBooking(null)}>
           <div className="glass-card" style={{ maxWidth: '420px', width: '100%', background: 'var(--bg-secondary)', padding: '1.8rem', borderRadius: '18px', border: '1px solid var(--border-color)' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.15rem', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <RotateCcw size={18} color="var(--accent-gold)" /> Propose Counter Offer
               </h3>
               <button onClick={() => setCounterModalBooking(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
@@ -779,7 +779,7 @@ export default function CustomerBookings({
         <div className="toast-popup-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(5, 10, 20, 0.88)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={(e) => e.target.className.includes('toast-popup-overlay') && setCompletePayBooking(null)}>
           <div className="glass-card" style={{ maxWidth: '450px', width: '100%', background: 'var(--bg-secondary)', padding: '1.8rem', borderRadius: '18px', border: '1px solid var(--border-color)' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1.2rem', color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <CreditCard size={20} color="var(--primary)" /> Complete & Pay Final Amount
               </h3>
               <button onClick={() => setCompletePayBooking(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>

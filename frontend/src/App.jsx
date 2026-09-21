@@ -3086,7 +3086,7 @@ function App() {
                     {viewingWorkerReviews.map((rev, rIdx) => (
                       <div key={rIdx} style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '6px', borderLeft: '3px solid var(--accent-gold)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                          <strong style={{ fontSize: '0.85rem', color: '#ffffff' }}>{rev.customerName || rev.customer?.name || 'Verified Customer'}</strong>
+                          <strong style={{ fontSize: '0.85rem', color: 'var(--text-heading)' }}>{rev.customerName || rev.customer?.name || 'Verified Customer'}</strong>
                           <span style={{ color: 'var(--accent-gold)', fontSize: '0.8rem', fontWeight: 'bold' }}>⭐ {rev.rating || 5}.0</span>
                         </div>
                         <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 0.3rem 0', fontStyle: 'italic', lineHeight: 1.4 }}>

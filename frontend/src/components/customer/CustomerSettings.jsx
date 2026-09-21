@@ -322,7 +322,7 @@ export default function CustomerSettings({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#ffffff',
+                        color: 'var(--primary)',
                         fontWeight: 'bold',
                         fontSize: '1.8rem',
                         flexShrink: 0
@@ -618,7 +618,7 @@ export default function CustomerSettings({
                       </div>
                     </div>
                     {currentTheme === 'light' && (
-                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-heading)' }}>
                         <Check size={14} />
                       </div>
                     )}
@@ -692,7 +692,7 @@ export default function CustomerSettings({
                         <Moon size={20} color="#10b981" />
                       </div>
                       <div>
-                        <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#ffffff' }}>Midnight Dark</h4>
+                        <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-heading)' }}>Midnight Dark</h4>
                         <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
                           Night Mode
                         </span>

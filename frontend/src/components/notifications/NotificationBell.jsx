@@ -35,7 +35,7 @@ export default function NotificationBell({ notifications = [], onMarkAllRead, on
               top: '-2px',
               right: '-2px',
               background: '#f43f5e',
-              color: '#ffffff',
+              color: 'var(--text-heading)',
               fontSize: '0.7rem',
               fontWeight: 'bold',
               borderRadius: '10px',
@@ -76,7 +76,7 @@ export default function NotificationBell({ notifications = [], onMarkAllRead, on
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.6rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Bell size={16} color="var(--primary)" />
-              <strong style={{ fontSize: '0.95rem', color: '#ffffff' }}>Notifications</strong>
+              <strong style={{ fontSize: '0.95rem', color: 'var(--text-heading)' }}>Notifications</strong>
               {unreadCount > 0 && <span className="badge badge-verified" style={{ fontSize: '0.7rem' }}>{unreadCount} unread</span>}
             </div>
             {unreadCount > 0 && (
@@ -108,7 +108,7 @@ export default function NotificationBell({ notifications = [], onMarkAllRead, on
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.2rem' }}>
-                  <strong style={{ fontSize: '0.85rem', color: '#ffffff' }}>{n.title}</strong>
+                  <strong style={{ fontSize: '0.85rem', color: 'var(--text-heading)' }}>{n.title}</strong>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{n.time || 'Just now'}</span>
                 </div>
                 <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>{n.message}</p>

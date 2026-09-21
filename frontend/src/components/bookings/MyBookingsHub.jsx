@@ -336,7 +336,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
       <div className="glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '2rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-            <h1 style={{ fontSize: '1.8rem', color: '#ffffff', margin: 0 }}>MY BOOKINGS</h1>
+            <h1 style={{ fontSize: '1.8rem', color: 'var(--text-heading)', margin: 0 }}>MY BOOKINGS</h1>
             <span className="badge badge-verified">Customer Service Center</span>
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.3rem 0 0 0' }}>Track active services, negotiate prices, manage OTPs, and view detailed invoices</p>
@@ -388,7 +388,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
             >
               <div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Active Job</span>
-                <h3 style={{ fontSize: '1.8rem', color: '#ffffff', margin: '0.2rem 0 0 0' }}>{activeBooking ? 1 : 0}</h3>
+                <h3 style={{ fontSize: '1.8rem', color: 'var(--text-heading)', margin: '0.2rem 0 0 0' }}>{activeBooking ? 1 : 0}</h3>
               </div>
               <div style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '0.8rem', borderRadius: '12px', color: 'var(--accent-blue)' }}>
                 <Wrench size={24} />
@@ -447,7 +447,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Booking #{activeBooking.id}</span>
                   </div>
 
-                  <h2 style={{ fontSize: '1.5rem', color: '#ffffff', margin: 0 }}>{activeBooking.serviceType}</h2>
+                  <h2 style={{ fontSize: '1.5rem', color: 'var(--text-heading)', margin: 0 }}>{activeBooking.serviceType}</h2>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{activeBooking.description}</p>
 
                   <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.85rem', color: 'var(--text-primary)', marginTop: '0.4rem' }}>
@@ -495,7 +495,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
           {/* Recent Service Requests */}
           <div className="glass-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1.1rem', color: '#ffffff' }}>Recent Service Requests</h3>
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--text-heading)' }}>Recent Service Requests</h3>
               <button onClick={() => setActiveTab('bookings')} style={{ background: 'none', border: 'none', color: 'var(--accent-blue)', cursor: 'pointer', fontSize: '0.85rem' }}>View All →</button>
             </div>
 
@@ -529,7 +529,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                   >
                     <div style={{ flex: 1, minWidth: '220px' }}>
                       <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <strong style={{ fontSize: '0.95rem', color: '#ffffff' }}>{b.serviceType}</strong>
+                        <strong style={{ fontSize: '0.95rem', color: 'var(--text-heading)' }}>{b.serviceType}</strong>
                         {getStatusBadge(b.status)}
                         {isWorkerCounter && (
                           <span className="badge badge-gold" style={{ fontSize: '0.7rem' }}>
@@ -543,7 +543,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                         )}
                       </div>
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.3rem', marginBottom: 0 }}>
-                        Technician: <strong style={{ color: '#ffffff' }}>{b.worker?.name || 'Searching...'}</strong> • 
+                        Technician: <strong style={{ color: 'var(--text-heading)' }}>{b.worker?.name || 'Searching...'}</strong> • 
                         Price: <strong style={{ color: 'var(--primary)' }}>৳{currentPrice}</strong> • 
                         Address: {b.address}
                       </p>
@@ -706,7 +706,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
 
                   {/* Column 2: Service & Problem Description */}
                   <div>
-                    <strong style={{ fontSize: '0.95rem', color: '#ffffff', display: 'block' }}>{b.serviceType}</strong>
+                    <strong style={{ fontSize: '0.95rem', color: 'var(--text-heading)', display: 'block' }}>{b.serviceType}</strong>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0', lineHeight: 1.3 }}>
                       {b.description.length > 50 ? `${b.description.slice(0, 50)}...` : b.description}
                     </p>
@@ -730,7 +730,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                       style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
                     />
                     <div>
-                      <strong style={{ fontSize: '0.85rem', color: '#ffffff', display: 'block' }}>{b.worker?.name || 'Searching...'}</strong>
+                      <strong style={{ fontSize: '0.85rem', color: 'var(--text-heading)', display: 'block' }}>{b.worker?.name || 'Searching...'}</strong>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>⭐ {b.worker?.rating || 4.9}</span>
                     </div>
                   </div>
@@ -894,14 +894,14 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
       {/* --- SERVICE HISTORY & INVOICES TAB --- */}
       {activeTab === 'history' && (
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <h3 style={{ fontSize: '1.2rem', color: '#ffffff' }}>Service History & Invoices</h3>
+          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)' }}>Service History & Invoices</h3>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
             {bookings.filter(b => b.status === 'COMPLETED' || b.status === 'PAID').map((b) => (
               <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                   <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
-                    <strong style={{ fontSize: '0.95rem', color: '#ffffff' }}>{b.serviceType}</strong>
+                    <strong style={{ fontSize: '0.95rem', color: 'var(--text-heading)' }}>{b.serviceType}</strong>
                     {getStatusBadge(b.status)}
                   </div>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
@@ -956,7 +956,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
       {/* --- SAVED TECHNICIANS TAB --- */}
       {activeTab === 'saved-technicians' && (
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <h3 style={{ fontSize: '1.2rem', color: '#ffffff' }}>Saved Technicians</h3>
+          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)' }}>Saved Technicians</h3>
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
             {savedWorkers.map((w) => (
@@ -968,7 +968,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                     style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }}
                   />
                   <div>
-                    <strong style={{ fontSize: '0.9rem', color: '#ffffff', display: 'block' }}>{w.user?.name}</strong>
+                    <strong style={{ fontSize: '0.9rem', color: 'var(--text-heading)', display: 'block' }}>{w.user?.name}</strong>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>⭐ {w.user?.rating || 4.9} • {w.specialization}</span>
                   </div>
                 </div>
@@ -1033,7 +1033,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <RotateCcw size={20} color="var(--accent-gold)" />
-                <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Propose Counter Offer</h3>
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-heading)', margin: 0 }}>Propose Counter Offer</h3>
               </div>
               <button onClick={() => setShowCounterModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <XCircle size={22} />
@@ -1084,7 +1084,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <KeyRound size={20} color="var(--primary)" />
-                <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Verify Service Completion</h3>
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-heading)', margin: 0 }}>Verify Service Completion</h3>
               </div>
               <button onClick={() => setShowCompletionOtpModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <XCircle size={22} />
@@ -1130,7 +1130,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <CreditCard size={20} color="var(--primary)" />
-                <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Complete & Pay Service Bill</h3>
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-heading)', margin: 0 }}>Complete & Pay Service Bill</h3>
               </div>
               <button onClick={() => setShowPaymentModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <XCircle size={22} />
@@ -1211,7 +1211,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <DollarSign size={20} color="var(--accent-gold)" />
-                <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Pay Minimum Base Advance</h3>
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-heading)', margin: 0 }}>Pay Minimum Base Advance</h3>
               </div>
               <button onClick={() => setShowAdvanceModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <XCircle size={22} />
@@ -1225,14 +1225,14 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.9rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.2rem', fontSize: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>Worker Base Price (Advance):</span>
-                <strong style={{ color: '#ffffff' }}>৳{advanceBooking.basePrice || 300}</strong>
+                <strong style={{ color: 'var(--text-heading)' }}>৳{advanceBooking.basePrice || 300}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>SkillVerse VAT (5%):</span>
                 <strong style={{ color: 'var(--accent-gold)' }}>+৳{((advanceBooking.basePrice || 300) * 0.05).toFixed(1)}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '0.4rem', marginTop: '0.3rem', fontSize: '1rem' }}>
-                <span style={{ fontWeight: 'bold', color: '#ffffff' }}>Total Advance Required:</span>
+                <span style={{ fontWeight: 'bold', color: 'var(--text-heading)' }}>Total Advance Required:</span>
                 <strong style={{ color: 'var(--primary)' }}>৳{((advanceBooking.basePrice || 300) * 1.05).toFixed(1)}</strong>
               </div>
             </div>
@@ -1286,7 +1286,7 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <Star size={20} color="var(--accent-gold)" />
-                <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Review Technician</h3>
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-heading)', margin: 0 }}>Review Technician</h3>
               </div>
               <button onClick={() => setShowReviewModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <XCircle size={22} />
@@ -1344,26 +1344,26 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
         <div className="toast-popup-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(5, 10, 20, 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div className="glass-card" style={{ maxWidth: '420px', width: '100%', background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.8rem', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1.1rem', color: '#ffffff', margin: 0 }}>SERVICE INVOICE</h3>
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--text-heading)', margin: 0 }}>SERVICE INVOICE</h3>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>#INV-2026-{invoiceBooking.id}</span>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Service:</span>
-                <strong style={{ color: '#ffffff' }}>{invoiceBooking.serviceType}</strong>
+                <strong style={{ color: 'var(--text-heading)' }}>{invoiceBooking.serviceType}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Technician:</span>
-                <strong style={{ color: '#ffffff' }}>{invoiceBooking.worker?.name}</strong>
+                <strong style={{ color: 'var(--text-heading)' }}>{invoiceBooking.worker?.name}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Customer:</span>
-                <strong style={{ color: '#ffffff' }}>{currentUser?.name || 'Customer'}</strong>
+                <strong style={{ color: 'var(--text-heading)' }}>{currentUser?.name || 'Customer'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Payment Method:</span>
-                <strong style={{ color: '#ffffff' }}>{invoiceBooking.paymentMethod || 'bKash'}</strong>
+                <strong style={{ color: 'var(--text-heading)' }}>{invoiceBooking.paymentMethod || 'bKash'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '0.6rem', marginTop: '0.4rem' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Final Amount:</span>

@@ -160,7 +160,7 @@ export default function BookingDetailsModal({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
           <div>
             <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
-              <h2 style={{ fontSize: '1.4rem', color: '#ffffff', margin: 0 }}>{booking.serviceType}</h2>
+              <h2 style={{ fontSize: '1.4rem', color: 'var(--text-heading)', margin: 0 }}>{booking.serviceType}</h2>
               {getStatusBadge(booking.status)}
             </div>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
@@ -259,9 +259,9 @@ export default function BookingDetailsModal({
               style={{ width: 50, height: 50, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }}
             />
             <div>
-              <h4 style={{ fontSize: '0.95rem', color: '#ffffff', margin: 0 }}>{booking.worker?.name || 'Assigned Technician'}</h4>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--text-heading)', margin: 0 }}>{booking.worker?.name || 'Assigned Technician'}</h4>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
-                ⭐ {booking.worker?.rating || 4.9} • Phone: <strong style={{ color: '#ffffff' }}>{booking.worker?.phone || '01911223344'}</strong>
+                ⭐ {booking.worker?.rating || 4.9} • Phone: <strong style={{ color: 'var(--text-heading)' }}>{booking.worker?.phone || '01911223344'}</strong>
               </p>
             </div>
           </div>
@@ -294,11 +294,11 @@ export default function BookingDetailsModal({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.8rem', fontSize: '0.85rem' }}>
             <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Service Address</span>
-              <strong style={{ color: '#ffffff' }}>{booking.address}</strong>
+              <strong style={{ color: 'var(--text-heading)' }}>{booking.address}</strong>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Scheduled Time</span>
-              <strong style={{ color: '#ffffff' }}>{booking.preferredDate || 'Tomorrow'} ({booking.preferredTime || '10:00 AM'})</strong>
+              <strong style={{ color: 'var(--text-heading)' }}>{booking.preferredDate || 'Tomorrow'} ({booking.preferredTime || '10:00 AM'})</strong>
             </div>
           </div>
         </div>
@@ -322,7 +322,7 @@ export default function BookingDetailsModal({
         {['CONFIRMED', 'ON_THE_WAY', 'ARRIVED'].includes(booking.status) && (
           <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '0.8rem', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>🔑 Arrival Start OTP:</span>
-            <span style={{ fontSize: '1.2rem', fontWeight: 'bold', fontFamily: 'monospace', color: '#ffffff', background: '#000', padding: '0.2rem 0.8rem', borderRadius: '6px' }}>
+            <span style={{ fontSize: '1.2rem', fontWeight: 'bold', fontFamily: 'monospace', color: 'var(--text-heading)', background: '#000', padding: '0.2rem 0.8rem', borderRadius: '6px' }}>
               {booking.startVerificationCode || '4829'}
             </span>
           </div>

@@ -1065,7 +1065,7 @@ export default function AcademyCoursesHub({ currentUser, rewards, onUsePoints, o
                           Available Balance: <strong>{rewards?.points} Points</strong> (1 pt = ৳1 off)
                         </div>
                       </div>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-heading)' }}>
                         <input
                           type="checkbox"
                           checked={useRewardPoints}

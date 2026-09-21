@@ -121,7 +121,7 @@ export default function WorkerBookingDetailsModal({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
           <div>
             <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
-              <h2 style={{ fontSize: '1.35rem', color: '#ffffff', margin: 0 }}>{booking.serviceType}</h2>
+              <h2 style={{ fontSize: '1.35rem', color: 'var(--text-heading)', margin: 0 }}>{booking.serviceType}</h2>
               {getStatusBadge(booking.status)}
             </div>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
@@ -174,7 +174,7 @@ export default function WorkerBookingDetailsModal({
         {isWorkerCounterWaiting && (
           <div style={{ background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '12px', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <strong style={{ fontSize: '0.9rem', color: '#ffffff', display: 'block' }}>Counter Offer Submitted</strong>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--text-heading)', display: 'block' }}>Counter Offer Submitted</strong>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                 You proposed <strong>৳{currentPrice}</strong>. Waiting for customer response.
               </span>
@@ -202,16 +202,16 @@ export default function WorkerBookingDetailsModal({
               <User size={22} />
             </div>
             <div>
-              <h4 style={{ fontSize: '0.95rem', color: '#ffffff', margin: 0 }}>{booking.customer?.name || 'Customer'}</h4>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--text-heading)', margin: 0 }}>{booking.customer?.name || 'Customer'}</h4>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
-                Phone: <strong style={{ color: '#ffffff' }}>{booking.customer?.phone || '01711223344'}</strong>
+                Phone: <strong style={{ color: 'var(--text-heading)' }}>{booking.customer?.phone || '01711223344'}</strong>
               </p>
             </div>
           </div>
 
           <div style={{ textAlign: 'right', fontSize: '0.8rem' }}>
             <span style={{ color: 'var(--text-muted)', display: 'block' }}>Scheduled Window</span>
-            <strong style={{ color: '#ffffff' }}>{booking.preferredDate || 'Tomorrow'} ({booking.preferredTime || '10:00 AM'})</strong>
+            <strong style={{ color: 'var(--text-heading)' }}>{booking.preferredDate || 'Tomorrow'} ({booking.preferredTime || '10:00 AM'})</strong>
           </div>
         </div>
 
@@ -240,7 +240,7 @@ export default function WorkerBookingDetailsModal({
             <MapPin size={18} color="var(--primary)" style={{ flexShrink: 0 }} />
             <div>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Service Location Address</span>
-              <strong style={{ color: '#ffffff' }}>{booking.address}</strong>
+              <strong style={{ color: 'var(--text-heading)' }}>{booking.address}</strong>
             </div>
           </div>
         </div>
@@ -249,7 +249,7 @@ export default function WorkerBookingDetailsModal({
         <div style={{ background: 'rgba(16, 185, 129, 0.06)', padding: '1.1rem', borderRadius: '14px', border: '1px solid rgba(16, 185, 129, 0.25)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.8rem', textAlign: 'center' }}>
           <div>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>Final Service Price</span>
-            <strong style={{ fontSize: '1.25rem', color: '#ffffff' }}>৳{currentPrice}</strong>
+            <strong style={{ fontSize: '1.25rem', color: 'var(--text-heading)' }}>৳{currentPrice}</strong>
           </div>
           <div>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block' }}>Platform Fee ({commissionRate}%)</span>
@@ -265,7 +265,7 @@ export default function WorkerBookingDetailsModal({
         {['IN_PROGRESS', 'COMPLETION_REQUESTED', 'COMPLETED', 'PAID'].includes(booking.status) && (
           <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#ffffff' }}>Work Evidence Photos</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-heading)' }}>Work Evidence Photos</span>
               <div style={{ display: 'flex', gap: '0.4rem' }}>
                 <button
                   type="button"

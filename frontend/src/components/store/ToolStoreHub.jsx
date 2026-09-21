@@ -499,7 +499,7 @@ function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, cont
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
             <Wrench size={24} color="var(--primary)" />
             <div>
-              <div style={{ fontWeight: 'bold', fontSize: '1rem', color: '#fff' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '1rem', color: 'var(--text-heading)' }}>
                 Shopping Required Parts for Service Request #{contextualBooking.id}
               </div>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -544,7 +544,7 @@ function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, cont
           >
             <Package size={16} /> My Orders
             {userOrders.length > 0 && (
-              <span style={{ background: '#3b82f6', color: '#fff', fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '10px', marginLeft: '0.4rem' }}>
+              <span style={{ background: '#3b82f6', color: 'var(--text-heading)', fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '10px', marginLeft: '0.4rem' }}>
                 {userOrders.length}
               </span>
             )}
@@ -1117,9 +1117,9 @@ function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, cont
 
                 {/* Compatibility Box */}
                 <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', padding: '0.8rem', borderRadius: '8px', marginBottom: '1.2rem', fontSize: '0.8rem' }}>
-                  <div style={{ fontWeight: 'bold', color: '#fff', marginBottom: '0.3rem' }}>Compatible Services:</div>
+                  <div style={{ fontWeight: 'bold', color: 'var(--text-heading)', marginBottom: '0.3rem' }}>Compatible Services:</div>
                   <div style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>{selectedProduct.compatibleServices || "Universal Maintenance"}</div>
-                  <div style={{ fontWeight: 'bold', color: '#fff', marginBottom: '0.3rem' }}>Compatible Models:</div>
+                  <div style={{ fontWeight: 'bold', color: 'var(--text-heading)', marginBottom: '0.3rem' }}>Compatible Models:</div>
                   <div style={{ color: 'var(--text-secondary)' }}>{selectedProduct.compatibleModels || "Universal Standard Models"}</div>
                 </div>
 
@@ -1159,7 +1159,7 @@ function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, cont
                             {Object.entries(specs).map(([key, val]) => (
                               <tr key={key} style={{ borderBottom: '1px solid var(--border-color)' }}>
                                 <td style={{ padding: '0.5rem', color: 'var(--text-muted)', fontWeight: 'bold', width: '40%' }}>{key}</td>
-                                <td style={{ padding: '0.5rem', color: '#fff' }}>{val}</td>
+                                <td style={{ padding: '0.5rem', color: 'var(--text-primary)' }}>{val}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1417,7 +1417,7 @@ function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, cont
                       Available Balance: <strong>{rewards?.points} Points</strong> (1 pt = ৳1 off)
                     </div>
                   </div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-heading)' }}>
                     <input
                       type="checkbox"
                       checked={useRewardPoints}

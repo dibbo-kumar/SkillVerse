@@ -115,7 +115,7 @@ export default function PostedProblemsHub({ isOpen, onClose, currentUser, onAcce
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-              <h2 style={{ fontSize: '1.4rem', color: '#ffffff', margin: 0 }}>📋 Your Posted Problems</h2>
+              <h2 style={{ fontSize: '1.4rem', color: 'var(--text-heading)', margin: 0 }}>📋 Your Posted Problems</h2>
               <span className="badge badge-verified">{problemPosts.length} Total Posts</span>
             </div>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>Review worker price offers and accept the right technician</p>
@@ -172,7 +172,7 @@ export default function PostedProblemsHub({ isOpen, onClose, currentUser, onAcce
                   <span className="badge badge-verified" style={{ fontSize: '0.7rem' }}>{p.serviceCategory}</span>
                   <strong style={{ color: 'var(--primary)', fontSize: '0.85rem' }}>Budget: ৳{p.budgetPrice}</strong>
                 </div>
-                <h4 style={{ fontSize: '0.95rem', color: '#ffffff', margin: '0 0 0.3rem 0' }}>{p.title}</h4>
+                <h4 style={{ fontSize: '0.95rem', color: 'var(--text-heading)', margin: '0 0 0.3rem 0' }}>{p.title}</h4>
                 <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0 }}>{p.description.slice(0, 70)}...</p>
               </div>
             ))}
@@ -189,7 +189,7 @@ export default function PostedProblemsHub({ isOpen, onClose, currentUser, onAcce
             <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.2rem', borderRadius: '16px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h3 style={{ fontSize: '1.1rem', color: '#ffffff', margin: 0 }}>{selectedProblem.title}</h3>
+                  <h3 style={{ fontSize: '1.1rem', color: 'var(--text-heading)', margin: 0 }}>{selectedProblem.title}</h3>
                   <span className="badge badge-gold">Offers ({offers.length})</span>
                 </div>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.4rem' }}>{selectedProblem.description}</p>
@@ -212,7 +212,7 @@ export default function PostedProblemsHub({ isOpen, onClose, currentUser, onAcce
                             style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover' }}
                           />
                           <div>
-                            <strong style={{ fontSize: '0.85rem', color: '#ffffff', display: 'block' }}>{off.worker?.name || 'Technician'}</strong>
+                            <strong style={{ fontSize: '0.85rem', color: 'var(--text-heading)', display: 'block' }}>{off.worker?.name || 'Technician'}</strong>
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>⭐ {off.worker?.rating || 4.9} • {off.estimatedArrival || 'Within 1 hour'}</span>
                           </div>
                         </div>

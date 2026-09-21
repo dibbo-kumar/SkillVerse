@@ -572,7 +572,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
           <div>
             <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <h2 style={{ fontSize: '1.4rem', color: '#ffffff', margin: 0 }}>{currentWorker?.name || 'Technician'}</h2>
+              <h2 style={{ fontSize: '1.4rem', color: 'var(--text-heading)', margin: 0 }}>{currentWorker?.name || 'Technician'}</h2>
               
               {isWorkerApproved ? (
                 <span className="badge badge-verified" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -609,7 +609,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
               )}
             </div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.3rem 0 0 0' }}>
-              Specialization: <strong style={{ color: '#ffffff' }}>{verifForm.skills || 'AC Repair, Electrical, Plumbing'}</strong> • <strong>{verifForm.experienceYears || 3}+ Years Exp</strong>
+              Specialization: <strong style={{ color: 'var(--text-heading)' }}>{verifForm.skills || 'AC Repair, Electrical, Plumbing'}</strong> • <strong>{verifForm.experienceYears || 3}+ Years Exp</strong>
             </p>
           </div>
         </div>
@@ -673,7 +673,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
               <ShieldCheck size={24} />
             </div>
             <div>
-              <h4 style={{ fontSize: '1.05rem', color: '#ffffff', margin: 0, fontWeight: 700 }}>
+              <h4 style={{ fontSize: '1.05rem', color: 'var(--text-heading)', margin: 0, fontWeight: 700 }}>
                 {currentVerifStatus === 'CORRECTION_REQUIRED' && '⚠️ Admin Requested Changes on your Verification'}
                 {currentVerifStatus === 'REJECTED' && '❌ Verification Application Rejected'}
                 {(currentVerifStatus === 'UNDER_REVIEW' || currentVerifStatus === 'PENDING') && '⏳ Worker Verification Dossier Under Review'}
@@ -791,7 +791,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                     <span className="badge badge-verified">ACTIVE JOB IN PROGRESS</span>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>#BK-{activeJob.id}</span>
                   </div>
-                  <h2 style={{ fontSize: '1.8rem', color: '#ffffff', margin: '0.4rem 0 0.2rem 0' }}>{activeJob.serviceType}</h2>
+                  <h2 style={{ fontSize: '1.8rem', color: 'var(--text-heading)', margin: '0.4rem 0 0.2rem 0' }}>{activeJob.serviceType}</h2>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
                     Source: <strong>{activeJob.bookingSource || 'DIRECT'}</strong> • Address: <strong>{activeJob.address}</strong>
                   </p>
@@ -840,15 +840,15 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', fontSize: '0.85rem' }}>
                 <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>CUSTOMER CONTACT</span>
-                  <strong style={{ fontSize: '1rem', color: '#ffffff', display: 'block' }}>{activeJob.customer?.name}</strong>
+                  <strong style={{ fontSize: '1rem', color: 'var(--text-heading)', display: 'block' }}>{activeJob.customer?.name}</strong>
                   <p style={{ color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
-                    Phone: <strong style={{ color: '#ffffff' }}>{activeJob.customer?.phone || '01811223344'}</strong>
+                    Phone: <strong style={{ color: 'var(--text-heading)' }}>{activeJob.customer?.phone || '01811223344'}</strong>
                   </p>
                 </div>
 
                 <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>SERVICE ADDRESS & TIME</span>
-                  <strong style={{ color: '#ffffff', display: 'block' }}>{activeJob.address}</strong>
+                  <strong style={{ color: 'var(--text-heading)', display: 'block' }}>{activeJob.address}</strong>
                   <p style={{ color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
                     Schedule: {activeJob.preferredDate || 'Tomorrow'} ({activeJob.preferredTime || '10:00 AM'})
                   </p>
@@ -861,7 +861,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                 {activeJob.status === 'CONFIRMED' && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                     <div>
-                      <h4 style={{ fontSize: '1.1rem', color: '#ffffff', margin: 0 }}>Stage 1: Ready to Depart</h4>
+                      <h4 style={{ fontSize: '1.1rem', color: 'var(--text-heading)', margin: 0 }}>Stage 1: Ready to Depart</h4>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
                         Click below when you begin traveling to the customer's site.
                       </p>
@@ -875,7 +875,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                 {activeJob.status === 'ON_THE_WAY' && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                     <div>
-                      <h4 style={{ fontSize: '1.1rem', color: '#ffffff', margin: 0 }}>Stage 2: Traveling to Customer</h4>
+                      <h4 style={{ fontSize: '1.1rem', color: 'var(--text-heading)', margin: 0 }}>Stage 2: Traveling to Customer</h4>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
                         Customer sees you are on the way. Click below once you arrive at the address.
                       </p>
@@ -943,7 +943,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
           ) : (
             <div className="glass-card" style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-muted)' }}>
               <Wrench size={52} style={{ margin: '0 auto 1rem auto', opacity: 0.4 }} />
-              <h3 style={{ fontSize: '1.3rem', color: '#ffffff', margin: 0 }}>No Active Job In Progress</h3>
+              <h3 style={{ fontSize: '1.3rem', color: 'var(--text-heading)', margin: 0 }}>No Active Job In Progress</h3>
               <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.4rem' }}>
                 Accept an incoming direct service request or submit a quote on a posted problem to start a job.
               </p>
@@ -966,7 +966,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
       {activeSubTab === 'requests' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '1.2rem', color: '#ffffff', margin: 0 }}>Incoming Direct Customer Requests</h3>
+            <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)', margin: 0 }}>Incoming Direct Customer Requests</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Method 1: Direct Technician Booking</span>
           </div>
 
@@ -1004,7 +1004,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
                   {/* Column 2: Service & Problem */}
                   <div>
-                    <strong style={{ fontSize: '0.95rem', color: '#ffffff', display: 'block' }}>{b.serviceType}</strong>
+                    <strong style={{ fontSize: '0.95rem', color: 'var(--text-heading)', display: 'block' }}>{b.serviceType}</strong>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
                       {b.description?.length > 50 ? `${b.description.slice(0, 50)}...` : b.description}
                     </p>
@@ -1018,7 +1018,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
                   {/* Column 3: Customer info */}
                   <div>
-                    <strong style={{ fontSize: '0.85rem', color: '#ffffff', display: 'block' }}>{b.customer?.name}</strong>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-heading)', display: 'block' }}>{b.customer?.name}</strong>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>📍 {b.address}</span>
                   </div>
 
@@ -1142,7 +1142,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <h3 style={{ fontSize: '1.2rem', color: '#ffffff', margin: 0 }}>Customer Problem Posts (Method 2)</h3>
+              <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)', margin: 0 }}>Customer Problem Posts (Method 2)</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
                 Browse posted problems and submit price quotes. When customer accepts, booking is confirmed.
               </p>
@@ -1175,7 +1175,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                       <strong style={{ color: 'var(--primary)', fontSize: '0.95rem' }}>Budget: ৳{p.budgetPrice}</strong>
                     </div>
 
-                    <h4 style={{ fontSize: '1.1rem', color: '#ffffff', margin: '0.6rem 0 0.3rem 0' }}>{p.title}</h4>
+                    <h4 style={{ fontSize: '1.1rem', color: 'var(--text-heading)', margin: '0.6rem 0 0.3rem 0' }}>{p.title}</h4>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.4, margin: 0 }}>{p.description}</p>
 
                     {p.photoUrl && (
@@ -1257,7 +1257,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
             <div className="glass-card">
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Net Earnings (95%)</span>
-              <h3 style={{ fontSize: '2rem', color: '#ffffff', margin: '0.3rem 0 0 0' }}>৳{wallet?.totalEarnings || 0}</h3>
+              <h3 style={{ fontSize: '2rem', color: 'var(--text-heading)', margin: '0.3rem 0 0 0' }}>৳{wallet?.totalEarnings || 0}</h3>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All completed service jobs</span>
             </div>
 
@@ -1287,7 +1287,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
           {/* Wallet Financial Ledger */}
           <div className="glass-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Wallet Transactions Ledger</h3>
+              <h3 style={{ fontSize: '1.15rem', color: 'var(--text-heading)', margin: 0 }}>Wallet Transactions Ledger</h3>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{walletTransactions.length} Transactions</span>
             </div>
 
@@ -1318,7 +1318,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                       {tx.amount >= 0 ? <ArrowDownRight size={18} /> : <ArrowUpRight size={18} />}
                     </div>
                     <div>
-                      <strong style={{ color: '#ffffff', display: 'block' }}>{tx.description}</strong>
+                      <strong style={{ color: 'var(--text-heading)', display: 'block' }}>{tx.description}</strong>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         {new Date(tx.createdAt).toLocaleString()} • Type: {tx.type}
                       </span>
@@ -1345,7 +1345,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
       {/* ============================================================ */}
       {activeSubTab === 'history' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-          <h3 style={{ fontSize: '1.2rem', color: '#ffffff', margin: 0 }}>Completed Service History & Customer Ratings</h3>
+          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)', margin: 0 }}>Completed Service History & Customer Ratings</h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
             {completedBookings.map((b) => (
@@ -1366,7 +1366,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
               >
                 <div>
                   <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
-                    <strong style={{ fontSize: '1rem', color: '#ffffff' }}>{b.serviceType}</strong>
+                    <strong style={{ fontSize: '1rem', color: 'var(--text-heading)' }}>{b.serviceType}</strong>
                     <span className="badge badge-verified">Completed</span>
                     {b.paymentStatus === 'PAID' && <span className="badge badge-gold">Paid ({b.paymentMethod || 'bKash'})</span>}
                   </div>
@@ -1406,7 +1406,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <ShieldCheck size={24} color="var(--primary)" />
-                <h3 style={{ fontSize: '1.3rem', color: '#ffffff', margin: 0 }}>Technician Verification Dossier</h3>
+                <h3 style={{ fontSize: '1.3rem', color: 'var(--text-heading)', margin: 0 }}>Technician Verification Dossier</h3>
               </div>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.3rem 0 0 0' }}>
                 SkillVerse home-entry trust & safety checkpoints. Kept secure and confidential.
@@ -1460,7 +1460,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
             {verifDossier?.adminRemarks && (
               <div style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.3)', gridColumn: 'span 1' }}>
                 <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 'bold' }}>ADMIN AUDIT REMARKS</span>
-                <p style={{ fontSize: '0.85rem', color: '#ffffff', marginTop: '0.3rem', marginBottom: 0 }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-heading)', marginTop: '0.3rem', marginBottom: 0 }}>
                   "{verifDossier.adminRemarks}"
                 </p>
               </div>
@@ -1474,25 +1474,25 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
             <div className="glass-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                 <User size={18} color="var(--primary)" />
-                <h4 style={{ fontSize: '1rem', color: '#ffffff', margin: 0 }}>1. Personal & Identity</h4>
+                <h4 style={{ fontSize: '1rem', color: 'var(--text-heading)', margin: 0 }}>1. Personal & Identity</h4>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.85rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Full Legal Name:</span>
-                  <strong style={{ color: '#ffffff' }}>{verifForm.fullName}</strong>
+                  <strong style={{ color: 'var(--text-heading)' }}>{verifForm.fullName}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Date of Birth:</span>
-                  <strong style={{ color: '#ffffff' }}>{verifForm.dateOfBirth}</strong>
+                  <strong style={{ color: 'var(--text-heading)' }}>{verifForm.dateOfBirth}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Phone Number:</span>
-                  <strong style={{ color: '#ffffff' }}>{verifForm.phone} {phoneOtpVerified || verifForm.phoneVerified ? '✔ (OTP Verified)' : '⚠️ (Unverified)'}</strong>
+                  <strong style={{ color: 'var(--text-heading)' }}>{verifForm.phone} {phoneOtpVerified || verifForm.phoneVerified ? '✔ (OTP Verified)' : '⚠️ (Unverified)'}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-muted)' }}>NID Number:</span>
-                  <strong style={{ color: '#ffffff', fontFamily: 'monospace' }}>{verifForm.nidNumber}</strong>
+                  <strong style={{ color: 'var(--text-heading)', fontFamily: 'monospace' }}>{verifForm.nidNumber}</strong>
                 </div>
 
                 <div style={{ marginTop: '0.8rem' }}>
@@ -1525,19 +1525,19 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
             <div className="glass-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                 <MapPin size={18} color="#38bdf8" />
-                <h4 style={{ fontSize: '1rem', color: '#ffffff', margin: 0 }}>2. Address Verification</h4>
+                <h4 style={{ fontSize: '1rem', color: 'var(--text-heading)', margin: 0 }}>2. Address Verification</h4>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.85rem' }}>
                 <div>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>PRESENT / CURRENT ADDRESS:</span>
-                  <strong style={{ color: '#ffffff', display: 'block', marginTop: '0.1rem' }}>{verifForm.presentAddress}</strong>
+                  <strong style={{ color: 'var(--text-heading)', display: 'block', marginTop: '0.1rem' }}>{verifForm.presentAddress}</strong>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{verifForm.cityArea}, {verifForm.district}, {verifForm.division} - {verifForm.postalCode}</span>
                 </div>
 
                 <div style={{ marginTop: '0.5rem' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>PERMANENT / HOME ADDRESS:</span>
-                  <strong style={{ color: '#ffffff', display: 'block', marginTop: '0.1rem' }}>{verifForm.permanentAddress}</strong>
+                  <strong style={{ color: 'var(--text-heading)', display: 'block', marginTop: '0.1rem' }}>{verifForm.permanentAddress}</strong>
                 </div>
 
                 {verifForm.detailedAddress && (
@@ -1553,7 +1553,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
             <div className="glass-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                 <Wrench size={18} color="var(--accent-gold)" />
-                <h4 style={{ fontSize: '1rem', color: '#ffffff', margin: 0 }}>3. Professional Skills</h4>
+                <h4 style={{ fontSize: '1rem', color: 'var(--text-heading)', margin: 0 }}>3. Professional Skills</h4>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.85rem' }}>
@@ -1578,7 +1578,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                 {verifForm.previousEmployer && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.2rem' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Previous Employer:</span>
-                    <strong style={{ color: '#ffffff' }}>{verifForm.previousEmployer}</strong>
+                    <strong style={{ color: 'var(--text-heading)' }}>{verifForm.previousEmployer}</strong>
                   </div>
                 )}
               </div>
@@ -1588,7 +1588,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
             <div className="glass-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                 <Wallet size={18} color="#a855f7" />
-                <h4 style={{ fontSize: '1rem', color: '#ffffff', margin: 0 }}>4. Payout Information</h4>
+                <h4 style={{ fontSize: '1rem', color: 'var(--text-heading)', margin: 0 }}>4. Payout Information</h4>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.85rem' }}>
@@ -1598,16 +1598,16 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Account / Phone No:</span>
-                  <strong style={{ color: '#ffffff', fontFamily: 'monospace' }}>{verifForm.payoutAccount}</strong>
+                  <strong style={{ color: 'var(--text-heading)', fontFamily: 'monospace' }}>{verifForm.payoutAccount}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Account Holder Name:</span>
-                  <strong style={{ color: '#ffffff' }}>{verifForm.payoutAccountHolder}</strong>
+                  <strong style={{ color: 'var(--text-heading)' }}>{verifForm.payoutAccountHolder}</strong>
                 </div>
                 {verifForm.payoutMethod === 'Bank' && verifForm.payoutBankName && (
                   <div>
                     <span style={{ color: 'var(--text-muted)', display: 'block' }}>Bank & Branch:</span>
-                    <strong style={{ color: '#ffffff' }}>{verifForm.payoutBankName} ({verifForm.payoutBankBranch})</strong>
+                    <strong style={{ color: 'var(--text-heading)' }}>{verifForm.payoutBankName} ({verifForm.payoutBankBranch})</strong>
                   </div>
                 )}
               </div>
@@ -1659,7 +1659,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <RotateCcw size={20} color="var(--accent-gold)" />
-                <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Propose Counter Price</h3>
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-heading)', margin: 0 }}>Propose Counter Price</h3>
               </div>
               <button onClick={() => setShowCounterModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <XCircle size={22} />
@@ -1708,7 +1708,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <KeyRound size={20} color="var(--primary)" />
-                <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Enter Start OTP</h3>
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-heading)', margin: 0 }}>Enter Start OTP</h3>
               </div>
               <button onClick={() => setShowStartOtpModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <XCircle size={22} />
@@ -1750,7 +1750,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <KeyRound size={20} color="var(--primary)" />
-                <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Enter Completion OTP</h3>
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-heading)', margin: 0 }}>Enter Completion OTP</h3>
               </div>
               <button onClick={() => setShowCompletionOtpModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <XCircle size={22} />
@@ -1792,7 +1792,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <Send size={20} color="var(--primary)" />
-                <h3 style={{ fontSize: '1.15rem', color: '#ffffff', margin: 0 }}>Submit Quote for Problem</h3>
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-heading)', margin: 0 }}>Submit Quote for Problem</h3>
               </div>
               <button onClick={() => setShowProblemOfferModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <XCircle size={22} />
@@ -1851,7 +1851,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <Wallet size={22} color="var(--primary)" />
                 <div>
-                  <h3 style={{ fontSize: '1.2rem', color: '#ffffff', margin: 0 }}>Cashout Wallet Balance</h3>
+                  <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)', margin: 0 }}>Cashout Wallet Balance</h3>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Direct disbursement to Mobile Wallet or Bank</span>
                 </div>
               </div>
@@ -2095,7 +2095,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                   <ShieldCheck size={22} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '1.25rem', color: '#ffffff', margin: 0 }}>Technician Verification Dossier</h3>
+                  <h3 style={{ fontSize: '1.25rem', color: 'var(--text-heading)', margin: 0 }}>Technician Verification Dossier</h3>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Step {verifStep} of 5: {verifStep === 1 ? 'Personal & NID' : verifStep === 2 ? 'Address Details' : verifStep === 3 ? 'Professional Experience' : verifStep === 4 ? 'Payout Setup' : 'Review & Submit'}</span>
                 </div>
               </div>
@@ -2666,13 +2666,13 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', fontSize: '0.85rem' }}>
                   <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>LEGAL NAME & NID</span>
-                    <strong style={{ color: '#ffffff' }}>{verifForm.fullName}</strong>
+                    <strong style={{ color: 'var(--text-heading)' }}>{verifForm.fullName}</strong>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.2rem' }}>NID: {verifForm.nidNumber} • DOB: {verifForm.dateOfBirth}</div>
                   </div>
 
                   <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>PHONE & OTP STATUS</span>
-                    <strong style={{ color: '#ffffff' }}>{verifForm.phone}</strong>
+                    <strong style={{ color: 'var(--text-heading)' }}>{verifForm.phone}</strong>
                     <div style={{ color: phoneOtpVerified || verifForm.phoneVerified ? '#34d399' : '#f59e0b', fontSize: '0.8rem', marginTop: '0.2rem' }}>
                       {phoneOtpVerified || verifForm.phoneVerified ? '✔ Phone Verified' : '⚠️ OTP Not Verified'}
                     </div>
@@ -2680,13 +2680,13 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
                   <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>PRESENT ADDRESS</span>
-                    <strong style={{ color: '#ffffff' }}>{verifForm.presentAddress}</strong>
+                    <strong style={{ color: 'var(--text-heading)' }}>{verifForm.presentAddress}</strong>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.2rem' }}>{verifForm.cityArea}, {verifForm.division}</div>
                   </div>
 
                   <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>PAYOUT METHOD</span>
-                    <strong style={{ color: '#ffffff' }}>{verifForm.payoutMethod}: {verifForm.payoutAccount}</strong>
+                    <strong style={{ color: 'var(--text-heading)' }}>{verifForm.payoutMethod}: {verifForm.payoutAccount}</strong>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.2rem' }}>Holder: {verifForm.payoutAccountHolder}</div>
                   </div>
                 </div>

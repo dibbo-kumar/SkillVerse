@@ -262,17 +262,37 @@ a {
   color: var(--text-heading) !important;
 }
 
-[data-theme='light'] p:not(.btn *):not(.badge *) {
+[data-theme='light'] p:not(.btn *):not(.badge *):not([class*='badge']):not([class*='btn']) {
   color: var(--text-secondary) !important;
 }
 
-[data-theme='light'] strong:not(.btn *):not(.badge *), 
-[data-theme='light'] b:not(.btn *):not(.badge *) {
+[data-theme='light'] strong:not(.btn *):not(.badge *):not([class*='badge']):not([class*='btn']), 
+[data-theme='light'] b:not(.btn *):not(.badge *):not([class*='badge']):not([class*='btn']) {
   color: var(--text-heading) !important;
 }
 
-[data-theme='light'] .form-label {
-  color: var(--text-muted) !important;
+[data-theme='light'] span:not(.btn *):not(.badge *):not([class*='badge']):not([class*='btn']):not([style*='color: var(--primary)']):not([style*='color: var(--accent-rose)']):not([style*='color: var(--accent-gold)']):not([style*='color: var(--accent-blue)']):not([style*='color: #']):not([style*='color: rgb']) {
+  color: var(--text-primary);
+}
+
+[data-theme='light'] td:not(.btn *):not(.badge *) {
+  color: var(--text-primary);
+}
+
+[data-theme='light'] th {
+  color: var(--text-heading) !important;
+}
+
+[data-theme='light'] .form-label,
+[data-theme='light'] label:not(.btn):not(.btn *):not(.badge *) {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme='light'] input,
+[data-theme='light'] textarea,
+[data-theme='light'] select {
+  color: var(--input-text) !important;
+  background-color: var(--input-bg) !important;
 }
 
 [data-theme='light'] .nav-link {

@@ -237,7 +237,7 @@ export default function LandingPage({ onOpenAuth }) {
                   <GraduationCap size={28} color="#06b6d4" />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.3rem', color: '#ffffff' }}>SkillVerse Academy</h3>
+                  <h3 style={{ margin: 0, fontSize: '1.3rem', color: 'var(--text-heading)' }}>SkillVerse Academy</h3>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Professional Certification Programs</span>
                 </div>
               </div>
@@ -260,7 +260,7 @@ export default function LandingPage({ onOpenAuth }) {
                   <ShoppingBag size={28} color="#f59e0b" />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.3rem', color: '#ffffff' }}>Pro Equipment & Tool Store</h3>
+                  <h3 style={{ margin: 0, fontSize: '1.3rem', color: 'var(--text-heading)' }}>Pro Equipment & Tool Store</h3>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Authentic Gear with Warranty</span>
                 </div>
               </div>
@@ -287,7 +287,7 @@ export default function LandingPage({ onOpenAuth }) {
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.8rem' }}>
                 <CheckCircle2 size={15} /> 100% Peace of Mind
               </div>
-              <h2 style={{ fontSize: '1.8rem', margin: '0 0 0.6rem 0', color: '#ffffff' }}>
+              <h2 style={{ fontSize: '1.8rem', margin: '0 0 0.6rem 0', color: 'var(--text-heading)' }}>
                 The 30-Day SkillVerse Service Guarantee
               </h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
@@ -312,7 +312,7 @@ export default function LandingPage({ onOpenAuth }) {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
                 <ShieldCheck size={26} color="#10b981" />
-                <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff' }}>SkillVerse</span>
+                <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-heading)' }}>SkillVerse</span>
               </div>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '340px' }}>
                 Bangladesh's premier ecosystem for verified technical professionals, doorstep services, skills development, and equipment.

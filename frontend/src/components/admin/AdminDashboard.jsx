@@ -314,7 +314,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
               <Shield size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>Control Center</div>
+              <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-heading)' }}>Control Center</div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Superadmin Workspace</div>
             </div>
           </div>
@@ -417,7 +417,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                   <span>Total Customers</span>
                   <Users size={16} color="#3b82f6" />
                 </div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#ffffff' }}>{overviewData?.totalCustomers ?? 0}</div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-heading)' }}>{overviewData?.totalCustomers ?? 0}</div>
                 <div style={{ fontSize: '0.75rem', color: '#38bdf8', marginTop: '0.3rem' }}>Registered Service Requesters</div>
               </div>
 
@@ -426,7 +426,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                   <span>Total Technicians</span>
                   <Wrench size={16} color="#10b981" />
                 </div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#ffffff' }}>{overviewData?.totalWorkers ?? 0}</div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-heading)' }}>{overviewData?.totalWorkers ?? 0}</div>
                 <div style={{ fontSize: '0.75rem', color: '#34d399', marginTop: '0.3rem' }}>Registered Field Workers</div>
               </div>
 
@@ -446,7 +446,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                   <span>Active Jobs</span>
                   <Calendar size={16} color="#8b5cf6" />
                 </div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#ffffff' }}>{overviewData?.activeBookings ?? 0}</div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-heading)' }}>{overviewData?.activeBookings ?? 0}</div>
                 <div style={{ fontSize: '0.75rem', color: '#c084fc', marginTop: '0.3rem' }}>In Progress / On The Way</div>
               </div>
 
@@ -455,7 +455,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                   <span>Total Service Volume</span>
                   <DollarSign size={16} color="#06b6d4" />
                 </div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#ffffff' }}>৳{overviewData?.totalRevenue?.toLocaleString() ?? 0}</div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-heading)' }}>৳{overviewData?.totalRevenue?.toLocaleString() ?? 0}</div>
                 <div style={{ fontSize: '0.75rem', color: '#22d3ee', marginTop: '0.3rem' }}>Completed Gross Volume</div>
               </div>
 
@@ -697,7 +697,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                               <img src={u.profilePicture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"} alt={u.name} style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover' }} />
                               <div>
-                                <div style={{ fontWeight: 700, color: '#ffffff' }}>{u.name}</div>
+                                <div style={{ fontWeight: 700, color: 'var(--text-heading)' }}>{u.name}</div>
                                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>User ID: #{u.id}</div>
                               </div>
                             </div>
@@ -861,7 +861,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
               {displayedVerifRequests.length === 0 ? (
                 <div className="glass-card" style={{ textAlign: 'center', padding: '3.5rem', color: 'var(--text-muted)' }}>
                   <CheckCircle2 size={44} color="var(--primary)" style={{ margin: '0 auto 0.8rem', opacity: 0.7 }} />
-                  <div style={{ fontSize: '1.1rem', fontWeight: 600, color: '#ffffff' }}>No requests in this queue</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-heading)' }}>No requests in this queue</div>
                   <div style={{ fontSize: '0.85rem' }}>All submitted technician applications in this category have been processed.</div>
                 </div>
               ) : (
@@ -893,7 +893,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                           />
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                              <h3 style={{ fontSize: '1.2rem', margin: 0, color: '#ffffff', fontWeight: 700 }}>
+                              <h3 style={{ fontSize: '1.2rem', margin: 0, color: 'var(--text-heading)', fontWeight: 700 }}>
                                 {req.fullName || applicant.name || "Technician Candidate"}
                               </h3>
                               {renderStatusBadge(req.status)}
@@ -904,7 +904,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                               )}
                             </div>
                             <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                              Phone: <strong style={{ color: '#ffffff' }}>{req.phone || applicant.phone}</strong> • Email: <strong style={{ color: '#ffffff' }}>{applicant.email}</strong>
+                              Phone: <strong style={{ color: 'var(--text-heading)' }}>{req.phone || applicant.phone}</strong> • Email: <strong style={{ color: 'var(--text-heading)' }}>{applicant.email}</strong>
                             </div>
                           </div>
                         </div>
@@ -924,7 +924,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', background: 'rgba(255,255,255,0.02)', padding: '0.85rem 1.1rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1rem', fontSize: '0.82rem' }}>
                         <div>
                           <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>TRADE / SPECIALIZATION</span>
-                          <strong style={{ color: '#ffffff' }}>{req.skills || "AC Repair & Electrical"}</strong>
+                          <strong style={{ color: 'var(--text-heading)' }}>{req.skills || "AC Repair & Electrical"}</strong>
                         </div>
                         <div>
                           <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>EXPERIENCE</span>
@@ -932,7 +932,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                         </div>
                         <div>
                           <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>SERVICE CITY / AREA</span>
-                          <strong style={{ color: '#ffffff' }}>{req.cityArea || "Uttara"}, {req.division || "Dhaka"}</strong>
+                          <strong style={{ color: 'var(--text-heading)' }}>{req.cityArea || "Uttara"}, {req.division || "Dhaka"}</strong>
                         </div>
                         <div>
                           <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem' }}>PAYOUT METHOD</span>
@@ -943,7 +943,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                       {/* 3. Admin Remarks if present */}
                       {req.adminRemarks && (
                         <div style={{ background: 'rgba(245, 158, 11, 0.08)', borderLeft: '3px solid #f59e0b', padding: '0.6rem 0.9rem', borderRadius: '6px', marginBottom: '1rem', fontSize: '0.8rem' }}>
-                          <strong style={{ color: '#f59e0b' }}>Admin Feedback:</strong> <span style={{ color: '#ffffff' }}>{req.adminRemarks}</span>
+                          <strong style={{ color: '#f59e0b' }}>Admin Feedback:</strong> <span style={{ color: 'var(--text-heading)' }}>{req.adminRemarks}</span>
                         </div>
                       )}
 
@@ -1058,9 +1058,9 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                       <div style={{ color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>
                         👤 Legal Identity & Contact
                       </div>
-                      <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '0.95rem' }}>{selectedVerifReq.fullName || selectedVerifReq.user?.name}</div>
-                      <div style={{ marginTop: '0.2rem' }}>Phone: <strong style={{ color: '#ffffff' }}>{selectedVerifReq.phone || selectedVerifReq.user?.phone}</strong> {selectedVerifReq.phoneVerified ? <span style={{ color: '#10b981' }}>✔ (OTP Verified)</span> : <span style={{ color: '#f59e0b' }}>⚠️ Unverified</span>}</div>
-                      <div>Email: <strong style={{ color: '#ffffff' }}>{selectedVerifReq.user?.email || 'N/A'}</strong></div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-heading)', fontSize: '0.95rem' }}>{selectedVerifReq.fullName || selectedVerifReq.user?.name}</div>
+                      <div style={{ marginTop: '0.2rem' }}>Phone: <strong style={{ color: 'var(--text-heading)' }}>{selectedVerifReq.phone || selectedVerifReq.user?.phone}</strong> {selectedVerifReq.phoneVerified ? <span style={{ color: '#10b981' }}>✔ (OTP Verified)</span> : <span style={{ color: '#f59e0b' }}>⚠️ Unverified</span>}</div>
+                      <div>Email: <strong style={{ color: 'var(--text-heading)' }}>{selectedVerifReq.user?.email || 'N/A'}</strong></div>
                       <div>Date of Birth: {selectedVerifReq.dateOfBirth || "1994-08-14"}</div>
                       <div style={{ marginTop: '0.3rem' }}>National NID: <strong style={{ color: 'var(--accent-gold)', fontFamily: 'monospace' }}>{selectedVerifReq.nidNumber || 'Not provided'}</strong></div>
                     </div>
@@ -1069,7 +1069,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                       <div style={{ color: 'var(--accent-gold)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>
                         🛠️ Professional Capabilities
                       </div>
-                      <div>Skills / Specialization: <strong style={{ color: '#ffffff' }}>{selectedVerifReq.skills || "Technical Service"}</strong></div>
+                      <div>Skills / Specialization: <strong style={{ color: 'var(--text-heading)' }}>{selectedVerifReq.skills || "Technical Service"}</strong></div>
                       <div>Field Experience: <strong style={{ color: 'var(--primary)' }}>{selectedVerifReq.experienceYears || 5} Years</strong></div>
                       {selectedVerifReq.previousEmployer && <div>Previous Contractor/Employer: <strong>{selectedVerifReq.previousEmployer}</strong></div>}
                       {selectedVerifReq.experienceDescription && (
@@ -1095,7 +1095,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                         💳 Payout & Financial Routing
                       </div>
                       <div>Method: <span className="badge badge-gold" style={{ fontSize: '0.72rem' }}>{selectedVerifReq.payoutMethod || "bKash"}</span></div>
-                      <div style={{ marginTop: '0.2rem' }}>Account Number: <strong style={{ fontFamily: 'monospace', color: '#ffffff' }}>{selectedVerifReq.payoutAccount || selectedVerifReq.user?.phone}</strong></div>
+                      <div style={{ marginTop: '0.2rem' }}>Account Number: <strong style={{ fontFamily: 'monospace', color: 'var(--text-heading)' }}>{selectedVerifReq.payoutAccount || selectedVerifReq.user?.phone}</strong></div>
                       {selectedVerifReq.payoutAccountHolder && <div>Account Holder Name: {selectedVerifReq.payoutAccountHolder}</div>}
                       {selectedVerifReq.payoutBankName && <div>Bank: {selectedVerifReq.payoutBankName} ({selectedVerifReq.payoutBankBranch || 'Main Branch'})</div>}
                     </div>
@@ -1218,11 +1218,11 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                             #{b.id}
                           </td>
                           <td style={{ padding: '0.9rem 1rem' }}>
-                            <div style={{ fontWeight: 600, color: '#ffffff' }}>{b.customer?.name || 'Customer'}</div>
+                            <div style={{ fontWeight: 600, color: 'var(--text-heading)' }}>{b.customer?.name || 'Customer'}</div>
                             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{b.customer?.phone}</div>
                           </td>
                           <td style={{ padding: '0.9rem 1rem' }}>
-                            <div style={{ fontWeight: 600, color: '#ffffff' }}>{b.worker?.name || 'Unassigned'}</div>
+                            <div style={{ fontWeight: 600, color: 'var(--text-heading)' }}>{b.worker?.name || 'Unassigned'}</div>
                             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{b.worker?.phone}</div>
                           </td>
                           <td style={{ padding: '0.9rem 1rem' }}>
@@ -1393,7 +1393,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
               
               <div className="glass-card" style={{ borderLeft: '4px solid var(--primary)', padding: '1.25rem' }}>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.4rem' }}>Total Gross Service Value</div>
-                <div style={{ fontSize: '1.7rem', fontWeight: 800, color: '#ffffff' }}>৳{financeData?.totalServiceVolume?.toLocaleString() ?? 0}</div>
+                <div style={{ fontSize: '1.7rem', fontWeight: 800, color: 'var(--text-heading)' }}>৳{financeData?.totalServiceVolume?.toLocaleString() ?? 0}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.2rem' }}>Total completed customer invoices</div>
               </div>
 
@@ -1561,7 +1561,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.2rem', marginBottom: '2rem' }}>
               <div className="glass-card" style={{ padding: '1.25rem' }}>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Total Service Contracts</div>
-                <div style={{ fontSize: '1.7rem', fontWeight: 800, color: '#ffffff' }}>{analyticsData?.totalBookings ?? 0}</div>
+                <div style={{ fontSize: '1.7rem', fontWeight: 800, color: 'var(--text-heading)' }}>{analyticsData?.totalBookings ?? 0}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.2rem' }}>Completed: {analyticsData?.completedBookings ?? 0}</div>
               </div>
 
@@ -1704,7 +1704,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
                           <div>
-                            <span style={{ fontWeight: 700, color: '#ffffff', marginRight: '0.6rem' }}>{l.action}</span>
+                            <span style={{ fontWeight: 700, color: 'var(--text-heading)', marginRight: '0.6rem' }}>{l.action}</span>
                             <span className="badge badge-pending" style={{ fontSize: '0.7rem' }}>{l.actorRole}</span>
                           </div>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
