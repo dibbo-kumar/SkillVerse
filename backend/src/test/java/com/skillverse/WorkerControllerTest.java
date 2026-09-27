@@ -45,10 +45,38 @@ public class WorkerControllerTest {
     @Test
     void testVerifyWorker() throws Exception {
         User worker = userRepository.findByEmail("sajid@gmail.com").orElse(null);
+        if (worker == null) {
+            worker = userRepository.findByEmail("kamrul@gmail.com").orElse(null);
+        }
         assertThat(worker).isNotNull();
 
         mockMvc.perform(post("/api/workers/" + worker.getId() + "/verify")
                 .param("nid", "19952618954712399"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void testGetNearbyWorkersWithCoordinates() throws Exception {
+        // Customer in Uttara (23.8759, 90.3795) with 5km radius
+        mockMvc.perform(get("/api/workers/nearby")
+                .param("lat", "23.8759")
+                .param("lon", "90.3795")
+                .param("radius", "5.0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].distanceKm").exists())
+                .andExpect(jsonPath("$[0].distanceString").exists())
+                .andExpect(jsonPath("$[0].serviceArea").exists());
+    }
+
+    @Test
+    void testGetNearbyWorkersRadiusFilter() throws Exception {
+        // Customer in Uttara with 0.5km (500m) radius
+        mockMvc.perform(get("/api/workers/nearby")
+                .param("lat", "23.8759")
+                .param("lon", "90.3795")
+                .param("radius", "0.5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
     }
 }

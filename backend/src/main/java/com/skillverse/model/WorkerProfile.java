@@ -21,8 +21,8 @@ public class WorkerProfile {
     private Double hourlyRate;
     private Double basePrice = 300.0;
     private boolean isAvailable;
-    private Double latitude = 23.8720;
-    private Double longitude = 90.3810;
+    private Double latitude;
+    private Double longitude;
 
     public WorkerProfile() {}
 

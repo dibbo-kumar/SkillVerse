@@ -126,22 +126,32 @@ public class VerificationRequestController {
                 ? dto.getDetailedAddress() 
                 : (dto.getPresentAddress() != null ? dto.getPresentAddress() : user.getAddress());
         user.setAddress(formattedAddress);
+        if (dto.getLatitude() != null) user.setLatitude(dto.getLatitude());
+        if (dto.getLongitude() != null) user.setLongitude(dto.getLongitude());
         user.setVerified(false);
         user.setStatus("UNDER_REVIEW");
         userRepository.save(user);
 
         // Update / create WorkerProfile
         WorkerProfile profile = workerProfileRepository.findByUserId(user.getId()).orElse(null);
+        String calculatedServiceArea = dto.getServiceArea();
+        if (calculatedServiceArea == null || calculatedServiceArea.trim().isEmpty()) {
+            calculatedServiceArea = (dto.getCityArea() != null && !dto.getCityArea().isEmpty()) 
+                    ? dto.getCityArea() + ", " + (dto.getDivision() != null ? dto.getDivision() : "Dhaka")
+                    : (profile != null && profile.getServiceArea() != null ? profile.getServiceArea() : "Dhaka");
+        }
         if (profile == null) {
             profile = new WorkerProfile(user, dto.getSkills() != null ? dto.getSkills() : "Technical Maintenance",
                     dto.getExperienceYears() != null ? dto.getExperienceYears() : 1,
-                    dto.getCityArea() != null ? dto.getCityArea() : "Dhaka",
+                    calculatedServiceArea,
                     "Bronze", 350.0);
         } else {
             if (dto.getSkills() != null && !dto.getSkills().isEmpty()) profile.setSkills(dto.getSkills());
             if (dto.getExperienceYears() != null) profile.setExperienceYears(dto.getExperienceYears());
-            if (dto.getCityArea() != null && !dto.getCityArea().isEmpty()) profile.setServiceArea(dto.getCityArea() + ", " + (dto.getDivision() != null ? dto.getDivision() : "Dhaka"));
+            profile.setServiceArea(calculatedServiceArea);
         }
+        if (dto.getLatitude() != null) profile.setLatitude(dto.getLatitude());
+        if (dto.getLongitude() != null) profile.setLongitude(dto.getLongitude());
         workerProfileRepository.save(profile);
 
         // Check if existing verification request exists
@@ -342,6 +352,19 @@ public class VerificationRequestController {
         private String payoutAccountHolder;
         private String payoutBankName;
         private String payoutBankBranch;
+
+        private String serviceArea;
+        private Double latitude;
+        private Double longitude;
+
+        public String getServiceArea() { return serviceArea; }
+        public void setServiceArea(String serviceArea) { this.serviceArea = serviceArea; }
+
+        public Double getLatitude() { return latitude; }
+        public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+        public Double getLongitude() { return longitude; }
+        public void setLongitude(Double longitude) { this.longitude = longitude; }
 
         public Long getUserId() { return userId; }
         public void setUserId(Long userId) { this.userId = userId; }

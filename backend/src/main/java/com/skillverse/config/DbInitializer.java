@@ -281,6 +281,42 @@ public class DbInitializer implements CommandLineRunner {
                 problemOfferRepository.save(off2);
         }
 
+        private void seedWorker(String name, String email, String phone, String nid, double rating, double lat, double lon,
+                                String serviceArea, String skills, int expYears, String level, double rate, double basePrice, String photoUrl) {
+                User worker = userRepository.findByEmail(email).orElse(null);
+                if (worker == null) {
+                        worker = new User(name, email, phone, "WORKER");
+                        worker.setVerified(true);
+                        worker.setNidNumber(nid);
+                        worker.setRating(rating);
+                        worker.setLatitude(lat);
+                        worker.setLongitude(lon);
+                        worker.setAddress(serviceArea);
+                        worker.setProfilePicture(photoUrl);
+                        worker = userRepository.save(worker);
+                } else {
+                        worker.setVerified(true);
+                        worker.setLatitude(lat);
+                        worker.setLongitude(lon);
+                        worker.setAddress(serviceArea);
+                        userRepository.save(worker);
+                }
+
+                WorkerProfile profile = workerProfileRepository.findByUserId(worker.getId()).orElse(null);
+                if (profile == null) {
+                        profile = new WorkerProfile(worker, skills, expYears, serviceArea, level, rate, basePrice);
+                        profile.setLatitude(lat);
+                        profile.setLongitude(lon);
+                        workerProfileRepository.save(profile);
+                } else {
+                        profile.setLatitude(lat);
+                        profile.setLongitude(lon);
+                        profile.setServiceArea(serviceArea);
+                        profile.setSkills(skills);
+                        workerProfileRepository.save(profile);
+                }
+        }
+
         private void seedCoreData() {
 
                 // Pre-populate users
@@ -298,39 +334,68 @@ public class DbInitializer implements CommandLineRunner {
                 userRepository.save(customer);
 
                 // Pre-populate workers
-                User worker1 = new User("Kamrul Islam", "kamrul@gmail.com", "01911223344", "WORKER");
-                worker1.setVerified(true);
-                worker1.setNidNumber("19942618954712365");
-                worker1.setRating(4.8);
-                worker1.setLatitude(23.8720);
-                worker1.setLongitude(90.3810);
-                worker1.setAddress("Sector 11, Uttara, Dhaka");
-                worker1.setProfilePicture(
-                                "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=150&auto=format&fit=crop");
-                userRepository.save(worker1);
+                seedWorker("Kamrul Islam", "kamrul@gmail.com", "01911223344", "19942618954712365", 4.8, 23.8720, 90.3810,
+                        "Sector 11, Uttara, Dhaka", "Electrical, AC Repair, Smart Home", 6, "Gold", 450.0, 300.0,
+                        "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=150&auto=format&fit=crop");
 
-                WorkerProfile profile1 = new WorkerProfile(worker1, "Electrical, AC Repair, Smart Home", 6,
-                                "Dhaka North (Gulshan, Banani, Uttara)", "Gold", 450.0, 300.0);
-                profile1.setLatitude(23.8720);
-                profile1.setLongitude(90.3810);
-                workerProfileRepository.save(profile1);
+                seedWorker("Mohammad Rafiq", "rafiq@gmail.com", "01511223344", "19892618954785412", 4.9, 23.7461, 90.3742,
+                        "Road 9A, Dhanmondi, Dhaka", "Plumbing, Water Pump Repair", 10, "Master", 500.0, 350.0,
+                        "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=150&auto=format&fit=crop");
 
-                User worker2 = new User("Mohammad Rafiq", "rafiq@gmail.com", "01511223344", "WORKER");
-                worker2.setVerified(true);
-                worker2.setNidNumber("19892618954785412");
-                worker2.setRating(4.9);
-                worker2.setLatitude(23.7461);
-                worker2.setLongitude(90.3742);
-                worker2.setAddress("Road 9A, Dhanmondi, Dhaka");
-                worker2.setProfilePicture(
-                                "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=150&auto=format&fit=crop");
-                userRepository.save(worker2);
+                seedWorker("Tariqul Islam", "tariq@gmail.com", "01712345678", "19882618954711223", 4.9, 23.8745, 90.3815,
+                        "Sector 13, Uttara, Dhaka", "AC Repair, HVAC Servicing, Refrigerant Gas Top-up", 8, "Master", 550.0, 400.0,
+                        "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop");
 
-                WorkerProfile profile2 = new WorkerProfile(worker2, "Plumbing, Water Pump Repair", 10,
-                                "Dhaka South (Dhanmondi, Lalbagh, Motijheel)", "Master", 500.0, 350.0);
-                profile2.setLatitude(23.7461);
-                profile2.setLongitude(90.3742);
-                workerProfileRepository.save(profile2);
+                seedWorker("Tanvir Ahmed", "tanvir.ahmed@gmail.com", "01823456789", "19922618954733445", 4.7, 23.8680, 90.3910,
+                        "Sector 3, Uttara, Dhaka", "Electrical, Smart Home Automation, Generator Repair", 5, "Gold", 400.0, 300.0,
+                        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop");
+
+                seedWorker("Mahfuzur Rahman", "mahfuz@gmail.com", "01934567890", "19872618954755667", 4.85, 23.7925, 90.4078,
+                        "Road 71, Gulshan 2, Dhaka", "Plumbing, Water Pump Repair, Gas Line Fitting", 9, "Platinum", 500.0, 350.0,
+                        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop");
+
+                seedWorker("Kazi Kabir", "kabir@gmail.com", "01545678901", "19952618954777889", 4.6, 23.8150, 90.3650,
+                        "Section 11, Mirpur, Dhaka", "House Painting, Wood Polish, Carpentry", 4, "Silver", 350.0, 250.0,
+                        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop");
+
+                seedWorker("Shahriar Hossain", "shahriar@gmail.com", "01656789012", "19902618954799001", 4.95, 23.7930, 90.4040,
+                        "Block E, Banani, Dhaka", "AC Repair, Washing Machine Repair, Microwave Repair", 7, "Platinum", 480.0, 300.0,
+                        "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop");
+
+                seedWorker("Farhan Ahmed", "farhan@gmail.com", "01722334455", "19892618954722334", 4.88, 23.8155, 90.4250,
+                        "Block C, Bashundhara R/A, Dhaka", "Washing Machine Repair, Refrigerator Gas Top-up, PCB Repair", 8, "Master", 520.0, 350.0,
+                        "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop");
+
+                seedWorker("Imtiaz Chowdhury", "imtiaz@gmail.com", "01833445566", "19932618954744556", 4.75, 23.7850, 90.4270,
+                        "Middle Badda, Dhaka", "Electrical, CCTV Camera Installation, IPS & UPS Repair", 6, "Gold", 420.0, 300.0,
+                        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop");
+
+                seedWorker("Zubaer Rahman", "zubaer@gmail.com", "01944556677", "19912618954766778", 4.82, 23.7590, 90.3620,
+                        "Kazi Nazrul Islam Road, Mohammadpur, Dhaka", "Gas Stove Burner Fitting, RO Water Purifier Servicing, Kitchen Geyser", 5, "Gold", 400.0, 250.0,
+                        "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop");
+
+                seedWorker("Ariful Islam", "arif@gmail.com", "01555667788", "19902618954788990", 4.90, 23.7520, 90.4210,
+                        "Tamtola, Khilgaon, Dhaka", "Deep House Cleaning, Overhead Water Tank Jet Wash, Sofa Cleaning", 7, "Platinum", 380.0, 250.0,
+                        "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop");
+
+                seedWorker("Hasan Mahmud", "hasan@gmail.com", "01666778899", "19852618954700112", 4.70, 23.7180, 90.3880,
+                        "Lalbagh Fort Road, Old Dhaka, Dhaka", "Roof Damp Leak Proofing, Tile Fitting, Masonry Work", 11, "Master", 450.0, 300.0,
+                        "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop");
+
+                seedWorker("Nazmul Huda", "nazmul@gmail.com", "01777889900", "19882618954733221", 4.92, 23.8920, 90.3950,
+                        "Sector 18, Uttara, Dhaka", "AC Repair, Inverter Compressor Replacement, Gas Top-up", 9, "Platinum", 550.0, 400.0,
+                        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop");
+
+                seedWorker("Sajid Hasan", "sajid@gmail.com", "01755667788", "19952618954712399", 4.85, 23.8730, 90.3820,
+                        "Sector 12, Uttara, Dhaka", "Electrical, AC Repair, Home Automation", 5, "Gold", 420.0, 300.0,
+                        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop");
+
+                seedWorker("Biplob Hossain", "biplob@gmail.com", "01888990011", "19922618954755443", 4.80, 23.8080, 90.3610,
+                        "Stadium Road, Mirpur 2, Dhaka", "Plumbing, Sewer Line Unclogging, High Pressure Drain Wash", 8, "Gold", 460.0, 300.0,
+                        "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop");
+
+                User worker1 = userRepository.findByEmail("kamrul@gmail.com").orElse(null);
+                User worker2 = userRepository.findByEmail("rafiq@gmail.com").orElse(null);
 
                 // Pre-populate bookings with past completed review
                 ServiceBooking bookingPast1 = new ServiceBooking(customer, worker1, "Electrical Circuit Diagnostic",

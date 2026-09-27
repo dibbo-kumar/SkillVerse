@@ -4,9 +4,11 @@ import {
   AlertCircle, ShieldCheck, MapPin, Phone, User, Play, Sparkles, Navigation,
   KeyRound, RefreshCw, Layers, ArrowDownRight, Wallet, Award, XCircle,
   Eye, CheckCheck, Star, Camera, FileText, Send, Filter, Search, RotateCcw,
-  ShieldAlert, FileCheck, Check, UploadCloud, ChevronRight, HelpCircle, AlertTriangle
+  ShieldAlert, FileCheck, Check, UploadCloud, ChevronRight, HelpCircle, AlertTriangle,
+  Compass
 } from 'lucide-react';
 import WorkerBookingDetailsModal from './WorkerBookingDetailsModal';
+import LocationPickerModal from '../common/LocationPickerModal';
 
 const API_BASE = "http://localhost:8081/api";
 
@@ -55,7 +57,11 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
   // Verification State
   const [verifDossier, setVerifDossier] = useState(null);
   const [showVerifModal, setShowVerifModal] = useState(false);
-  const [verifStep, setVerifStep] = useState(1); // 1: Personal, 2: Address, 3: Professional, 4: Payout, 5: Review
+  const [verifStep, setVerifStep] = useState(1); // 1: Personal, 2: Address & Location, 3: Professional, 4: Payout, 5: Review
+
+  // Location Picker State
+  const [showLocationPickerModal, setShowLocationPickerModal] = useState(false);
+  const [isDetectingGps, setIsDetectingGps] = useState(false);
 
   // Phone OTP Verification Simulator state
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
@@ -79,6 +85,9 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     cityArea: 'Uttara',
     postalCode: '1230',
     detailedAddress: currentWorker?.address || 'House 14, Road 4, Sector 11, Uttara, Dhaka',
+    serviceArea: currentWorker?.serviceArea || currentWorker?.address || 'Sector 11, Uttara, Dhaka',
+    latitude: currentWorker?.latitude || 23.8720,
+    longitude: currentWorker?.longitude || 90.3810,
     skills: 'AC Repair, Electrical, Plumbing',
     experienceYears: 5,
     experienceDescription: 'Certified technician with hands-on experience in inverter split AC servicing, gas charging, and house electrical wiring.',
@@ -251,6 +260,69 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
       setVerifForm(prev => ({ ...prev, [field]: event.target.result }));
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleUseCurrentLocationForVerif = () => {
+    if (!("geolocation" in navigator)) {
+      if (onShowToast) onShowToast("Not Supported", "Geolocation is not supported by your browser.", "error");
+      return;
+    }
+    setIsDetectingGps(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        setIsDetectingGps(false);
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        setVerifForm(prev => ({
+          ...prev,
+          latitude: lat,
+          longitude: lon
+        }));
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=16`);
+          if (res.ok) {
+            const data = await res.json();
+            const addr = data.address || {};
+            const resolvedArea = [addr.suburb || addr.neighbourhood || addr.residential || addr.road, addr.city || 'Dhaka'].filter(Boolean).join(', ');
+            if (resolvedArea) {
+              setVerifForm(prev => ({ ...prev, serviceArea: resolvedArea }));
+            }
+          }
+        } catch (e) {
+          console.warn("Geocode error", e);
+        }
+        if (onShowToast) onShowToast("GPS Location Captured!", `Service base set to (${lat.toFixed(4)}, ${lon.toFixed(4)}).`, "success");
+      },
+      (err) => {
+        setIsDetectingGps(false);
+        if (onShowToast) onShowToast("GPS Warning", "Could not read GPS. You can choose your location on the map.", "warning");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const handleConfirmLocationPicker = (loc) => {
+    setVerifForm(prev => ({
+      ...prev,
+      latitude: loc.lat,
+      longitude: loc.lon,
+      serviceArea: loc.address || prev.serviceArea
+    }));
+    if (onShowToast) onShowToast("Service Location Updated!", `Set to ${loc.address || 'Selected Map Point'} (${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)}).`, "success");
+  };
+
+  const handleQuickUpdateLocation = async (loc) => {
+    try {
+      const res = await fetch(`${API_BASE}/workers/${workerId}/location?lat=${loc.lat}&lon=${loc.lon}&area=${encodeURIComponent(loc.address || '')}`, {
+        method: 'PUT'
+      });
+      if (res.ok) {
+        if (onShowToast) onShowToast("Service Base Updated!", `New coordinates saved to database: (${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)}).`, "success");
+        fetchWorkerData();
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleSubmitVerification = async (e) => {
@@ -608,9 +680,31 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                 )
               )}
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.3rem 0 0 0' }}>
-              Specialization: <strong style={{ color: 'var(--text-heading)' }}>{verifForm.skills || 'AC Repair, Electrical, Plumbing'}</strong> • <strong>{verifForm.experienceYears || 3}+ Years Exp</strong>
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                Specialization: <strong style={{ color: 'var(--text-heading)' }}>{verifForm.skills || 'AC Repair, Electrical, Plumbing'}</strong> • <strong>{verifForm.experienceYears || 3}+ Yrs Exp</strong>
+              </span>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowLocationPickerModal(true)}
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '0.25rem 0.65rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  borderColor: 'rgba(16, 185, 129, 0.3)',
+                  color: '#34d399'
+                }}
+                title="Update your service base location coordinates"
+              >
+                <MapPin size={12} />
+                <span>Base: <strong>{verifForm.serviceArea || 'Dhaka'}</strong></span>
+                <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>(Change)</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -2445,6 +2539,107 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                   />
                 </div>
 
+                {/* --- SERVICE LOCATION (FOR CUSTOMER MATCHING & DISPATCH) --- */}
+                <div style={{
+                  background: 'rgba(16, 185, 129, 0.05)',
+                  padding: '1.2rem',
+                  borderRadius: '14px',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.9rem'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Compass size={18} color="#10b981" />
+                        <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-heading)' }}>
+                          Public Service Location (Customer Discovery Base) *
+                        </h4>
+                      </div>
+                      <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        Customers within your service radius will match and book you based on this point. (No manual typing)
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={handleUseCurrentLocationForVerif}
+                        disabled={isDetectingGps}
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '0.45rem 0.8rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          background: 'rgba(16, 185, 129, 0.15)',
+                          borderColor: 'rgba(16, 185, 129, 0.3)',
+                          color: '#34d399'
+                        }}
+                      >
+                        <Navigation size={13} className={isDetectingGps ? 'animate-spin' : ''} />
+                        {isDetectingGps ? 'Detecting GPS...' : 'Use My Current Location'}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={() => setShowLocationPickerModal(true)}
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '0.45rem 0.8rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          background: 'linear-gradient(90deg, #10b981, #059669)'
+                        }}
+                      >
+                        <MapPin size={13} />
+                        Select Location on Map
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Read-only Location Coordinates & Area Display */}
+                  <div style={{
+                    background: 'rgba(5, 10, 20, 0.6)',
+                    padding: '0.8rem 1rem',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '0.6rem'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <MapPin size={16} color="#10b981" />
+                      <div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-heading)' }}>
+                          {verifForm.serviceArea || 'Sector 11, Uttara, Dhaka'}
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          Service Area Name (Displayed to nearby customers)
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                      <span className="badge" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                        Lat: {Number(verifForm.latitude || 23.8720).toFixed(5)}
+                      </span>
+                      <span className="badge" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                        Lon: {Number(verifForm.longitude || 90.3810).toFixed(5)}
+                      </span>
+                      <span className="badge badge-verified" style={{ fontSize: '0.7rem' }}>
+                        ✔ Pin Active
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
                   <button type="button" className="btn btn-secondary" onClick={() => setVerifStep(1)}>← Back</button>
                   <button type="button" className="btn btn-primary" onClick={() => setVerifStep(3)}>Next: Professional Experience →</button>
@@ -2679,9 +2874,17 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                   </div>
 
                   <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>PRESENT ADDRESS</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>PRESENT ADDRESS (PRIVATE)</span>
                     <strong style={{ color: 'var(--text-heading)' }}>{verifForm.presentAddress}</strong>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.2rem' }}>{verifForm.cityArea}, {verifForm.division}</div>
+                  </div>
+
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>PUBLIC SERVICE BASE</span>
+                    <strong style={{ color: '#10b981' }}>{verifForm.serviceArea}</strong>
+                    <div style={{ color: '#38bdf8', fontSize: '0.78rem', marginTop: '0.2rem', fontFamily: 'monospace' }}>
+                      ({Number(verifForm.latitude || 23.8720).toFixed(4)}, {Number(verifForm.longitude || 90.3810).toFixed(4)})
+                    </div>
                   </div>
 
                   <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
@@ -2712,6 +2915,23 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
           </div>
         </div>
       )}
+
+      {/* --- REUSABLE LOCATION PICKER MODAL --- */}
+      <LocationPickerModal
+        isOpen={showLocationPickerModal}
+        onClose={() => setShowLocationPickerModal(false)}
+        initialLat={verifForm.latitude || 23.8720}
+        initialLon={verifForm.longitude || 90.3810}
+        initialAddress={verifForm.serviceArea || verifForm.presentAddress}
+        title="Set Technician Service Location"
+        description="Pin the central base where you provide services. Nearby customers within your radius will match with you."
+        onConfirm={(loc) => {
+          handleConfirmLocationPicker(loc);
+          if (isWorkerApproved) {
+            handleQuickUpdateLocation(loc);
+          }
+        }}
+      />
 
     </div>
   );

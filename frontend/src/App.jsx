@@ -952,10 +952,57 @@ function App() {
     { label: 'All Areas', value: 999 }
   ];
   const CATEGORY_CHIPS = ['All', 'HVAC & AC', 'Plumbing', 'Electrical', 'Painting', 'Smart Home', 'Carpentry'];
-  const customerLocation = {
+  
+  const [customerLocation, setCustomerLocation] = useState({
     lat: currentUser?.latitude || 23.8759,
     lon: currentUser?.longitude || 90.3795,
-    address: currentUser?.address || 'Uttara Sector 12, Dhaka'
+    address: currentUser?.address || 'House 14, Road 4, Sector 12, Uttara, Dhaka'
+  });
+  const [isCustomerLocating, setIsCustomerLocating] = useState(false);
+
+  // Sync customer location if user profile updates
+  useEffect(() => {
+    if (currentUser?.latitude && currentUser?.longitude) {
+      setCustomerLocation({
+        lat: currentUser.latitude,
+        lon: currentUser.longitude,
+        address: currentUser.address || 'Dhaka, Bangladesh'
+      });
+    }
+  }, [currentUser?.latitude, currentUser?.longitude, currentUser?.address]);
+
+  const handleDetectCustomerGps = () => {
+    if (!("geolocation" in navigator)) {
+      showToast("Not Supported", "Geolocation is not supported by your browser.", "error");
+      return;
+    }
+    setIsCustomerLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        setIsCustomerLocating(false);
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        let addr = `GPS Location (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=16`);
+          if (res.ok) {
+            const data = await res.json();
+            const a = data.address || {};
+            const resolved = [a.suburb || a.neighbourhood || a.residential || a.road, a.city || 'Dhaka'].filter(Boolean).join(', ');
+            if (resolved) addr = resolved;
+          }
+        } catch (e) {
+          console.warn(e);
+        }
+        setCustomerLocation({ lat, lon, address: addr });
+        showToast("Location Updated", `Discovery radar centered at ${addr}.`, "success");
+      },
+      (err) => {
+        setIsCustomerLocating(false);
+        showToast("GPS Error", "Could not get device GPS location. Please allow browser location permissions.", "error");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
   // Counter-offer state (Worker)
@@ -985,30 +1032,49 @@ function App() {
 
   // Fetch initial base data on load
   useEffect(() => {
-    fetchWorkers();
+    fetchWorkers(customerLocation.lat, customerLocation.lon, selectedRadius, selectedCategory, skillSearchQuery);
     fetchCourses();
     fetchMarketplace();
     fetchAllUsers();
   }, []);
 
-  // Fetch role-specific data when user logs in or switches tabs
+  // Re-fetch nearby workers when location, radius, category, or search changes
   useEffect(() => {
-    if (!isLoggedIn || !currentUser) return;
+    fetchWorkers(customerLocation.lat, customerLocation.lon, selectedRadius, selectedCategory, skillSearchQuery);
+  }, [customerLocation.lat, customerLocation.lon, selectedRadius, selectedCategory, skillSearchQuery]);
 
-    if (currentUser.role === 'CUSTOMER') {
-      fetchCustomerBookings();
-    } else if (currentUser.role === 'WORKER') {
-      fetchWorkerProfileAndBookings(currentUser.id);
-    } else if (currentUser.role === 'ADMIN') {
-      fetchAdminData();
-    }
-  }, [isLoggedIn, currentUser, activeTab]);
-
-  const fetchWorkers = async () => {
+  const fetchWorkers = async (lat, lon, radius, cat, q) => {
     try {
-      const res = await fetch(`${API_BASE}/workers`);
-      const data = await res.json();
-      setWorkers(data);
+      let url = `${API_BASE}/workers/nearby?`;
+      if (lat && lon) {
+        url += `lat=${lat}&lon=${lon}&`;
+      }
+      if (radius && radius < 900) {
+        url += `radius=${radius}&`;
+      }
+      if (cat && cat !== 'All') {
+        url += `category=${encodeURIComponent(cat)}&`;
+      }
+      if (q && q.trim()) {
+        url += `query=${encodeURIComponent(q.trim())}&`;
+      }
+
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setWorkers(data);
+          return;
+        }
+      }
+      // Fallback to /api/workers
+      const fallbackRes = await fetch(`${API_BASE}/workers`);
+      if (fallbackRes.ok) {
+        const fallbackData = await fallbackRes.json();
+        if (Array.isArray(fallbackData) && fallbackData.length > 0) {
+          setWorkers(fallbackData);
+        }
+      }
     } catch (e) {
       console.error("Error fetching workers", e);
     }
@@ -2563,10 +2629,30 @@ function App() {
 
           {/* Service Booking & Active Service Grid */}
           <div style={{ padding: '0 2rem' }}>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Compass size={22} color="var(--primary)" />
-              Match Verified Technicians
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+              <h2 style={{ fontSize: '1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Compass size={22} color="var(--primary)" />
+                Match Verified Technicians
+              </h2>
+
+              {/* Customer Location Bar */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: 'rgba(255,255,255,0.02)', padding: '0.4rem 0.8rem', borderRadius: '12px', border: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                  <MapPin size={14} color="#10b981" />
+                  <span>Center: <strong style={{ color: 'var(--text-heading)' }}>{customerLocation.address || 'Uttara, Dhaka'}</strong></span>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(16, 185, 129, 0.12)', color: '#34d399', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+                  onClick={handleDetectCustomerGps}
+                  disabled={isCustomerLocating}
+                >
+                  <Navigation size={12} className={isCustomerLocating ? 'animate-spin' : ''} />
+                  {isCustomerLocating ? 'Detecting GPS...' : 'Use My Current Location'}
+                </button>
+              </div>
+            </div>
 
             {/* Skill Keyword Search */}
             <div style={{ marginBottom: '1rem' }}>
@@ -2616,13 +2702,13 @@ function App() {
             {/* Interactive Technician Map */}
             {(() => {
               const filteredSearchWorkers = workers
-                .filter(w => w.user.verified)
+                .filter(w => w.user?.verified)
                 .filter(w => {
                   // Skill / keyword search filter
                   if (skillSearchQuery.trim()) {
                     const q = skillSearchQuery.toLowerCase();
                     const skillMatch = (w.skills || '').toLowerCase().includes(q);
-                    const nameMatch = (w.user.name || '').toLowerCase().includes(q);
+                    const nameMatch = (w.user?.name || '').toLowerCase().includes(q);
                     const areaMatch = (w.serviceArea || '').toLowerCase().includes(q);
                     if (!skillMatch && !nameMatch && !areaMatch) return false;
                   }
@@ -2666,9 +2752,7 @@ function App() {
                       .filter(w => {
                         // Radius filter (Haversine)
                         if (selectedRadius < 900) {
-                          const wLat = w.latitude || w.user?.latitude || 23.8720;
-                          const wLon = w.longitude || w.user?.longitude || 90.3810;
-                          const dist = calculateDistanceKm(customerLocation.lat, customerLocation.lon, wLat, wLon);
+                          const dist = w.distanceKm != null ? w.distanceKm : calculateDistanceKm(customerLocation.lat, customerLocation.lon, w.latitude || 23.8720, w.longitude || 90.3810);
                           if (dist > selectedRadius) return false;
                         }
                         return true;
@@ -2677,14 +2761,16 @@ function App() {
                         const isSaved = savedWorkerIds.includes(w.id || w.user?.id);
                         const wLat = w.latitude || w.user?.latitude || 23.8720;
                         const wLon = w.longitude || w.user?.longitude || 90.3810;
-                        const distKm = calculateDistanceKm(customerLocation.lat, customerLocation.lon, wLat, wLon);
+                        const distKm = w.distanceKm != null ? w.distanceKm : calculateDistanceKm(customerLocation.lat, customerLocation.lon, wLat, wLon);
+                        const distStr = w.distanceString || formatDistanceString(distKm);
+
                         return (
                           <div key={w.id} className="glass-card" style={{ cursor: 'pointer' }} onClick={() => setViewingWorker(w)}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                               <div style={{ position: 'relative' }}>
                                 <img
-                                  src={w.user.profilePicture}
-                                  alt={w.user.name}
+                                  src={w.user?.profilePicture || 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=150'}
+                                  alt={w.user?.name}
                                   style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(16,185,129,0.3)' }}
                                 />
                               </div>
@@ -2702,14 +2788,14 @@ function App() {
                                 <span className="badge badge-verified">Verified Worker</span>
                               </div>
                             </div>
-                            <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{w.user.name}</h3>
+                            <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{w.user?.name}</h3>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: 'var(--accent-gold)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
                               <Award size={14} />
-                              <span>Rating: {w.user.rating} ({w.careerLevel} Rank)</span>
+                              <span>Rating: {w.user?.rating || 4.8} ({w.careerLevel || 'Gold'} Rank)</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>
                               <MapPin size={13} />
-                              <span style={{ fontWeight: 'bold' }}>{formatDistanceString(distKm)}</span>
+                              <span style={{ fontWeight: 'bold' }}>{distStr}</span>
                               <span style={{ color: 'var(--text-muted)' }}>• {w.serviceArea}</span>
                             </div>
                             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
