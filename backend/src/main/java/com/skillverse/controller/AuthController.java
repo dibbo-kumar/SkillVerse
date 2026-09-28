@@ -76,48 +76,61 @@ public class AuthController {
     }
 
     @PutMapping("/users/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User profile) {
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody java.util.Map<String, Object> profileMap) {
         return userRepository.findById(id)
                 .map(user -> {
                     // Update standard personal info immediately (No admin approval needed)
-                    if (profile.getName() != null)
-                        user.setName(profile.getName());
-                    if (profile.getEmail() != null)
-                        user.setEmail(profile.getEmail());
-                    if (profile.getPhone() != null)
-                        user.setPhone(profile.getPhone());
-                    if (profile.getProfilePicture() != null)
-                        user.setProfilePicture(profile.getProfilePicture());
-                    if (profile.getAddress() != null)
-                        user.setAddress(profile.getAddress());
-                    if (profile.getLatitude() != null)
-                        user.setLatitude(profile.getLatitude());
-                    if (profile.getLongitude() != null)
-                        user.setLongitude(profile.getLongitude());
+                    if (profileMap.containsKey("name") && profileMap.get("name") != null)
+                        user.setName(profileMap.get("name").toString());
+                    if (profileMap.containsKey("email") && profileMap.get("email") != null)
+                        user.setEmail(profileMap.get("email").toString());
+                    // Always update phone when provided (ensures admin sees latest phone)
+                    if (profileMap.containsKey("phone") && profileMap.get("phone") != null)
+                        user.setPhone(profileMap.get("phone").toString());
+                    // ProfilePicture: allow clearing (empty string) and setting new value
+                    if (profileMap.containsKey("profilePicture")) {
+                        Object pic = profileMap.get("profilePicture");
+                        if (pic == null || (pic instanceof String && ((String) pic).trim().isEmpty())) {
+                            user.setProfilePicture(null);
+                        } else {
+                            user.setProfilePicture(pic.toString());
+                        }
+                    }
+                    if (profileMap.containsKey("address") && profileMap.get("address") != null)
+                        user.setAddress(profileMap.get("address").toString());
+                    if (profileMap.containsKey("latitude") && profileMap.get("latitude") != null) {
+                        try { user.setLatitude(Double.parseDouble(profileMap.get("latitude").toString())); } catch (Exception ignored) {}
+                    }
+                    if (profileMap.containsKey("longitude") && profileMap.get("longitude") != null) {
+                        try { user.setLongitude(Double.parseDouble(profileMap.get("longitude").toString())); } catch (Exception ignored) {}
+                    }
 
                     // NID Number Change Rule:
-                    // If NID Number is changed, create/update a PENDING Verification Request for
-                    // Admin review & approval!
-                    if (profile.getNidNumber() != null && !profile.getNidNumber().trim().isEmpty()) {
-                        String newNid = profile.getNidNumber().trim();
-                        String currentNid = user.getNidNumber();
+                    // If NID Number is changed, DO NOT update user.nidNumber directly.
+                    // Instead create a PENDING Verification Request for Admin review & approval.
+                    // Only when Admin approves will the NID be set on the user.
+                    if (profileMap.containsKey("nidNumber") && profileMap.get("nidNumber") != null) {
+                        String newNid = profileMap.get("nidNumber").toString().trim();
+                        if (!newNid.isEmpty()) {
+                            String currentNid = user.getNidNumber();
 
-                        if (currentNid == null || !currentNid.equals(newNid)) {
-                            VerificationRequest req = verificationRequestRepository
-                                    .findTopByUserIdOrderBySubmittedAtDesc(user.getId())
-                                    .orElse(new VerificationRequest());
+                            if (currentNid == null || !currentNid.equals(newNid)) {
+                                // Create a new verification request (don't reuse old ones to keep audit trail)
+                                VerificationRequest req = new VerificationRequest();
+                                req.setUser(user);
+                                req.setFullName(user.getName());
+                                req.setPhone(user.getPhone());
+                                req.setNidNumber(newNid);
+                                req.setProfileSelfiePhoto(user.getProfilePicture());
+                                req.setPresentAddress(user.getAddress());
+                                req.setSubmittedAt(LocalDateTime.now());
+                                req.setStatus("PENDING");
+                                req.setAdminRemarks("NID Number update requested by user. Awaiting admin review.");
 
-                            req.setUser(user);
-                            req.setFullName(user.getName());
-                            req.setPhone(user.getPhone());
-                            req.setNidNumber(newNid);
-                            req.setProfileSelfiePhoto(user.getProfilePicture());
-                            req.setPresentAddress(user.getAddress());
-                            req.setSubmittedAt(LocalDateTime.now());
-                            req.setStatus("PENDING");
-                            req.setAdminRemarks("NID Number update requested by user. Awaiting admin review.");
-
-                            verificationRequestRepository.save(req);
+                                verificationRequestRepository.save(req);
+                            }
+                            // NOTE: user.nidNumber is NOT updated here.
+                            // It only gets updated when admin approves the verification request.
                         }
                     }
 
@@ -126,26 +139,27 @@ public class AuthController {
                     // Sync WorkerProfile if user is WORKER
                     if ("WORKER".equalsIgnoreCase(user.getRole())) {
                         workerProfileRepository.findByUserId(user.getId()).ifPresent(wp -> {
-                            if (profile.getAddress() != null)
-                                wp.setServiceArea(profile.getAddress());
-                            if (profile.getLatitude() != null)
-                                wp.setLatitude(profile.getLatitude());
-                            if (profile.getLongitude() != null)
-                                wp.setLongitude(profile.getLongitude());
+                            if (profileMap.containsKey("address") && profileMap.get("address") != null)
+                                wp.setServiceArea(profileMap.get("address").toString());
+                            if (user.getLatitude() != null)
+                                wp.setLatitude(user.getLatitude());
+                            if (user.getLongitude() != null)
+                                wp.setLongitude(user.getLongitude());
                             workerProfileRepository.save(wp);
                         });
-
-                        verificationRequestRepository.findTopByUserIdOrderBySubmittedAtDesc(user.getId())
-                                .ifPresent(req -> {
-                                    req.setFullName(user.getName());
-                                    req.setPhone(user.getPhone());
-                                    if (user.getAddress() != null)
-                                        req.setPresentAddress(user.getAddress());
-                                    if (user.getProfilePicture() != null)
-                                        req.setProfileSelfiePhoto(user.getProfilePicture());
-                                    verificationRequestRepository.save(req);
-                                });
                     }
+
+                    // Sync latest user details (name, phone, address, profilePicture) to their latest verification request
+                    verificationRequestRepository.findTopByUserIdOrderBySubmittedAtDesc(user.getId())
+                            .ifPresent(req -> {
+                                req.setFullName(user.getName());
+                                req.setPhone(user.getPhone());
+                                if (user.getAddress() != null)
+                                    req.setPresentAddress(user.getAddress());
+                                if (user.getProfilePicture() != null)
+                                    req.setProfileSelfiePhoto(user.getProfilePicture());
+                                verificationRequestRepository.save(req);
+                            });
 
                     return ResponseEntity.ok(user);
                 }).orElse(ResponseEntity.notFound().build());

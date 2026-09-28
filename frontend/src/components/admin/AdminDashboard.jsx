@@ -70,20 +70,29 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
   });
   const [settingsSaved, setSettingsSaved] = useState(false);
 
-  // Refresh Trigger
+  // Refresh Trigger & live polling for admin view
   useEffect(() => {
     fetchDashboardData();
+    const interval = setInterval(() => {
+      if (activeTab === 'users' || activeTab === 'verification' || activeTab === 'overview') {
+        fetchDashboardData();
+      }
+    }, 3000);
+    return () => clearInterval(interval);
   }, [activeTab]);
 
   const fetchDashboardData = async () => {
-    setLoading(true);
     try {
       if (activeTab === 'overview') {
         const res = await fetch(`${API_BASE}/admin/overview`);
         if (res.ok) setOverviewData(await res.json());
       } else if (activeTab === 'users') {
-        const res = await fetch(`${API_BASE}/admin/users`);
-        if (res.ok) setUsersList(await res.json());
+        const [uRes, vRes] = await Promise.all([
+          fetch(`${API_BASE}/admin/users`),
+          fetch(`${API_BASE}/admin/verification/requests?status=ALL`)
+        ]);
+        if (uRes.ok) setUsersList(await uRes.json());
+        if (vRes.ok) setAllVerificationRequests(await vRes.json());
       } else if (activeTab === 'verification') {
         const res = await fetch(`${API_BASE}/admin/verification/requests?status=ALL`);
         if (res.ok) setAllVerificationRequests(await res.json());
@@ -157,8 +166,14 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
     try {
       const res = await fetch(`${API_BASE}/admin/verification/${reqId}/decision?decision=APPROVED`, { method: 'PUT' });
       if (res.ok) {
+        const approvedData = await res.json();
+        const updatedUser = approvedData.request?.user;
+        if (updatedUser) {
+          setUsersList(prev => prev.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser, nidNumber: updatedUser.nidNumber, isVerified: true, verified: true } : u));
+        }
         fetchDashboardData();
         setSelectedVerifReq(null);
+        if (onShowToast) onShowToast("NID Request Approved", "The user's NID and verification status have been approved and updated.", "success");
       }
     } catch (e) {
       console.error(e);
@@ -617,6 +632,64 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
               </button>
             </div>
 
+            {/* Pending NID Change Requests Section */}
+            {allVerificationRequests.filter(r => r.status === 'PENDING').length > 0 && (
+              <div className="glass-card" style={{ padding: '1.2rem 1.5rem', marginBottom: '1.5rem', borderLeft: '4px solid #f59e0b', background: 'rgba(245, 158, 11, 0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <AlertTriangle size={20} color="#f59e0b" />
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-heading)' }}>
+                      Pending NID Change & Verification Requests ({allVerificationRequests.filter(r => r.status === 'PENDING').length})
+                    </h3>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Admin approval required to apply new NID numbers
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+                  {allVerificationRequests.filter(r => r.status === 'PENDING').map(req => {
+                    const u = req.user || {};
+                    return (
+                      <div key={req.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                            <img src={req.profileSelfiePhoto || u.profilePicture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"} alt={req.fullName || u.name} style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover' }} />
+                            <div>
+                              <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{req.fullName || u.name}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.role || 'USER'} • Phone: {req.phone || u.phone}</div>
+                            </div>
+                          </div>
+                          <div style={{ fontSize: '0.8rem', background: 'rgba(0,0,0,0.2)', padding: '0.6rem 0.8rem', borderRadius: '6px', marginBottom: '0.8rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>Current NID:</span>
+                              <span style={{ fontFamily: 'monospace' }}>{u.nidNumber || 'None / Unset'}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: '#f59e0b', fontWeight: 600 }}>Requested NID:</span>
+                              <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#f59e0b' }}>{req.nidNumber}</span>
+                            </div>
+                            {req.adminRemarks && (
+                              <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '0.4rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.3rem' }}>
+                                Note: {req.adminRemarks}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                          <button className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.4)' }} onClick={() => handleRejectPrompt('VERIFICATION', req.id)}>
+                            <XCircle size={13} /> Deny
+                          </button>
+                          <button className="btn btn-primary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }} onClick={() => handleApproveVerification(req.id)}>
+                            <CheckCircle2 size={13} /> Approve NID
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Filter & Search Bar */}
             <div className="glass-card" style={{ padding: '1rem', marginBottom: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
               <div style={{ position: 'relative', flex: '1 1 280px' }}>
@@ -691,73 +764,101 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                         }
                         return true;
                       })
-                      .map(u => (
-                        <tr key={u.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.1s ease' }}>
-                          <td style={{ padding: '0.9rem 1.2rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                              <img src={u.profilePicture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"} alt={u.name} style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover' }} />
-                              <div>
-                                <div style={{ fontWeight: 700, color: 'var(--text-heading)' }}>{u.name}</div>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>User ID: #{u.id}</div>
+                      .map(u => {
+                        const userPendingReq = allVerificationRequests.find(r => (r.user?.id === u.id || r.userId === u.id) && r.status === 'PENDING');
+                        return (
+                          <tr key={u.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.1s ease' }}>
+                            <td style={{ padding: '0.9rem 1.2rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <img src={u.profilePicture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"} alt={u.name} style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover' }} />
+                                <div>
+                                  <div style={{ fontWeight: 700, color: 'var(--text-heading)' }}>{u.name}</div>
+                                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>User ID: #{u.id}</div>
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td style={{ padding: '0.9rem 1rem' }}>
-                            <span className={`badge ${u.role === 'ADMIN' ? 'badge-gold' : u.role === 'WORKER' ? 'badge-pending' : 'badge-verified'}`}>
-                              {u.role}
-                            </span>
-                          </td>
-                          <td style={{ padding: '0.9rem 1rem' }}>
-                            <div>{u.email}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.phone}</div>
-                          </td>
-                          <td style={{ padding: '0.9rem 1rem' }}>
-                            {u.isVerified ? (
-                              <span className="badge badge-verified"><CheckCircle2 size={12} /> Verified</span>
-                            ) : (
-                              <span className="badge badge-pending">Unverified</span>
-                            )}
-                            {u.nidNumber && <div style={{ fontSize: '0.7rem', fontFamily: 'monospace', color: 'var(--text-muted)', marginTop: '0.2rem' }}>{u.nidNumber}</div>}
-                          </td>
-                          <td style={{ padding: '0.9rem 1rem' }}>
-                            {u.role === 'WORKER' ? (
-                              <div><strong>{u.completedJobs || 0}</strong> completed ({u.totalJobs || 0} total)</div>
-                            ) : (
-                              <div><strong>{u.totalBookings || 0}</strong> bookings (৳{u.totalSpent || 0} spent)</div>
-                            )}
-                          </td>
-                          <td style={{ padding: '0.9rem 1rem' }}>
-                            {renderStatusBadge(u.status || 'ACTIVE')}
-                          </td>
-                          <td style={{ padding: '0.9rem 1.2rem', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
-                              <button
-                                className="btn btn-secondary"
-                                style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
-                                onClick={() => setSelectedUser(u)}
-                                title="View Details & History"
-                              >
-                                <Eye size={13} /> Details
-                              </button>
-                              {u.role !== 'ADMIN' && (
+                            </td>
+                            <td style={{ padding: '0.9rem 1rem' }}>
+                              <span className={`badge ${u.role === 'ADMIN' ? 'badge-gold' : u.role === 'WORKER' ? 'badge-pending' : 'badge-verified'}`}>
+                                {u.role}
+                              </span>
+                            </td>
+                            <td style={{ padding: '0.9rem 1rem' }}>
+                              <div>{u.email}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.phone}</div>
+                            </td>
+                            <td style={{ padding: '0.9rem 1rem' }}>
+                              {u.isVerified ? (
+                                <span className="badge badge-verified"><CheckCircle2 size={12} /> Verified</span>
+                              ) : (
+                                <span className="badge badge-pending">Unverified</span>
+                              )}
+                              {u.nidNumber && <div style={{ fontSize: '0.7rem', fontFamily: 'monospace', color: 'var(--text-muted)', marginTop: '0.2rem' }}>{u.nidNumber}</div>}
+                              {userPendingReq && (
+                                <div style={{ marginTop: '0.4rem' }}>
+                                  <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', gap: '0.2rem', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>
+                                    ⏳ Req NID: {userPendingReq.nidNumber}
+                                  </span>
+                                  <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.3rem' }}>
+                                    <button
+                                      className="btn btn-primary"
+                                      style={{ padding: '0.2rem 0.45rem', fontSize: '0.7rem', lineHeight: 1 }}
+                                      onClick={() => handleApproveVerification(userPendingReq.id)}
+                                      title="Approve NID Change"
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      className="btn btn-secondary"
+                                      style={{ padding: '0.2rem 0.45rem', fontSize: '0.7rem', lineHeight: 1, color: '#ef4444' }}
+                                      onClick={() => handleRejectPrompt('VERIFICATION', userPendingReq.id)}
+                                      title="Deny NID Change"
+                                    >
+                                      Deny
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: '0.9rem 1rem' }}>
+                              {u.role === 'WORKER' ? (
+                                <div><strong>{u.completedJobs || 0}</strong> completed ({u.totalJobs || 0} total)</div>
+                              ) : (
+                                <div><strong>{u.totalBookings || 0}</strong> bookings (৳{u.totalSpent || 0} spent)</div>
+                              )}
+                            </td>
+                            <td style={{ padding: '0.9rem 1rem' }}>
+                              {renderStatusBadge(u.status || 'ACTIVE')}
+                            </td>
+                            <td style={{ padding: '0.9rem 1.2rem', textAlign: 'right' }}>
+                              <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
                                 <button
                                   className="btn btn-secondary"
-                                  style={{
-                                    padding: '0.35rem 0.65rem',
-                                    fontSize: '0.75rem',
-                                    color: u.status === 'SUSPENDED' ? '#10b981' : '#ef4444',
-                                    borderColor: u.status === 'SUSPENDED' ? '#10b981' : '#ef4444'
-                                  }}
-                                  onClick={() => handleToggleUserStatus(u.id, u.status || 'ACTIVE')}
+                                  style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
+                                  onClick={() => setSelectedUser(u)}
+                                  title="View Details & History"
                                 >
-                                  {u.status === 'SUSPENDED' ? <UserCheck size={13} /> : <UserX size={13} />}
-                                  {u.status === 'SUSPENDED' ? 'Activate' : 'Suspend'}
+                                  <Eye size={13} /> Details
                                 </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                                {u.role !== 'ADMIN' && (
+                                  <button
+                                    className="btn btn-secondary"
+                                    style={{
+                                      padding: '0.35rem 0.65rem',
+                                      fontSize: '0.75rem',
+                                      color: u.status === 'SUSPENDED' ? '#10b981' : '#ef4444',
+                                      borderColor: u.status === 'SUSPENDED' ? '#10b981' : '#ef4444'
+                                    }}
+                                    onClick={() => handleToggleUserStatus(u.id, u.status || 'ACTIVE')}
+                                  >
+                                    {u.status === 'SUSPENDED' ? <UserCheck size={13} /> : <UserX size={13} />}
+                                    {u.status === 'SUSPENDED' ? 'Activate' : 'Suspend'}
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
@@ -769,7 +870,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                 <div className="glass-card" style={{ maxWidth: '560px', width: '100%', padding: '2rem', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.2rem' }}>
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                      <img src={selectedUser.profilePicture} alt={selectedUser.name} style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
+                      <img src={selectedUser.profilePicture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"} alt={selectedUser.name} style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
                       <div>
                         <h2 style={{ fontSize: '1.3rem', margin: 0 }}>{selectedUser.name}</h2>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Role: <strong>{selectedUser.role}</strong> • Status: {renderStatusBadge(selectedUser.status)}</div>
@@ -779,6 +880,28 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                       <XCircle size={22} />
                     </button>
                   </div>
+
+                  {(() => {
+                    const modalPendingReq = allVerificationRequests.find(r => (r.user?.id === selectedUser.id || r.userId === selectedUser.id) && r.status === 'PENDING');
+                    return modalPendingReq ? (
+                      <div style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', borderRadius: '8px', padding: '0.8rem 1rem', marginBottom: '1.2rem', fontSize: '0.85rem' }}>
+                        <div style={{ fontWeight: 600, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
+                          <AlertTriangle size={16} /> Pending NID Change Request
+                        </div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '0.6rem' }}>
+                          Requested New NID: <strong style={{ color: 'var(--text-heading)', fontFamily: 'monospace' }}>{modalPendingReq.nidNumber}</strong> (Submitted: {modalPendingReq.submittedAt ? new Date(modalPendingReq.submittedAt).toLocaleString() : 'Recently'})
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                          <button className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', color: '#ef4444' }} onClick={() => handleRejectPrompt('VERIFICATION', modalPendingReq.id)}>
+                            Deny Request
+                          </button>
+                          <button className="btn btn-primary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={() => handleApproveVerification(modalPendingReq.id)}>
+                            Approve NID Change
+                          </button>
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '10px', marginBottom: '1.2rem', fontSize: '0.85rem' }}>
                     <div><strong>Email:</strong> {selectedUser.email}</div>
@@ -894,8 +1017,13 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                               <h3 style={{ fontSize: '1.2rem', margin: 0, color: 'var(--text-heading)', fontWeight: 700 }}>
-                                {req.fullName || applicant.name || "Technician Candidate"}
+                                {req.fullName || applicant.name || "Identity Candidate"}
                               </h3>
+                              {applicant.role && (
+                                <span className={`badge ${applicant.role === 'WORKER' ? 'badge-pending' : 'badge-verified'}`} style={{ fontSize: '0.72rem' }}>
+                                  {applicant.role === 'WORKER' ? 'Technician' : 'Customer'}
+                                </span>
+                              )}
                               {renderStatusBadge(req.status)}
                               {req.phoneVerified && (
                                 <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>

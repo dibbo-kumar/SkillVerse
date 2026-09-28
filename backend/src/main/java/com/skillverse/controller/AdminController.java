@@ -258,16 +258,20 @@ public class AdminController {
                 if ("APPROVED".equals(actionDec)) {
                     user.setVerified(true);
                     user.setNidNumber(req.getNidNumber());
-                    user.setStatus("ACTIVE");
+                    if ("UNVERIFIED".equalsIgnoreCase(user.getStatus()) || user.getStatus() == null) {
+                        user.setStatus("ACTIVE");
+                    }
                 } else if ("SUSPENDED".equals(actionDec)) {
                     user.setVerified(false);
                     user.setStatus("SUSPENDED");
                 } else if ("CORRECTION_REQUIRED".equals(actionDec)) {
-                    user.setVerified(false);
-                    user.setStatus("CORRECTION_REQUIRED");
+                    if ("WORKER".equalsIgnoreCase(user.getRole()) && !user.isVerified()) {
+                        user.setStatus("CORRECTION_REQUIRED");
+                    }
                 } else {
-                    user.setVerified(false);
-                    user.setStatus("REJECTED");
+                    if ("WORKER".equalsIgnoreCase(user.getRole()) && !user.isVerified()) {
+                        user.setStatus("REJECTED");
+                    }
                 }
                 userRepository.save(user);
             }

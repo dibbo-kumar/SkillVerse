@@ -24,6 +24,7 @@ public class DbInitializer implements CommandLineRunner {
         private final ProductReviewRepository productReviewRepository;
         private final ProblemPostRepository problemPostRepository;
         private final ProblemOfferRepository problemOfferRepository;
+        private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
         public DbInitializer(UserRepository userRepository, WorkerProfileRepository workerProfileRepository,
                         ServiceBookingRepository bookingRepository, CourseRepository courseRepository,
@@ -35,7 +36,8 @@ public class DbInitializer implements CommandLineRunner {
                         StoreOrderRepository storeOrderRepository,
                         ProductReviewRepository productReviewRepository,
                         ProblemPostRepository problemPostRepository,
-                        ProblemOfferRepository problemOfferRepository) {
+                        ProblemOfferRepository problemOfferRepository,
+                        org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
                 this.userRepository = userRepository;
                 this.workerProfileRepository = workerProfileRepository;
                 this.bookingRepository = bookingRepository;
@@ -50,10 +52,19 @@ public class DbInitializer implements CommandLineRunner {
                 this.productReviewRepository = productReviewRepository;
                 this.problemPostRepository = problemPostRepository;
                 this.problemOfferRepository = problemOfferRepository;
+                this.jdbcTemplate = jdbcTemplate;
         }
 
         @Override
         public void run(String... args) throws Exception {
+                // Ensure users columns support long base64 avatars and addresses in H2 database
+                try {
+                        jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN profile_picture SET DATA TYPE TEXT");
+                } catch (Exception ignored) {}
+                try {
+                        jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN address SET DATA TYPE TEXT");
+                } catch (Exception ignored) {}
+
                 if (userRepository.count() == 0) {
                         seedCoreData();
                 }

@@ -16,10 +16,12 @@ public class User {
     private String role; // CUSTOMER, WORKER, ADMIN
     private String nidNumber;
     private boolean isVerified;
+    @Column(columnDefinition = "TEXT")
     private String profilePicture;
     private Double rating = 5.0;
     private Double latitude;
     private Double longitude;
+    @Column(columnDefinition = "TEXT")
     private String address = "";
 
     private String status = "ACTIVE"; // ACTIVE, SUSPENDED, DEACTIVATED

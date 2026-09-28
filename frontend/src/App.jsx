@@ -875,10 +875,43 @@ function App() {
     }
   };
 
+  // Live User Profile Sync (NID approval, verification status, profile picture, etc.)
+  const fetchCurrentUserData = async () => {
+    if (!currentUser?.id) return;
+    try {
+      const res = await fetch(`${API_BASE}/auth/users/${currentUser.id}`);
+      if (res.ok) {
+        const freshUser = await res.json();
+        setCurrentUser(prev => {
+          if (!prev) return freshUser;
+          if (
+            prev.nidNumber !== freshUser.nidNumber ||
+            prev.verified !== freshUser.verified ||
+            prev.isVerified !== freshUser.isVerified ||
+            prev.profilePicture !== freshUser.profilePicture ||
+            prev.phone !== freshUser.phone ||
+            prev.name !== freshUser.name ||
+            prev.address !== freshUser.address ||
+            prev.status !== freshUser.status
+          ) {
+            return { ...prev, ...freshUser };
+          }
+          return prev;
+        });
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     if (!currentUser?.id) return;
+    fetchCurrentUserData();
     fetchBackendNotifications();
-    const interval = setInterval(fetchBackendNotifications, 4000);
+    const interval = setInterval(() => {
+      fetchCurrentUserData();
+      fetchBackendNotifications();
+    }, 3000);
     return () => clearInterval(interval);
   }, [currentUser?.id]);
 
@@ -1604,17 +1637,32 @@ function App() {
   const handleUpdateProfile = async (updatedProfile) => {
     if (!currentUser?.id) return;
     try {
+      // Separate NID from the payload - NID changes go through admin approval
+      const { nidNumber: requestedNid, ...profileWithoutNid } = updatedProfile;
+      const isNidChanged = currentUser?.nidNumber
+        ? (requestedNid && requestedNid.trim() !== (currentUser.nidNumber || '').trim())
+        : Boolean(requestedNid && requestedNid.trim());
+
+      // Build the payload: include nidNumber only if changed (backend creates verification request, does NOT save it directly)
+      const payload = { ...profileWithoutNid };
+      if (isNidChanged && requestedNid) {
+        payload.nidNumber = requestedNid;
+      }
+
       const userRes = await fetch(`${API_BASE}/auth/users/${currentUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedProfile)
+        body: JSON.stringify(payload)
       });
       
       if (userRes.ok) {
         const updatedUser = await userRes.json();
+        // Merge backend response - note: NID on the user object remains unchanged until admin approves
         setCurrentUser(prev => ({ ...prev, ...updatedUser }));
       } else {
-        setCurrentUser(prev => ({ ...prev, ...updatedProfile }));
+        // Fallback: update local state but keep existing NID (don't locally set a pending NID)
+        const { nidNumber: _nid, ...safeProfile } = updatedProfile;
+        setCurrentUser(prev => ({ ...prev, ...safeProfile }));
       }
 
       if (currentUser.role === 'WORKER') {
@@ -1634,13 +1682,17 @@ function App() {
         fetchWorkerProfileAndBookings(currentUser.id);
       }
 
-      // Sync across all views (Customer, Worker, Admin)
-      fetchWorkers();
+      // Sync across all views (Customer, Worker, Admin) - pass current filter params
+      fetchWorkers(customerLocation.lat, customerLocation.lon, selectedRadius, selectedCategory, skillSearchQuery);
       if (currentUser.role === 'ADMIN' || activeTab === 'admin') {
         fetchAdminData();
       }
 
-      showToast("Profile Saved!", "Your profile information has been updated and synced system-wide.", "success");
+      if (isNidChanged) {
+        showToast("Profile Saved!", "Your profile has been updated. NID change request has been submitted to Admin for review & approval.", "success");
+      } else {
+        showToast("Profile Saved!", "Your profile information has been updated and synced system-wide.", "success");
+      }
     } catch (e) {
       console.error('Profile update failed', e);
       showToast("Update Error", "Could not save profile changes.", "error");

@@ -10,3 +10,27 @@ update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitu
 2026-09-29 01:53:05.969846+06:00 jdbc[6]: exception
 org.h2.jdbc.JdbcSQLDataException: Value too long for column "PROFILE_PICTURE CHARACTER VARYING(255)": "'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABagAAAQ+CAIAAAC1Dk/sAABcZmNhQlgAA... (3333734)"; SQL statement:
 update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitude=?,name=?,nid_number=?,phone=?,profile_picture=?,rating=?,role=?,status=? where id=? [22001-224]
+2026-09-29 02:11:00.599782+06:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PROFILE_PICTURE CHARACTER VARYING(255)": "'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABagAAAQ+CAIAAAC1Dk/sAABcZmNhQlgAA... (3333734)"; SQL statement:
+update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitude=?,name=?,nid_number=?,phone=?,profile_picture=?,rating=?,role=?,status=? where id=? [22001-224]
+2026-09-29 02:11:27.067619+06:00 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PROFILE_PICTURE CHARACTER VARYING(255)": "'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABagAAAQ+CAIAAAC1Dk/sAABcZmNhQlgAA... (3333734)"; SQL statement:
+update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitude=?,name=?,nid_number=?,phone=?,profile_picture=?,rating=?,role=?,status=? where id=? [22001-224]
+2026-09-29 02:29:54.745137+06:00 jdbc[7]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PROFILE_PICTURE CHARACTER VARYING(255)": "'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABagAAAQ+CAIAAAC1Dk/sAABcZmNhQlgAA... (3333734)"; SQL statement:
+update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitude=?,name=?,nid_number=?,phone=?,profile_picture=?,rating=?,role=?,status=? where id=? [22001-224]
+2026-09-29 02:30:31.173788+06:00 jdbc[8]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PROFILE_PICTURE CHARACTER VARYING(255)": "'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABagAAAQ+CAIAAAC1Dk/sAABcZmNhQlgAA... (3333734)"; SQL statement:
+update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitude=?,name=?,nid_number=?,phone=?,profile_picture=?,rating=?,role=?,status=? where id=? [22001-224]
+2026-09-29 02:32:43.802976+06:00 jdbc[4]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PROFILE_PICTURE CHARACTER VARYING(255)": "'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABagAAAQ+CAIAAAC1Dk/sAABcZmNhQlgAA... (3333734)"; SQL statement:
+update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitude=?,name=?,nid_number=?,phone=?,profile_picture=?,rating=?,role=?,status=? where id=? [22001-224]
+2026-09-29 02:42:51.557497+06:00 jdbc[4]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PROFILE_PICTURE CHARACTER VARYING(255)": "'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABagAAAQ+CAIAAAC1Dk/sAABcZmNhQlgAA... (3333734)"; SQL statement:
+update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitude=?,name=?,nid_number=?,phone=?,profile_picture=?,rating=?,role=?,status=? where id=? [22001-224]
+2026-09-29 02:43:09.272649+06:00 jdbc[6]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PROFILE_PICTURE CHARACTER VARYING(255)": "'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABagAAAQ+CAIAAAC1Dk/sAABcZmNhQlgAA... (3333734)"; SQL statement:
+update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitude=?,name=?,nid_number=?,phone=?,profile_picture=?,rating=?,role=?,status=? where id=? [22001-224]
+2026-09-29 02:47:05.796800+06:00 jdbc[7]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PROFILE_PICTURE CHARACTER VARYING(255)": "'data:image/png;base64,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA... (1022)"; SQL statement:
+update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitude=?,name=?,nid_number=?,phone=?,profile_picture=?,rating=?,role=?,status=? where id=? [22001-224]
