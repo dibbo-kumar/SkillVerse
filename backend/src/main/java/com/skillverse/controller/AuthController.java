@@ -1,9 +1,14 @@
 package com.skillverse.controller;
 
 import com.skillverse.model.User;
+import com.skillverse.model.VerificationRequest;
 import com.skillverse.repository.UserRepository;
+import com.skillverse.repository.WorkerProfileRepository;
+import com.skillverse.repository.VerificationRequestRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @RestController
@@ -12,11 +17,15 @@ import java.util.Optional;
 public class AuthController {
 
     private final UserRepository userRepository;
-    private final com.skillverse.repository.WorkerProfileRepository workerProfileRepository;
+    private final WorkerProfileRepository workerProfileRepository;
+    private final VerificationRequestRepository verificationRequestRepository;
 
-    public AuthController(UserRepository userRepository, com.skillverse.repository.WorkerProfileRepository workerProfileRepository) {
+    public AuthController(UserRepository userRepository,
+            WorkerProfileRepository workerProfileRepository,
+            VerificationRequestRepository verificationRequestRepository) {
         this.userRepository = userRepository;
         this.workerProfileRepository = workerProfileRepository;
+        this.verificationRequestRepository = verificationRequestRepository;
     }
 
     @PostMapping("/register")
@@ -37,13 +46,12 @@ public class AuthController {
         User saved = userRepository.save(user);
         if ("WORKER".equalsIgnoreCase(saved.getRole())) {
             com.skillverse.model.WorkerProfile profile = new com.skillverse.model.WorkerProfile(
-                saved, 
-                "Electrical, Plumbing", 
-                1, 
-                "Dhaka North (Gulshan, Banani, Uttara)", 
-                "Bronze", 
-                350.0
-            );
+                    saved,
+                    "Electrical, Plumbing",
+                    1,
+                    "Dhaka North (Gulshan, Banani, Uttara)",
+                    "Bronze",
+                    350.0);
             profile.setAvailable(true);
             workerProfileRepository.save(profile);
         }
@@ -71,15 +79,74 @@ public class AuthController {
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User profile) {
         return userRepository.findById(id)
                 .map(user -> {
-                    if (profile.getName() != null) user.setName(profile.getName());
-                    if (profile.getEmail() != null) user.setEmail(profile.getEmail());
-                    if (profile.getPhone() != null) user.setPhone(profile.getPhone());
-                    if (profile.getNidNumber() != null) user.setNidNumber(profile.getNidNumber());
-                    if (profile.getProfilePicture() != null) user.setProfilePicture(profile.getProfilePicture());
-                    if (profile.getAddress() != null) user.setAddress(profile.getAddress());
-                    if (profile.getLatitude() != null) user.setLatitude(profile.getLatitude());
-                    if (profile.getLongitude() != null) user.setLongitude(profile.getLongitude());
+                    // Update standard personal info immediately (No admin approval needed)
+                    if (profile.getName() != null)
+                        user.setName(profile.getName());
+                    if (profile.getEmail() != null)
+                        user.setEmail(profile.getEmail());
+                    if (profile.getPhone() != null)
+                        user.setPhone(profile.getPhone());
+                    if (profile.getProfilePicture() != null)
+                        user.setProfilePicture(profile.getProfilePicture());
+                    if (profile.getAddress() != null)
+                        user.setAddress(profile.getAddress());
+                    if (profile.getLatitude() != null)
+                        user.setLatitude(profile.getLatitude());
+                    if (profile.getLongitude() != null)
+                        user.setLongitude(profile.getLongitude());
+
+                    // NID Number Change Rule:
+                    // If NID Number is changed, create/update a PENDING Verification Request for
+                    // Admin review & approval!
+                    if (profile.getNidNumber() != null && !profile.getNidNumber().trim().isEmpty()) {
+                        String newNid = profile.getNidNumber().trim();
+                        String currentNid = user.getNidNumber();
+
+                        if (currentNid == null || !currentNid.equals(newNid)) {
+                            VerificationRequest req = verificationRequestRepository
+                                    .findTopByUserIdOrderBySubmittedAtDesc(user.getId())
+                                    .orElse(new VerificationRequest());
+
+                            req.setUser(user);
+                            req.setFullName(user.getName());
+                            req.setPhone(user.getPhone());
+                            req.setNidNumber(newNid);
+                            req.setProfileSelfiePhoto(user.getProfilePicture());
+                            req.setPresentAddress(user.getAddress());
+                            req.setSubmittedAt(LocalDateTime.now());
+                            req.setStatus("PENDING");
+                            req.setAdminRemarks("NID Number update requested by user. Awaiting admin review.");
+
+                            verificationRequestRepository.save(req);
+                        }
+                    }
+
                     userRepository.save(user);
+
+                    // Sync WorkerProfile if user is WORKER
+                    if ("WORKER".equalsIgnoreCase(user.getRole())) {
+                        workerProfileRepository.findByUserId(user.getId()).ifPresent(wp -> {
+                            if (profile.getAddress() != null)
+                                wp.setServiceArea(profile.getAddress());
+                            if (profile.getLatitude() != null)
+                                wp.setLatitude(profile.getLatitude());
+                            if (profile.getLongitude() != null)
+                                wp.setLongitude(profile.getLongitude());
+                            workerProfileRepository.save(wp);
+                        });
+
+                        verificationRequestRepository.findTopByUserIdOrderBySubmittedAtDesc(user.getId())
+                                .ifPresent(req -> {
+                                    req.setFullName(user.getName());
+                                    req.setPhone(user.getPhone());
+                                    if (user.getAddress() != null)
+                                        req.setPresentAddress(user.getAddress());
+                                    if (user.getProfilePicture() != null)
+                                        req.setProfileSelfiePhoto(user.getProfilePicture());
+                                    verificationRequestRepository.save(req);
+                                });
+                    }
+
                     return ResponseEntity.ok(user);
                 }).orElse(ResponseEntity.notFound().build());
     }

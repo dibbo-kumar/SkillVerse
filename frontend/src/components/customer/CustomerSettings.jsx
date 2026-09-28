@@ -140,6 +140,13 @@ export default function CustomerSettings({
     }
   };
 
+  const validateBdPhone = (num) => {
+    if (!num) return true;
+    const clean = num.trim();
+    if (clean.length === 0) return true;
+    return /^(\+88)?01[3-9]\d{8}$/.test(clean) || /^\d{10,14}$/.test(clean);
+  };
+
   const handleSaveProfile = (e) => {
     e.preventDefault();
     if (!validateBdPhone(phone)) {
@@ -147,6 +154,9 @@ export default function CustomerSettings({
       return;
     }
     setPhoneError("");
+
+    const isNidChanged = user?.nidNumber ? (nidNumber && nidNumber.trim() !== user.nidNumber.trim()) : Boolean(nidNumber && nidNumber.trim());
+
     if (onUpdateProfile) {
       onUpdateProfile({
         name,
@@ -162,8 +172,12 @@ export default function CustomerSettings({
         basePrice: Number(basePrice)
       });
     }
+
     setProfileSaved(true);
-    setTimeout(() => setProfileSaved(false), 3000);
+    if (isNidChanged) {
+      alert("ℹ️ Personal details updated! Since you changed your NID Number, an NID Verification Request has been submitted to Admin for review & approval.");
+    }
+    setTimeout(() => setProfileSaved(false), 4000);
   };
 
   const handleSaveLocation = (e) => {
@@ -184,17 +198,52 @@ export default function CustomerSettings({
 
   const handleGetBrowserLocation = () => {
     if ("geolocation" in navigator) {
+      setIsDetectingGps(true);
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          setLatitude(Number(lat.toFixed(4)));
-          setLongitude(Number(lon.toFixed(4)));
-          alert(`📍 Real Device GPS Acquired! Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`);
+        async (position) => {
+          const lat = Number(position.coords.latitude.toFixed(5));
+          const lon = Number(position.coords.longitude.toFixed(5));
+          setLatitude(lat);
+          setLongitude(lon);
+
+          let resolvedArea = serviceArea;
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=16`);
+            if (res.ok) {
+              const data = await res.json();
+              const addr = data.address || {};
+              resolvedArea = [addr.suburb || addr.neighbourhood || addr.residential || addr.road, addr.city || 'Dhaka'].filter(Boolean).join(', ');
+              if (resolvedArea) {
+                setServiceArea(resolvedArea);
+              }
+            }
+          } catch (e) {
+            console.warn("Reverse geocode error:", e);
+          } finally {
+            setIsDetectingGps(false);
+          }
+
+          const finalArea = resolvedArea || serviceArea || 'Current GPS Location';
+
+          if (onUpdateWorkerLocation) {
+            onUpdateWorkerLocation(lat, lon, finalArea);
+          }
+          if (onUpdateProfile) {
+            onUpdateProfile({
+              latitude: lat,
+              longitude: lon,
+              address: finalArea
+            });
+          }
+
+          setLocationSaved(true);
+          setTimeout(() => setLocationSaved(false), 3000);
         },
         (error) => {
-          alert(`Could not fetch device GPS: ${error.message}. Please enter coordinates manually or use neighborhood presets.`);
-        }
+          setIsDetectingGps(false);
+          alert(`Could not fetch device GPS: ${error.message}. Please select your location on the map.`);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
       alert("Geolocation API is not supported by your browser.");
@@ -581,11 +630,10 @@ export default function CustomerSettings({
                       <input
                         type="text"
                         className="form-input"
-                        style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
-                        value={serviceArea}
-                        onChange={(e) => setServiceArea(e.target.value)}
-                        placeholder="e.g. Sector 12, Uttara, Dhaka"
-                        required
+                        style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.85rem', background: 'rgba(255, 255, 255, 0.05)', cursor: 'not-allowed' }}
+                        value={serviceArea || ''}
+                        readOnly
+                        placeholder="Location address will be automatically detected via the buttons above"
                       />
                     </div>
 
@@ -598,42 +646,11 @@ export default function CustomerSettings({
                       </span>
                     </div>
                   </div>
-
-                  {/* Preset Quick Locations */}
-                  <div>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>
-                      Quick Preset Areas:
-                    </span>
-                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                      {[
-                        { label: 'Uttara', lat: 23.8759, lon: 90.3795, area: 'Sector 12, Uttara, Dhaka' },
-                        { label: 'Gulshan 2', lat: 23.7925, lon: 90.4078, area: 'Road 71, Gulshan 2, Dhaka' },
-                        { label: 'Banani', lat: 23.7930, lon: 90.4040, area: 'Block E, Banani, Dhaka' },
-                        { label: 'Dhanmondi', lat: 23.7461, lon: 90.3742, area: 'Road 9A, Dhanmondi, Dhaka' },
-                        { label: 'Mirpur 10', lat: 23.8050, lon: 90.3680, area: 'Mirpur 10 Circle, Dhaka' },
-                        { label: 'Bashundhara', lat: 23.8155, lon: 90.4250, area: 'Block C, Bashundhara R/A, Dhaka' }
-                      ].map(p => (
-                        <button
-                          key={p.label}
-                          type="button"
-                          className="btn btn-secondary"
-                          style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
-                          onClick={() => {
-                            setLatitude(p.lat);
-                            setLongitude(p.lon);
-                            setServiceArea(p.area);
-                          }}
-                        >
-                          {p.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 </div>
 
-                <button type="submit" className="btn btn-primary" style={{ padding: '0.65rem 1.4rem' }}>
-                  Save & Sync Coordinates
-                </button>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Check size={14} color="#10b981" /> Coordinates & service area update automatically when using either button above.
+                </div>
               </form>
             </div>
           )}
@@ -1060,7 +1077,20 @@ export default function CustomerSettings({
         onConfirm={(loc) => {
           setLatitude(loc.lat);
           setLongitude(loc.lon);
+          const finalAddr = loc.address || serviceArea;
           if (loc.address) setServiceArea(loc.address);
+          if (onUpdateWorkerLocation) {
+            onUpdateWorkerLocation(loc.lat, loc.lon, finalAddr);
+          }
+          if (onUpdateProfile) {
+            onUpdateProfile({
+              latitude: loc.lat,
+              longitude: loc.lon,
+              address: finalAddr
+            });
+          }
+          setLocationSaved(true);
+          setTimeout(() => setLocationSaved(false), 3000);
         }}
       />
     </div>

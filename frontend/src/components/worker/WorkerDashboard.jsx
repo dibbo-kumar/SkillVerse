@@ -112,6 +112,23 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     return () => clearInterval(interval);
   }, [workerId]);
 
+  useEffect(() => {
+    if (currentWorker) {
+      setVerifForm(prev => ({
+        ...prev,
+        fullName: currentWorker.name || prev.fullName,
+        phone: currentWorker.phone || prev.phone,
+        nidNumber: currentWorker.nidNumber || prev.nidNumber,
+        profileSelfiePhoto: currentWorker.profilePicture || prev.profileSelfiePhoto,
+        presentAddress: currentWorker.address || prev.presentAddress,
+        detailedAddress: currentWorker.address || prev.detailedAddress,
+        serviceArea: currentWorker.serviceArea || currentWorker.address || prev.serviceArea,
+        latitude: currentWorker.latitude || prev.latitude,
+        longitude: currentWorker.longitude || prev.longitude
+      }));
+    }
+  }, [currentWorker]);
+
   const fetchWorkerData = async (isBackground = false) => {
     if (!isBackground) setLoading(true);
     try {
@@ -271,19 +288,20 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         setIsDetectingGps(false);
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
+        const lat = Number(pos.coords.latitude.toFixed(5));
+        const lon = Number(pos.coords.longitude.toFixed(5));
         setVerifForm(prev => ({
           ...prev,
           latitude: lat,
           longitude: lon
         }));
+        let resolvedArea = '';
         try {
           const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=16`);
           if (res.ok) {
             const data = await res.json();
             const addr = data.address || {};
-            const resolvedArea = [addr.suburb || addr.neighbourhood || addr.residential || addr.road, addr.city || 'Dhaka'].filter(Boolean).join(', ');
+            resolvedArea = [addr.suburb || addr.neighbourhood || addr.residential || addr.road, addr.city || 'Dhaka'].filter(Boolean).join(', ');
             if (resolvedArea) {
               setVerifForm(prev => ({ ...prev, serviceArea: resolvedArea }));
             }
@@ -291,7 +309,10 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
         } catch (e) {
           console.warn("Geocode error", e);
         }
-        if (onShowToast) onShowToast("GPS Location Captured!", `Service base set to (${lat.toFixed(4)}, ${lon.toFixed(4)}).`, "success");
+        if (workerId) {
+          handleQuickUpdateLocation({ lat, lon, address: resolvedArea || verifForm.serviceArea });
+        }
+        if (onShowToast) onShowToast("GPS Location Captured!", `Service base set to ${resolvedArea || 'Current Spot'} (${lat}, ${lon}).`, "success");
       },
       (err) => {
         setIsDetectingGps(false);

@@ -1,9 +1,12 @@
-2026-09-05 02:04:44.760671+06:00 jdbc[6]: exception
-org.h2.jdbc.JdbcSQLDataException: Value too long for column "PHOTO_URL CHARACTER VARYING(255)": "'data:image/jpeg;base64,/9j/4dBNRXhpZgAASUkqAAgAAAANAAABBAABAAAAoA8AAAEBBAABAAAA... (6869403)"; SQL statement:
-insert into product_reviews (comment,created_at,is_verified_purchase,photo_url,product_id,rating,user_id,id) values (?,?,?,?,?,?,?,default) [22001-224]
-2026-09-05 02:04:48.309218+06:00 jdbc[3]: exception
-org.h2.jdbc.JdbcSQLDataException: Value too long for column "PHOTO_URL CHARACTER VARYING(255)": "'data:image/jpeg;base64,/9j/4dBNRXhpZgAASUkqAAgAAAANAAABBAABAAAAoA8AAAEBBAABAAAA... (6869403)"; SQL statement:
-insert into product_reviews (comment,created_at,is_verified_purchase,photo_url,product_id,rating,user_id,id) values (?,?,?,?,?,?,?,default) [22001-224]
-2026-09-05 02:05:27.570595+06:00 jdbc[4]: exception
-org.h2.jdbc.JdbcSQLDataException: Value too long for column "PHOTO_URL CHARACTER VARYING(255)": "'data:image/jpeg;base64,/9j/4dBNRXhpZgAASUkqAAgAAAANAAABBAABAAAAoA8AAAEBBAABAAAA... (6869403)"; SQL statement:
-insert into product_reviews (comment,created_at,is_verified_purchase,photo_url,product_id,rating,user_id,id) values (?,?,?,?,?,?,?,default) [22001-224]
+2026-09-29 01:49:30.806357+06:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PROFILE_PICTURE CHARACTER VARYING(255)": "'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABagAAAQ+CAIAAAC1Dk/sAABcZmNhQlgAA... (3333734)"; SQL statement:
+update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitude=?,name=?,nid_number=?,phone=?,profile_picture=?,rating=?,role=?,status=? where id=? [22001-224]
+2026-09-29 01:50:23.932463+06:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PROFILE_PICTURE CHARACTER VARYING(255)": "'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABagAAAQ+CAIAAAC1Dk/sAABcZmNhQlgAA... (3333734)"; SQL statement:
+update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitude=?,name=?,nid_number=?,phone=?,profile_picture=?,rating=?,role=?,status=? where id=? [22001-224]
+2026-09-29 01:52:26.206774+06:00 jdbc[7]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PROFILE_PICTURE CHARACTER VARYING(255)": "'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABagAAAQ+CAIAAAC1Dk/sAABcZmNhQlgAA... (3333734)"; SQL statement:
+update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitude=?,name=?,nid_number=?,phone=?,profile_picture=?,rating=?,role=?,status=? where id=? [22001-224]
+2026-09-29 01:53:05.969846+06:00 jdbc[6]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "PROFILE_PICTURE CHARACTER VARYING(255)": "'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABagAAAQ+CAIAAAC1Dk/sAABcZmNhQlgAA... (3333734)"; SQL statement:
+update users set address=?,created_at=?,email=?,is_verified=?,latitude=?,longitude=?,name=?,nid_number=?,phone=?,profile_picture=?,rating=?,role=?,status=? where id=? [22001-224]

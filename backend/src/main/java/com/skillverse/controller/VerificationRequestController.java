@@ -28,9 +28,9 @@ public class VerificationRequestController {
     private final Map<String, String> phoneOtpStore = new HashMap<>();
 
     public VerificationRequestController(VerificationRequestRepository verificationRepository,
-                                         UserRepository userRepository,
-                                         WorkerProfileRepository workerProfileRepository,
-                                         AuditLogRepository auditLogRepository) {
+            UserRepository userRepository,
+            WorkerProfileRepository workerProfileRepository,
+            AuditLogRepository auditLogRepository) {
         this.verificationRepository = verificationRepository;
         this.userRepository = userRepository;
         this.workerProfileRepository = workerProfileRepository;
@@ -39,9 +39,9 @@ public class VerificationRequestController {
 
     // --- 1. SEND & VERIFY PHONE OTP SIMULATOR ---
 
-    @RequestMapping(value = "/send-phone-otp", method = {RequestMethod.POST, RequestMethod.GET})
+    @RequestMapping(value = "/send-phone-otp", method = { RequestMethod.POST, RequestMethod.GET })
     public ResponseEntity<?> sendPhoneOtp(@RequestParam(required = false) String phone,
-                                          @RequestBody(required = false) Map<String, String> payload) {
+            @RequestBody(required = false) Map<String, String> payload) {
         String phoneNum = phone;
         if ((phoneNum == null || phoneNum.isEmpty()) && payload != null) {
             phoneNum = payload.get("phone");
@@ -59,14 +59,13 @@ public class VerificationRequestController {
                 "phone", phoneNum,
                 "simulatedOtp", otp,
                 "otp", otp,
-                "message", "Verification code sent to " + phoneNum + " (Demo OTP: " + otp + ")"
-        ));
+                "message", "Verification code sent to " + phoneNum + " (Demo OTP: " + otp + ")"));
     }
 
-    @RequestMapping(value = "/verify-phone-otp", method = {RequestMethod.POST, RequestMethod.GET})
+    @RequestMapping(value = "/verify-phone-otp", method = { RequestMethod.POST, RequestMethod.GET })
     public ResponseEntity<?> verifyPhoneOtp(@RequestParam(required = false) String phone,
-                                            @RequestParam(required = false) String otp,
-                                            @RequestBody(required = false) Map<String, String> payload) {
+            @RequestParam(required = false) String otp,
+            @RequestBody(required = false) Map<String, String> payload) {
         String phoneNum = phone;
         String enteredOtp = otp;
         if ((phoneNum == null || phoneNum.isEmpty()) && payload != null) {
@@ -92,14 +91,12 @@ public class VerificationRequestController {
                     "verified", true,
                     "status", "VERIFIED",
                     "phone", phoneNum,
-                    "message", "Phone number verified successfully"
-            ));
+                    "message", "Phone number verified successfully"));
         } else {
             return ResponseEntity.badRequest().body(Map.of(
                     "verified", false,
                     "status", "FAILED",
-                    "error", "Invalid OTP code. Please check SMS and try again."
-            ));
+                    "error", "Invalid OTP code. Please check SMS and try again."));
         }
     }
 
@@ -117,26 +114,46 @@ public class VerificationRequestController {
         }
 
         // Update User info
-        if (dto.getFullName() != null && !dto.getFullName().isEmpty()) user.setName(dto.getFullName());
-        if (dto.getPhone() != null && !dto.getPhone().isEmpty()) user.setPhone(dto.getPhone());
-        if (dto.getNidNumber() != null && !dto.getNidNumber().isEmpty()) user.setNidNumber(dto.getNidNumber());
-        if (dto.getProfileSelfiePhoto() != null && !dto.getProfileSelfiePhoto().isEmpty()) user.setProfilePicture(dto.getProfileSelfiePhoto());
-        
-        String formattedAddress = (dto.getDetailedAddress() != null && !dto.getDetailedAddress().isEmpty()) 
-                ? dto.getDetailedAddress() 
+        if (dto.getFullName() != null && !dto.getFullName().isEmpty())
+            user.setName(dto.getFullName());
+        if (dto.getPhone() != null && !dto.getPhone().isEmpty())
+            user.setPhone(dto.getPhone());
+        if (dto.getProfileSelfiePhoto() != null && !dto.getProfileSelfiePhoto().isEmpty())
+            user.setProfilePicture(dto.getProfileSelfiePhoto());
+
+        String formattedAddress = (dto.getDetailedAddress() != null && !dto.getDetailedAddress().isEmpty())
+                ? dto.getDetailedAddress()
                 : (dto.getPresentAddress() != null ? dto.getPresentAddress() : user.getAddress());
-        user.setAddress(formattedAddress);
-        if (dto.getLatitude() != null) user.setLatitude(dto.getLatitude());
-        if (dto.getLongitude() != null) user.setLongitude(dto.getLongitude());
-        user.setVerified(false);
-        user.setStatus("UNDER_REVIEW");
+        if (formattedAddress != null)
+            user.setAddress(formattedAddress);
+        if (dto.getLatitude() != null)
+            user.setLatitude(dto.getLatitude());
+        if (dto.getLongitude() != null)
+            user.setLongitude(dto.getLongitude());
+
+        // NID Change Rule: Only reset verified status to UNDER_REVIEW if NID is
+        // actually changing or first time submit
+        boolean isNidChanged = dto.getNidNumber() != null
+                && !dto.getNidNumber().trim().isEmpty()
+                && !dto.getNidNumber().trim().equals(user.getNidNumber());
+
+        if (user.getNidNumber() == null || user.getNidNumber().trim().isEmpty()) {
+            if (dto.getNidNumber() != null && !dto.getNidNumber().trim().isEmpty()) {
+                isNidChanged = true;
+            }
+        }
+
+        if (isNidChanged || !user.isVerified()) {
+            user.setVerified(false);
+            user.setStatus("UNDER_REVIEW");
+        }
         userRepository.save(user);
 
         // Update / create WorkerProfile
         WorkerProfile profile = workerProfileRepository.findByUserId(user.getId()).orElse(null);
         String calculatedServiceArea = dto.getServiceArea();
         if (calculatedServiceArea == null || calculatedServiceArea.trim().isEmpty()) {
-            calculatedServiceArea = (dto.getCityArea() != null && !dto.getCityArea().isEmpty()) 
+            calculatedServiceArea = (dto.getCityArea() != null && !dto.getCityArea().isEmpty())
                     ? dto.getCityArea() + ", " + (dto.getDivision() != null ? dto.getDivision() : "Dhaka")
                     : (profile != null && profile.getServiceArea() != null ? profile.getServiceArea() : "Dhaka");
         }
@@ -146,16 +163,21 @@ public class VerificationRequestController {
                     calculatedServiceArea,
                     "Bronze", 350.0);
         } else {
-            if (dto.getSkills() != null && !dto.getSkills().isEmpty()) profile.setSkills(dto.getSkills());
-            if (dto.getExperienceYears() != null) profile.setExperienceYears(dto.getExperienceYears());
+            if (dto.getSkills() != null && !dto.getSkills().isEmpty())
+                profile.setSkills(dto.getSkills());
+            if (dto.getExperienceYears() != null)
+                profile.setExperienceYears(dto.getExperienceYears());
             profile.setServiceArea(calculatedServiceArea);
         }
-        if (dto.getLatitude() != null) profile.setLatitude(dto.getLatitude());
-        if (dto.getLongitude() != null) profile.setLongitude(dto.getLongitude());
+        if (dto.getLatitude() != null)
+            profile.setLatitude(dto.getLatitude());
+        if (dto.getLongitude() != null)
+            profile.setLongitude(dto.getLongitude());
         workerProfileRepository.save(profile);
 
         // Check if existing verification request exists
-        VerificationRequest req = verificationRepository.findTopByUserIdOrderBySubmittedAtDesc(user.getId()).orElse(null);
+        VerificationRequest req = verificationRepository.findTopByUserIdOrderBySubmittedAtDesc(user.getId())
+                .orElse(null);
         if (req == null) {
             req = new VerificationRequest();
             req.setUser(user);
@@ -169,7 +191,8 @@ public class VerificationRequestController {
         req.setNidNumber(dto.getNidNumber());
         req.setNidFrontPhoto(dto.getNidFrontPhoto());
         req.setNidBackPhoto(dto.getNidBackPhoto());
-        req.setProfileSelfiePhoto(dto.getProfileSelfiePhoto() != null ? dto.getProfileSelfiePhoto() : user.getProfilePicture());
+        req.setProfileSelfiePhoto(
+                dto.getProfileSelfiePhoto() != null ? dto.getProfileSelfiePhoto() : user.getProfilePicture());
 
         req.setPresentAddress(dto.getPresentAddress());
         req.setPermanentAddress(dto.getPermanentAddress());
@@ -205,8 +228,7 @@ public class VerificationRequestController {
                 "WORKER",
                 "VerificationRequest",
                 saved.getId(),
-                "Worker " + user.getName() + " submitted complete verification dossier for administrative review."
-        ));
+                "Worker " + user.getName() + " submitted complete verification dossier for administrative review."));
 
         return ResponseEntity.ok(saved);
     }
@@ -244,7 +266,8 @@ public class VerificationRequestController {
             if (user != null) {
                 user.setVerified(true);
                 user.setStatus("ACTIVE");
-                if (req.getNidNumber() != null) user.setNidNumber(req.getNidNumber());
+                if (req.getNidNumber() != null)
+                    user.setNidNumber(req.getNidNumber());
                 userRepository.save(user);
             }
 
@@ -254,8 +277,8 @@ public class VerificationRequestController {
                     "ADMIN",
                     "VerificationRequest",
                     req.getId(),
-                    "Verification #" + req.getId() + " approved & certified for " + (user != null ? user.getName() : "Worker")
-            ));
+                    "Verification #" + req.getId() + " approved & certified for "
+                            + (user != null ? user.getName() : "Worker")));
 
             return ResponseEntity.ok(req);
         }).orElse(ResponseEntity.notFound().build());
@@ -283,8 +306,7 @@ public class VerificationRequestController {
                     "ADMIN",
                     "VerificationRequest",
                     req.getId(),
-                    "Correction requested for Verification #" + req.getId() + ". Reason: " + reason
-            ));
+                    "Correction requested for Verification #" + req.getId() + ". Reason: " + reason));
 
             return ResponseEntity.ok(req);
         }).orElse(ResponseEntity.notFound().build());
@@ -312,8 +334,7 @@ public class VerificationRequestController {
                     "ADMIN",
                     "VerificationRequest",
                     req.getId(),
-                    "Verification #" + req.getId() + " rejected. Reason: " + reason
-            ));
+                    "Verification #" + req.getId() + " rejected. Reason: " + reason));
 
             return ResponseEntity.ok(req);
         }).orElse(ResponseEntity.notFound().build());
@@ -357,97 +378,252 @@ public class VerificationRequestController {
         private Double latitude;
         private Double longitude;
 
-        public String getServiceArea() { return serviceArea; }
-        public void setServiceArea(String serviceArea) { this.serviceArea = serviceArea; }
+        public String getServiceArea() {
+            return serviceArea;
+        }
 
-        public Double getLatitude() { return latitude; }
-        public void setLatitude(Double latitude) { this.latitude = latitude; }
+        public void setServiceArea(String serviceArea) {
+            this.serviceArea = serviceArea;
+        }
 
-        public Double getLongitude() { return longitude; }
-        public void setLongitude(Double longitude) { this.longitude = longitude; }
+        public Double getLatitude() {
+            return latitude;
+        }
 
-        public Long getUserId() { return userId; }
-        public void setUserId(Long userId) { this.userId = userId; }
+        public void setLatitude(Double latitude) {
+            this.latitude = latitude;
+        }
 
-        public String getFullName() { return fullName; }
-        public void setFullName(String fullName) { this.fullName = fullName; }
+        public Double getLongitude() {
+            return longitude;
+        }
 
-        public String getDateOfBirth() { return dateOfBirth; }
-        public void setDateOfBirth(String dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+        public void setLongitude(Double longitude) {
+            this.longitude = longitude;
+        }
 
-        public String getPhone() { return phone; }
-        public void setPhone(String phone) { this.phone = phone; }
+        public Long getUserId() {
+            return userId;
+        }
 
-        public Boolean getPhoneVerified() { return phoneVerified; }
-        public void setPhoneVerified(Boolean phoneVerified) { this.phoneVerified = phoneVerified; }
+        public void setUserId(Long userId) {
+            this.userId = userId;
+        }
 
-        public String getNidNumber() { return nidNumber; }
-        public void setNidNumber(String nidNumber) { this.nidNumber = nidNumber; }
+        public String getFullName() {
+            return fullName;
+        }
 
-        public String getNidFrontPhoto() { return nidFrontPhoto; }
-        public void setNidFrontPhoto(String nidFrontPhoto) { this.nidFrontPhoto = nidFrontPhoto; }
+        public void setFullName(String fullName) {
+            this.fullName = fullName;
+        }
 
-        public String getNidBackPhoto() { return nidBackPhoto; }
-        public void setNidBackPhoto(String nidBackPhoto) { this.nidBackPhoto = nidBackPhoto; }
+        public String getDateOfBirth() {
+            return dateOfBirth;
+        }
 
-        public String getProfileSelfiePhoto() { return profileSelfiePhoto; }
-        public void setProfileSelfiePhoto(String profileSelfiePhoto) { this.profileSelfiePhoto = profileSelfiePhoto; }
+        public void setDateOfBirth(String dateOfBirth) {
+            this.dateOfBirth = dateOfBirth;
+        }
 
-        public String getPresentAddress() { return presentAddress; }
-        public void setPresentAddress(String presentAddress) { this.presentAddress = presentAddress; }
+        public String getPhone() {
+            return phone;
+        }
 
-        public String getPermanentAddress() { return permanentAddress; }
-        public void setPermanentAddress(String permanentAddress) { this.permanentAddress = permanentAddress; }
+        public void setPhone(String phone) {
+            this.phone = phone;
+        }
 
-        public String getDivision() { return division; }
-        public void setDivision(String division) { this.division = division; }
+        public Boolean getPhoneVerified() {
+            return phoneVerified;
+        }
 
-        public String getDistrict() { return district; }
-        public void setDistrict(String district) { this.district = district; }
+        public void setPhoneVerified(Boolean phoneVerified) {
+            this.phoneVerified = phoneVerified;
+        }
 
-        public String getCityArea() { return cityArea; }
-        public void setCityArea(String cityArea) { this.cityArea = cityArea; }
+        public String getNidNumber() {
+            return nidNumber;
+        }
 
-        public String getPostalCode() { return postalCode; }
-        public void setPostalCode(String postalCode) { this.postalCode = postalCode; }
+        public void setNidNumber(String nidNumber) {
+            this.nidNumber = nidNumber;
+        }
 
-        public String getDetailedAddress() { return detailedAddress; }
-        public void setDetailedAddress(String detailedAddress) { this.detailedAddress = detailedAddress; }
+        public String getNidFrontPhoto() {
+            return nidFrontPhoto;
+        }
 
-        public String getSkills() { return skills; }
-        public void setSkills(String skills) { this.skills = skills; }
+        public void setNidFrontPhoto(String nidFrontPhoto) {
+            this.nidFrontPhoto = nidFrontPhoto;
+        }
 
-        public Integer getExperienceYears() { return experienceYears; }
-        public void setExperienceYears(Integer experienceYears) { this.experienceYears = experienceYears; }
+        public String getNidBackPhoto() {
+            return nidBackPhoto;
+        }
 
-        public String getExperienceDescription() { return experienceDescription; }
-        public void setExperienceDescription(String experienceDescription) { this.experienceDescription = experienceDescription; }
+        public void setNidBackPhoto(String nidBackPhoto) {
+            this.nidBackPhoto = nidBackPhoto;
+        }
 
-        public String getPreviousEmployer() { return previousEmployer; }
-        public void setPreviousEmployer(String previousEmployer) { this.previousEmployer = previousEmployer; }
+        public String getProfileSelfiePhoto() {
+            return profileSelfiePhoto;
+        }
 
-        public String getExperienceCertPhoto() { return experienceCertPhoto; }
-        public void setExperienceCertPhoto(String experienceCertPhoto) { this.experienceCertPhoto = experienceCertPhoto; }
+        public void setProfileSelfiePhoto(String profileSelfiePhoto) {
+            this.profileSelfiePhoto = profileSelfiePhoto;
+        }
 
-        public String getTrainingCertPhoto() { return trainingCertPhoto; }
-        public void setTrainingCertPhoto(String trainingCertPhoto) { this.trainingCertPhoto = trainingCertPhoto; }
+        public String getPresentAddress() {
+            return presentAddress;
+        }
 
-        public String getWorkProofPhoto() { return workProofPhoto; }
-        public void setWorkProofPhoto(String workProofPhoto) { this.workProofPhoto = workProofPhoto; }
+        public void setPresentAddress(String presentAddress) {
+            this.presentAddress = presentAddress;
+        }
 
-        public String getPayoutMethod() { return payoutMethod; }
-        public void setPayoutMethod(String payoutMethod) { this.payoutMethod = payoutMethod; }
+        public String getPermanentAddress() {
+            return permanentAddress;
+        }
 
-        public String getPayoutAccount() { return payoutAccount; }
-        public void setPayoutAccount(String payoutAccount) { this.payoutAccount = payoutAccount; }
+        public void setPermanentAddress(String permanentAddress) {
+            this.permanentAddress = permanentAddress;
+        }
 
-        public String getPayoutAccountHolder() { return payoutAccountHolder; }
-        public void setPayoutAccountHolder(String payoutAccountHolder) { this.payoutAccountHolder = payoutAccountHolder; }
+        public String getDivision() {
+            return division;
+        }
 
-        public String getPayoutBankName() { return payoutBankName; }
-        public void setPayoutBankName(String payoutBankName) { this.payoutBankName = payoutBankName; }
+        public void setDivision(String division) {
+            this.division = division;
+        }
 
-        public String getPayoutBankBranch() { return payoutBankBranch; }
-        public void setPayoutBankBranch(String payoutBankBranch) { this.payoutBankBranch = payoutBankBranch; }
+        public String getDistrict() {
+            return district;
+        }
+
+        public void setDistrict(String district) {
+            this.district = district;
+        }
+
+        public String getCityArea() {
+            return cityArea;
+        }
+
+        public void setCityArea(String cityArea) {
+            this.cityArea = cityArea;
+        }
+
+        public String getPostalCode() {
+            return postalCode;
+        }
+
+        public void setPostalCode(String postalCode) {
+            this.postalCode = postalCode;
+        }
+
+        public String getDetailedAddress() {
+            return detailedAddress;
+        }
+
+        public void setDetailedAddress(String detailedAddress) {
+            this.detailedAddress = detailedAddress;
+        }
+
+        public String getSkills() {
+            return skills;
+        }
+
+        public void setSkills(String skills) {
+            this.skills = skills;
+        }
+
+        public Integer getExperienceYears() {
+            return experienceYears;
+        }
+
+        public void setExperienceYears(Integer experienceYears) {
+            this.experienceYears = experienceYears;
+        }
+
+        public String getExperienceDescription() {
+            return experienceDescription;
+        }
+
+        public void setExperienceDescription(String experienceDescription) {
+            this.experienceDescription = experienceDescription;
+        }
+
+        public String getPreviousEmployer() {
+            return previousEmployer;
+        }
+
+        public void setPreviousEmployer(String previousEmployer) {
+            this.previousEmployer = previousEmployer;
+        }
+
+        public String getExperienceCertPhoto() {
+            return experienceCertPhoto;
+        }
+
+        public void setExperienceCertPhoto(String experienceCertPhoto) {
+            this.experienceCertPhoto = experienceCertPhoto;
+        }
+
+        public String getTrainingCertPhoto() {
+            return trainingCertPhoto;
+        }
+
+        public void setTrainingCertPhoto(String trainingCertPhoto) {
+            this.trainingCertPhoto = trainingCertPhoto;
+        }
+
+        public String getWorkProofPhoto() {
+            return workProofPhoto;
+        }
+
+        public void setWorkProofPhoto(String workProofPhoto) {
+            this.workProofPhoto = workProofPhoto;
+        }
+
+        public String getPayoutMethod() {
+            return payoutMethod;
+        }
+
+        public void setPayoutMethod(String payoutMethod) {
+            this.payoutMethod = payoutMethod;
+        }
+
+        public String getPayoutAccount() {
+            return payoutAccount;
+        }
+
+        public void setPayoutAccount(String payoutAccount) {
+            this.payoutAccount = payoutAccount;
+        }
+
+        public String getPayoutAccountHolder() {
+            return payoutAccountHolder;
+        }
+
+        public void setPayoutAccountHolder(String payoutAccountHolder) {
+            this.payoutAccountHolder = payoutAccountHolder;
+        }
+
+        public String getPayoutBankName() {
+            return payoutBankName;
+        }
+
+        public void setPayoutBankName(String payoutBankName) {
+            this.payoutBankName = payoutBankName;
+        }
+
+        public String getPayoutBankBranch() {
+            return payoutBankBranch;
+        }
+
+        public void setPayoutBankBranch(String payoutBankBranch) {
+            this.payoutBankBranch = payoutBankBranch;
+        }
     }
 }

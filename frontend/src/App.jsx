@@ -1602,38 +1602,48 @@ function App() {
   };
 
   const handleUpdateProfile = async (updatedProfile) => {
-    setCurrentUser(prev => ({
-      ...prev,
-      ...updatedProfile
-    }));
-    // Persist to backend
-    if (currentUser?.id) {
-      try {
-        await fetch(`${API_BASE}/auth/users/${currentUser.id}`, {
+    if (!currentUser?.id) return;
+    try {
+      const userRes = await fetch(`${API_BASE}/auth/users/${currentUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProfile)
+      });
+      
+      if (userRes.ok) {
+        const updatedUser = await userRes.json();
+        setCurrentUser(prev => ({ ...prev, ...updatedUser }));
+      } else {
+        setCurrentUser(prev => ({ ...prev, ...updatedProfile }));
+      }
+
+      if (currentUser.role === 'WORKER') {
+        await fetch(`${API_BASE}/workers/${currentUser.id}/profile`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedProfile)
+          body: JSON.stringify({
+            skills: updatedProfile.skills || workerProfile?.skills,
+            hourlyRate: updatedProfile.hourlyRate != null ? updatedProfile.hourlyRate : workerProfile?.hourlyRate,
+            basePrice: updatedProfile.basePrice != null ? updatedProfile.basePrice : workerProfile?.basePrice,
+            latitude: updatedProfile.latitude != null ? updatedProfile.latitude : currentUser.latitude,
+            longitude: updatedProfile.longitude != null ? updatedProfile.longitude : currentUser.longitude,
+            serviceArea: updatedProfile.address || workerProfile?.serviceArea || currentUser.address,
+            available: true
+          })
         });
-        // If worker, also sync worker profile
-        if (currentUser.role === 'WORKER' && (updatedProfile.skills || updatedProfile.hourlyRate || updatedProfile.basePrice || updatedProfile.latitude)) {
-          await fetch(`${API_BASE}/workers/${currentUser.id}/profile`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              skills: updatedProfile.skills || workerProfile?.skills,
-              hourlyRate: updatedProfile.hourlyRate || workerProfile?.hourlyRate,
-              basePrice: updatedProfile.basePrice || workerProfile?.basePrice || 300,
-              latitude: updatedProfile.latitude,
-              longitude: updatedProfile.longitude,
-              serviceArea: updatedProfile.address || workerProfile?.serviceArea,
-              available: true
-            })
-          });
-          fetchWorkerProfileAndBookings(currentUser.id);
-        }
-      } catch (e) {
-        console.error('Profile update failed', e);
+        fetchWorkerProfileAndBookings(currentUser.id);
       }
+
+      // Sync across all views (Customer, Worker, Admin)
+      fetchWorkers();
+      if (currentUser.role === 'ADMIN' || activeTab === 'admin') {
+        fetchAdminData();
+      }
+
+      showToast("Profile Saved!", "Your profile information has been updated and synced system-wide.", "success");
+    } catch (e) {
+      console.error('Profile update failed', e);
+      showToast("Update Error", "Could not save profile changes.", "error");
     }
   };
 
