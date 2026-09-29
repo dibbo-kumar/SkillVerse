@@ -93,6 +93,15 @@ public class ServiceBooking {
     private String reviewComment;
     private LocalDateTime reviewedAt;
 
+    // 30-Day Warranty Service Claim Feature
+    private LocalDateTime completedAt;
+    private String warrantyStatus; // ELIGIBLE, WARRANTY_CLAIMED, WARRANTY_ACCEPTED, WARRANTY_COMPLETED, EXPIRED
+    private Boolean warrantyClaimed = false;
+    private LocalDateTime warrantyClaimedAt;
+    private LocalDateTime warrantyAcceptedAt;
+    private LocalDateTime warrantyCompletedAt;
+    private String warrantyProblemDescription;
+
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 
@@ -289,4 +298,25 @@ public class ServiceBooking {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public LocalDateTime getCompletedAt() { return completedAt; }
+    public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
+
+    public String getWarrantyStatus() { return warrantyStatus; }
+    public void setWarrantyStatus(String warrantyStatus) { this.warrantyStatus = warrantyStatus; }
+
+    public Boolean getWarrantyClaimed() { return warrantyClaimed != null && warrantyClaimed; }
+    public void setWarrantyClaimed(Boolean warrantyClaimed) { this.warrantyClaimed = warrantyClaimed; }
+
+    public LocalDateTime getWarrantyClaimedAt() { return warrantyClaimedAt; }
+    public void setWarrantyClaimedAt(LocalDateTime warrantyClaimedAt) { this.warrantyClaimedAt = warrantyClaimedAt; }
+
+    public LocalDateTime getWarrantyAcceptedAt() { return warrantyAcceptedAt; }
+    public void setWarrantyAcceptedAt(LocalDateTime warrantyAcceptedAt) { this.warrantyAcceptedAt = warrantyAcceptedAt; }
+
+    public LocalDateTime getWarrantyCompletedAt() { return warrantyCompletedAt; }
+    public void setWarrantyCompletedAt(LocalDateTime warrantyCompletedAt) { this.warrantyCompletedAt = warrantyCompletedAt; }
+
+    public String getWarrantyProblemDescription() { return warrantyProblemDescription; }
+    public void setWarrantyProblemDescription(String warrantyProblemDescription) { this.warrantyProblemDescription = warrantyProblemDescription; }
 }

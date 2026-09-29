@@ -437,6 +437,8 @@ public class DbInitializer implements CommandLineRunner {
                 bookingPast1.setAdvancePaid(true);
                 bookingPast1.setAdvancePaidAmount(300.0);
                 bookingPast1.setAdvanceVatAmount(15.0);
+                bookingPast1.setCompletedAt(LocalDateTime.now().minusDays(5));
+                bookingPast1.setWarrantyStatus("ELIGIBLE");
                 bookingPast1.setReviewRating(5);
                 bookingPast1.setReviewComment("Kamrul bhai is exceptionally skilled and punctual! Fixed the wiring issue within 40 mins.");
                 bookingPast1.setReviewedAt(LocalDateTime.now().minusDays(4));

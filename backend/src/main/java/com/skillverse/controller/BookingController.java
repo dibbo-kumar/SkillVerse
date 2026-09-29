@@ -159,6 +159,16 @@ public class BookingController {
                         && activeStatuses.contains(b.getStatus()));
     }
 
+    // --- HELPER: CHECK IF WORKER HAS UNRESOLVED WARRANTY CLAIM ---
+    private boolean hasActiveWarrantyClaim(Long workerId) {
+        if (workerId == null) return false;
+        List<ServiceBooking> workerBookings = bookingRepository.findByWorkerId(workerId);
+        return workerBookings.stream().anyMatch(b -> 
+            "WARRANTY_CLAIMED".equalsIgnoreCase(b.getWarrantyStatus()) ||
+            "WARRANTY_ACCEPTED".equalsIgnoreCase(b.getWarrantyStatus())
+        );
+    }
+
     // --- ACCEPT PRICE & TRANSITION (Worker accepts request -> Customer must pay base advance) ---
 
     @PutMapping("/{id}/accept-price")
@@ -170,7 +180,7 @@ public class BookingController {
 
         ServiceBooking booking = optionalBooking.get();
 
-        // Enforce: Worker must be verified by admin and not busy on another active job
+        // Enforce: Worker must be verified by admin, not have active warranty claims, and not busy on another active job
         User worker = booking.getWorker();
         if ("WORKER".equalsIgnoreCase(acceptedBy) && worker != null) {
             boolean isVerifiedWorker = Boolean.TRUE.equals(worker.isVerified()) 
@@ -179,6 +189,9 @@ public class BookingController {
                     && !"BANNED".equalsIgnoreCase(worker.getStatus());
             if (!isVerifiedWorker) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Worker account is unverified or under review. Admin verification is required before accepting bookings."));
+            }
+            if (hasActiveWarrantyClaim(worker.getId())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Cannot accept new work. You have an active warranty claim that must be resolved first."));
             }
             if (!"ACTIVE".equalsIgnoreCase(worker.getStatus())) {
                 worker.setStatus("ACTIVE");
@@ -247,6 +260,9 @@ public class BookingController {
                             && !"BANNED".equalsIgnoreCase(worker.getStatus());
                     if (!isVerifiedWorker) {
                         return ResponseEntity.badRequest().body(Map.of("error", "Worker is unverified. Admin verification required to submit counter-offers."));
+                    }
+                    if (hasActiveWarrantyClaim(worker.getId())) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "Cannot submit counter offers. You have an active warranty claim that must be resolved first."));
                     }
                     if (!"ACTIVE".equalsIgnoreCase(worker.getStatus())) {
                         worker.setStatus("ACTIVE");
@@ -540,6 +556,12 @@ public class BookingController {
         booking.setTransactionId(txId);
         booking.setPaidAt(LocalDateTime.now());
         booking.setStatus("COMPLETED"); // Direct completion upon payment!
+        if (booking.getCompletedAt() == null) {
+            booking.setCompletedAt(LocalDateTime.now());
+        }
+        if (booking.getWarrantyStatus() == null) {
+            booking.setWarrantyStatus("ELIGIBLE");
+        }
         booking.setCompletionOtpVerified(true);
 
         ServiceBooking savedBooking = bookingRepository.save(booking);
@@ -669,6 +691,121 @@ public class BookingController {
             }
         }
         return ResponseEntity.ok(reviews);
+    }
+
+    // ==========================================
+    // --- 30-DAY WARRANTY SERVICE CLAIM FLOW ---
+    // ==========================================
+
+    @PostMapping("/{id}/claim-warranty")
+    public ResponseEntity<?> claimWarranty(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> payload) {
+        Optional<ServiceBooking> optionalBooking = bookingRepository.findById(id);
+        if (optionalBooking.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        ServiceBooking booking = optionalBooking.get();
+        if (!"COMPLETED".equalsIgnoreCase(booking.getStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Warranty can only be claimed on completed bookings."));
+        }
+
+        if (Boolean.TRUE.equals(booking.getWarrantyClaimed())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Warranty has already been claimed for this booking. Only 1 warranty claim is allowed."));
+        }
+
+        // Check 30-day warranty window
+        LocalDateTime completionDate = booking.getCompletedAt() != null 
+                ? booking.getCompletedAt() 
+                : (booking.getPaidAt() != null ? booking.getPaidAt() : booking.getUpdatedAt());
+        if (completionDate == null) {
+            completionDate = booking.getCreatedAt();
+        }
+
+        if (completionDate != null && completionDate.plusDays(30).isBefore(LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Warranty period (30 days) has expired for this booking."));
+        }
+
+        String problemDesc = payload != null && payload.containsKey("description") && payload.get("description") != null
+                ? payload.get("description").toString()
+                : "Recurring problem reported under 30-day service warranty.";
+
+        booking.setWarrantyClaimed(true);
+        booking.setWarrantyStatus("WARRANTY_CLAIMED");
+        booking.setWarrantyClaimedAt(LocalDateTime.now());
+        booking.setWarrantyProblemDescription(problemDesc);
+
+        ServiceBooking saved = bookingRepository.save(booking);
+
+        // Notify Worker (Urgent: worker cannot accept new work until resolved)
+        User worker = booking.getWorker();
+        if (worker != null) {
+            String custName = booking.getCustomer() != null ? booking.getCustomer().getName() : "Customer";
+            sendNotification(worker, "🚨 Urgent: Warranty Claim Received!",
+                    "Customer " + custName + " has reported a recurring issue for " + booking.getServiceType() + " under 30-day warranty. You must accept and service this claim free of charge.",
+                    "WARRANTY_CLAIMED", saved.getId());
+        }
+
+        return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/{id}/accept-warranty")
+    public ResponseEntity<?> acceptWarranty(@PathVariable Long id) {
+        Optional<ServiceBooking> optionalBooking = bookingRepository.findById(id);
+        if (optionalBooking.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        ServiceBooking booking = optionalBooking.get();
+        if (!"WARRANTY_CLAIMED".equalsIgnoreCase(booking.getWarrantyStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "No pending warranty claim found to accept."));
+        }
+
+        booking.setWarrantyStatus("WARRANTY_ACCEPTED");
+        booking.setWarrantyAcceptedAt(LocalDateTime.now());
+
+        ServiceBooking saved = bookingRepository.save(booking);
+
+        // Notify Customer
+        User customer = booking.getCustomer();
+        User worker = booking.getWorker();
+        if (customer != null) {
+            String workerName = worker != null ? worker.getName() : "Technician";
+            sendNotification(customer, "Warranty Claim Accepted by Technician",
+                    workerName + " has accepted your warranty claim for " + booking.getServiceType() + " and will visit your address free of charge.",
+                    "WARRANTY_ACCEPTED", saved.getId());
+        }
+
+        return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/{id}/complete-warranty")
+    public ResponseEntity<?> completeWarranty(@PathVariable Long id) {
+        Optional<ServiceBooking> optionalBooking = bookingRepository.findById(id);
+        if (optionalBooking.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        ServiceBooking booking = optionalBooking.get();
+        if (!"WARRANTY_ACCEPTED".equalsIgnoreCase(booking.getWarrantyStatus()) && !"WARRANTY_CLAIMED".equalsIgnoreCase(booking.getWarrantyStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Warranty is not in an active claim state."));
+        }
+
+        booking.setWarrantyStatus("WARRANTY_COMPLETED");
+        booking.setWarrantyCompletedAt(LocalDateTime.now());
+
+        ServiceBooking saved = bookingRepository.save(booking);
+
+        // Notify Worker (Work restriction lifted!)
+        User worker = booking.getWorker();
+        User customer = booking.getCustomer();
+        if (worker != null) {
+            String custName = customer != null ? customer.getName() : "Customer";
+            sendNotification(worker, "Warranty Service Completed!",
+                    "Customer " + custName + " has confirmed that the warranty work for " + booking.getServiceType() + " is completed. Your work restriction is lifted.",
+                    "WARRANTY_COMPLETED", saved.getId());
+        }
+
+        return ResponseEntity.ok(saved);
     }
 
     public static class BookingRequest {

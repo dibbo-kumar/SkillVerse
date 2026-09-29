@@ -110,9 +110,18 @@ public class ProblemPostController {
             userRepository.save(worker);
         }
 
+        // Check if worker has an active warranty claim
+        List<ServiceBooking> workerBookings = bookingRepository.findByWorkerId(workerId);
+        boolean hasWarrantyClaim = workerBookings.stream().anyMatch(b ->
+            "WARRANTY_CLAIMED".equalsIgnoreCase(b.getWarrantyStatus()) ||
+            "WARRANTY_ACCEPTED".equalsIgnoreCase(b.getWarrantyStatus())
+        );
+        if (hasWarrantyClaim) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Cannot submit quotes. You have an active warranty claim that must be resolved first."));
+        }
+
         // Check if worker already has an active job in progress
         List<String> activeStatuses = List.of("CONFIRMED", "ON_THE_WAY", "ARRIVED", "IN_PROGRESS", "COMPLETION_REQUESTED");
-        List<ServiceBooking> workerBookings = bookingRepository.findByWorkerId(workerId);
         boolean isBusy = workerBookings.stream().anyMatch(b -> activeStatuses.contains(b.getStatus()));
         if (isBusy) {
             return ResponseEntity.badRequest().body(Map.of("error", "Worker already has an active job in progress. Complete or finalize the current job before submitting offers on new problems."));

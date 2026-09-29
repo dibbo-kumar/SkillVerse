@@ -228,6 +228,31 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
   );
   const hasActiveJob = !!activeJob;
 
+  const activeWarrantyBookings = workerBookings.filter(b =>
+    b.warrantyStatus === 'WARRANTY_CLAIMED' || b.warrantyStatus === 'WARRANTY_ACCEPTED'
+  );
+  const hasActiveWarrantyClaim = activeWarrantyBookings.length > 0;
+
+  const handleAcceptWarranty = async (bId) => {
+    try {
+      const res = await fetch(`${API_BASE}/bookings/${bId}/accept-warranty`, { method: 'PUT' });
+      if (res.ok) {
+        fetchWorkerData();
+        if (onShowToast) onShowToast(
+          "Warranty Claim Accepted!",
+          "You have accepted this free warranty request. Please visit the customer's location to perform the repair. Customer will mark Done upon completion.",
+          "success"
+        );
+      } else {
+        const err = await res.json();
+        if (onShowToast) onShowToast("Error", err.error || "Failed to accept warranty claim.", "error");
+      }
+    } catch (e) {
+      console.error(e);
+      if (onShowToast) onShowToast("Error", "Network error accepting warranty claim.", "error");
+    }
+  };
+
   useEffect(() => {
     if (hasActiveJob && activeSubTab === 'requests') {
       setActiveSubTab('active-job');
@@ -389,6 +414,11 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
       setShowVerifModal(true);
       return;
     }
+    if (hasActiveWarrantyClaim) {
+      if (onShowToast) onShowToast("Warranty Required", "Cannot accept new work. You have an active warranty claim that must be resolved first.", "error");
+      setActiveSubTab('history');
+      return;
+    }
     if (hasActiveJob) {
       if (onShowToast) onShowToast("Worker Busy", "You already have an active job in progress. Complete your current active job before accepting new bookings.", "error");
       return;
@@ -412,6 +442,11 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     e.preventDefault();
     if (!isWorkerApproved) {
       if (onShowToast) onShowToast("Verification Required", "You must be an approved technician to propose price counter-offers.", "warning");
+      return;
+    }
+    if (hasActiveWarrantyClaim) {
+      if (onShowToast) onShowToast("Warranty Required", "Cannot propose price counters. You have an active warranty claim that must be resolved first.", "error");
+      setActiveSubTab('history');
       return;
     }
     if (!selectedBooking || !counterPrice) return;
@@ -542,6 +577,11 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     if (!isWorkerApproved) {
       if (onShowToast) onShowToast("Verification Required", "Your account is not approved yet. Complete ID verification to quote on problem posts.", "warning");
       setShowVerifModal(true);
+      return;
+    }
+    if (hasActiveWarrantyClaim) {
+      if (onShowToast) onShowToast("Warranty Required", "Cannot quote on problem posts. You have an active warranty claim that must be resolved first.", "error");
+      setActiveSubTab('history');
       return;
     }
     if (hasActiveJob) {
@@ -843,6 +883,43 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
         </div>
       )}
 
+      {/* --- URGENT WARRANTY RESTRICTION BANNER --- */}
+      {hasActiveWarrantyClaim && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(245, 158, 11, 0.18))',
+          border: '1.5px solid #ef4444',
+          borderRadius: '16px',
+          padding: '1.2rem 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          boxShadow: '0 8px 30px rgba(239, 68, 68, 0.2)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: '280px' }}>
+            <div style={{ background: '#ef4444', borderRadius: '50%', padding: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 15px rgba(239, 68, 68, 0.5)' }}>
+              <ShieldAlert size={26} color="#fff" />
+            </div>
+            <div>
+              <h4 style={{ margin: 0, color: '#fca5a5', fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                🚨 Warranty Action Required ({activeWarrantyBookings.length} Active Claim)
+              </h4>
+              <p style={{ margin: '0.3rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                A customer reported a recurring issue under 30-day warranty. You are restricted from accepting new jobs until this free warranty service is finished.
+              </p>
+            </div>
+          </div>
+          <button
+            className="btn btn-primary"
+            style={{ background: '#ef4444', color: '#fff', border: 'none', fontWeight: 'bold', padding: '0.55rem 1.2rem', fontSize: '0.85rem' }}
+            onClick={() => setActiveSubTab('history')}
+          >
+            Go to Warranty Claims ({activeWarrantyBookings.length}) →
+          </button>
+        </div>
+      )}
+
       {/* --- SUBTABS NAVIGATION --- */}
       <div style={{
         display: 'grid',
@@ -885,9 +962,9 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
         <button
           onClick={() => setActiveSubTab('history')}
           className={`btn ${activeSubTab === 'history' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ padding: '0.5rem 0.6rem', fontSize: '0.8rem', justifyContent: 'center', textAlign: 'center', whiteSpace: 'normal', minHeight: '40px' }}
+          style={{ padding: '0.5rem 0.6rem', fontSize: '0.8rem', justifyContent: 'center', textAlign: 'center', whiteSpace: 'normal', minHeight: '40px', position: 'relative' }}
         >
-          📜 History ({completedBookings.length})
+          📜 History ({completedBookings.length}) {hasActiveWarrantyClaim && <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '10px', marginLeft: '4px', fontWeight: 'bold' }}>⚠️ Claim</span>}
         </button>
         <button
           onClick={() => setActiveSubTab('verification')}
@@ -1467,47 +1544,117 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
       {/* ============================================================ */}
       {activeSubTab === 'history' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)', margin: 0 }}>Completed Service History & Customer Ratings</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1.25rem', color: 'var(--text-heading)', margin: 0 }}>Completed Service History & Warranty Claims</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.3rem 0 0 0' }}>
+                Review past jobs, ratings, and active 30-day warranty service claims assigned to you.
+              </p>
+            </div>
+            {hasActiveWarrantyClaim && (
+              <span className="badge badge-warning" style={{ border: '1.5px solid #ef4444', color: '#ef4444', background: 'rgba(239, 68, 68, 0.15)', padding: '0.45rem 0.9rem', fontWeight: 'bold' }}>
+                ⚠️ {activeWarrantyBookings.length} Unresolved Warranty Claim Active
+              </span>
+            )}
+          </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-            {completedBookings.map((b) => (
-              <div
-                key={b.id}
-                className="glass-card"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  background: 'rgba(255,255,255,0.02)',
-                  padding: '1.2rem',
-                  borderRadius: '14px',
-                  border: '1px solid var(--border-color)',
-                  flexWrap: 'wrap',
-                  gap: '1rem'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
-                    <strong style={{ fontSize: '1rem', color: 'var(--text-heading)' }}>{b.serviceType}</strong>
-                    <span className="badge badge-verified">Completed</span>
-                    {b.paymentStatus === 'PAID' && <span className="badge badge-gold">Paid ({b.paymentMethod || 'bKash'})</span>}
-                  </div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem', marginBottom: 0 }}>
-                    Customer: <strong>{b.customer?.name}</strong> • Final Price: <strong>৳{b.agreedCost || b.estimatedCost}</strong> • 
-                    Net Earning: <strong style={{ color: 'var(--primary)' }}>৳{b.workerNetEarning || (b.agreedCost ? Math.round(b.agreedCost * 0.95) : 0)}</strong>
-                  </p>
-                  {b.reviewRating && (
-                    <div style={{ marginTop: '0.4rem', fontSize: '0.8rem', color: 'var(--accent-gold)' }}>
-                      ⭐ {b.reviewRating}/5: <em>"{b.reviewComment || 'Great service!'}"</em>
-                    </div>
-                  )}
-                </div>
+            {completedBookings.map((b) => {
+              const completedDate = new Date(b.completedAt || b.paidAt || b.createdAt);
+              const formattedWorkedDate = isNaN(completedDate.getTime()) ? 'Recently' : completedDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+              const isWarrantyClaimed = b.warrantyStatus === 'WARRANTY_CLAIMED';
+              const isWarrantyAccepted = b.warrantyStatus === 'WARRANTY_ACCEPTED';
+              const isWarrantyCompleted = b.warrantyStatus === 'WARRANTY_COMPLETED';
 
-                <button className="btn btn-secondary" style={{ padding: '0.45rem 0.9rem', fontSize: '0.8rem' }} onClick={() => handleOpenDetails(b)}>
-                  <Eye size={14} /> Full Record
-                </button>
-              </div>
-            ))}
+              return (
+                <div
+                  key={b.id}
+                  className="glass-card"
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    background: isWarrantyClaimed ? 'rgba(239, 68, 68, 0.08)' : isWarrantyAccepted ? 'rgba(245, 158, 11, 0.08)' : 'rgba(255,255,255,0.02)',
+                    padding: '1.3rem',
+                    borderRadius: '14px',
+                    border: isWarrantyClaimed ? '1.5px solid #ef4444' : isWarrantyAccepted ? '1.5px solid #f59e0b' : '1px solid var(--border-color)',
+                    flexWrap: 'wrap',
+                    gap: '1rem',
+                    boxShadow: (isWarrantyClaimed || isWarrantyAccepted) ? '0 4px 20px rgba(0,0,0,0.3)' : 'none'
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: '280px' }}>
+                    <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.3rem' }}>
+                      <strong style={{ fontSize: '1rem', color: 'var(--text-heading)' }}>{b.serviceType}</strong>
+                      <span className="badge badge-verified">Completed</span>
+                      {b.paymentStatus === 'PAID' && <span className="badge badge-gold">Paid ({b.paymentMethod || 'bKash'})</span>}
+                      
+                      {/* Warranty Status Badges for Worker */}
+                      {isWarrantyClaimed ? (
+                        <span className="badge badge-warning" style={{ background: '#ef4444', color: '#fff', border: 'none', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <ShieldAlert size={13} /> 🚨 Warranty Action Required
+                        </span>
+                      ) : isWarrantyAccepted ? (
+                        <span className="badge badge-gold" style={{ background: 'rgba(245, 158, 11, 0.2)', border: '1px solid #f59e0b', color: '#f59e0b' }}>
+                          <Clock size={12} /> 🛠️ Free Warranty In Progress
+                        </span>
+                      ) : isWarrantyCompleted ? (
+                        <span className="badge badge-verified" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid #10b981' }}>
+                          <CheckCircle2 size={12} /> Warranty Service Finished
+                        </span>
+                      ) : (
+                        <span className="badge badge-verified" style={{ opacity: 0.8 }}>
+                          <ShieldCheck size={12} /> 30-Day Guarantee
+                        </span>
+                      )}
+                    </div>
+
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem', marginBottom: 0 }}>
+                      Customer: <strong>{b.customer?.name}</strong> • Phone: <strong>{b.customer?.phone || '01711223344'}</strong> • Address: <strong>{b.address || b.customer?.address || 'Client Address'}</strong>
+                    </p>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.2rem', marginBottom: 0 }}>
+                      Worked Date: <strong>{formattedWorkedDate}</strong> • Final Price: <strong>৳{b.agreedCost || b.estimatedCost}</strong> • Net Earning: <strong style={{ color: 'var(--primary)' }}>৳{b.workerNetEarning || (b.agreedCost ? Math.round(b.agreedCost * 0.95) : 0)}</strong>
+                    </p>
+
+                    {/* Warranty issue prompt */}
+                    {b.warrantyProblemDescription && (
+                      <div style={{ marginTop: '0.6rem', padding: '0.5rem 0.8rem', background: isWarrantyClaimed ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.1)', borderRadius: '8px', borderLeft: isWarrantyClaimed ? '3px solid #ef4444' : '3px solid #f59e0b', fontSize: '0.82rem', color: isWarrantyClaimed ? '#fca5a5' : '#f59e0b' }}>
+                        <strong>⚠️ Customer Reported Warranty Issue:</strong> "{b.warrantyProblemDescription}"
+                        {b.warrantyClaimedAt && <span style={{ display: 'block', fontSize: '0.75rem', marginTop: '0.2rem', opacity: 0.8 }}>Claimed on: {new Date(b.warrantyClaimedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>}
+                      </div>
+                    )}
+
+                    {isWarrantyAccepted && (
+                      <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Clock size={14} /> Please visit customer at their location to perform free repair. Customer will mark "Done" upon completion to lift worker restrictions.
+                      </div>
+                    )}
+
+                    {b.reviewRating && (
+                      <div style={{ marginTop: '0.4rem', fontSize: '0.8rem', color: 'var(--accent-gold)' }}>
+                        ⭐ {b.reviewRating}/5: <em>"{b.reviewComment || 'Great service!'}"</em>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {isWarrantyClaimed && (
+                      <button
+                        className="btn btn-primary"
+                        style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: '#fff', fontWeight: 'bold', padding: '0.5rem 1.1rem', fontSize: '0.85rem', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                        onClick={() => handleAcceptWarranty(b.id)}
+                      >
+                        <Check size={16} /> Accept Warranty Claim
+                      </button>
+                    )}
+
+                    <button className="btn btn-secondary" style={{ padding: '0.45rem 0.9rem', fontSize: '0.8rem' }} onClick={() => handleOpenDetails(b)}>
+                      <Eye size={14} /> Full Record
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
 
             {completedBookings.length === 0 && (
               <div className="glass-card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>

@@ -63,6 +63,14 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [invoiceBooking, setInvoiceBooking] = useState(null);
 
+  // Warranty Claim & Done Modal State
+  const [showWarrantyModal, setShowWarrantyModal] = useState(false);
+  const [warrantyBooking, setWarrantyBooking] = useState(null);
+  const [warrantyProblemInput, setWarrantyProblemInput] = useState('');
+  const [isClaimingWarranty, setIsClaimingWarranty] = useState(false);
+  const [showWarrantyDoneModal, setShowWarrantyDoneModal] = useState(false);
+  const [warrantyDoneBooking, setWarrantyDoneBooking] = useState(null);
+
   // Saved Technicians state
   const [fetchedWorkers, setFetchedWorkers] = useState([]);
 
@@ -317,6 +325,174 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleClaimWarranty = async (e) => {
+    if (e) e.preventDefault();
+    if (!warrantyBooking) return;
+    setIsClaimingWarranty(true);
+    try {
+      const res = await fetch(`${API_BASE}/bookings/${warrantyBooking.id}/claim-warranty`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: warrantyProblemInput || 'Recurring service problem reported under 30-day warranty.' })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        if (onShowToast) onShowToast("Warranty Error", err.error || "Failed to submit warranty claim.", "error");
+        setIsClaimingWarranty(false);
+        return;
+      }
+      const data = await res.json();
+      setShowWarrantyModal(false);
+      setWarrantyBooking(null);
+      setWarrantyProblemInput('');
+      fetchCustomerData();
+      if (onShowToast) {
+        onShowToast(
+          "🛡️ 30-Day Warranty Claimed!",
+          `Free warranty request dispatched to ${data.worker?.name || 'Technician'}. The technician is restricted from taking new work until your warranty is completed!`,
+          "success"
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      if (onShowToast) onShowToast("Network Error", "Unable to submit warranty claim.", "error");
+    } finally {
+      setIsClaimingWarranty(false);
+    }
+  };
+
+  const handleDownloadReceipt = (booking) => {
+    if (!booking) return;
+    const workedDate = booking.completedAt 
+      ? new Date(booking.completedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : (booking.createdAt ? new Date(booking.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently');
+    const warrantyExpiry = new Date(new Date(booking.completedAt || booking.createdAt || Date.now()).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const vat = ((booking.advancePaidAmount || 300) * 0.05).toFixed(1);
+    const total = booking.agreedCost || booking.estimatedCost || 500;
+
+    const receiptHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FixConnect Official Receipt - INV-${booking.id}</title>
+  <style>
+    body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; margin: 0; }
+    .receipt-card { max-width: 620px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; box-shadow: 0 10px 25px rgba(0,0,0,0.06); }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 18px; margin-bottom: 20px; }
+    .logo { font-size: 22px; font-weight: 800; color: #2563eb; letter-spacing: -0.5px; }
+    .logo span { color: #f59e0b; }
+    .badge { background: #dcfce7; color: #166534; padding: 5px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700; }
+    .inv-no { font-size: 13px; font-weight: 600; color: #64748b; margin-top: 3px; }
+    .details-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .details-table td { padding: 9px 0; border-bottom: 1px solid #f1f5f9; font-size: 13.5px; }
+    .details-table td.label { color: #64748b; width: 42%; }
+    .details-table td.val { font-weight: 600; color: #0f172a; text-align: right; }
+    .warranty-box { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 14px; margin-bottom: 20px; }
+    .warranty-title { color: #065f46; font-weight: 700; font-size: 13.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+    .warranty-desc { color: #047857; font-size: 12px; line-height: 1.5; }
+    .total-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .total-label { font-size: 14px; font-weight: 700; color: #334155; }
+    .total-amount { font-size: 20px; font-weight: 800; color: #2563eb; }
+    .footer { text-align: center; color: #94a3b8; font-size: 11.5px; border-top: 1px solid #f1f5f9; padding-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="receipt-card">
+    <div class="header">
+      <div>
+        <div class="logo">Fix<span>Connect</span> / SkillVerse</div>
+        <div class="inv-no">Receipt #INV-2026-${booking.id}</div>
+      </div>
+      <div>
+        <span class="badge">✓ PAID & VERIFIED</span>
+      </div>
+    </div>
+
+    <table class="details-table">
+      <tr>
+        <td class="label">Service Name</td>
+        <td class="val">${booking.serviceType}</td>
+      </tr>
+      <tr>
+        <td class="label">Worked Date</td>
+        <td class="val">${workedDate}</td>
+      </tr>
+      <tr>
+        <td class="label">Certified Technician</td>
+        <td class="val">${booking.worker?.name || 'Assigned Technician'} ${booking.worker?.phone ? `(${booking.worker.phone})` : ''}</td>
+      </tr>
+      <tr>
+        <td class="label">Customer Name</td>
+        <td class="val">${currentUser?.name || 'Customer'}</td>
+      </tr>
+      <tr>
+        <td class="label">Service Location</td>
+        <td class="val">${booking.address || currentUser?.address || 'Dhaka, Bangladesh'}</td>
+      </tr>
+      <tr>
+        <td class="label">Payment Method</td>
+        <td class="val">${booking.paymentMethod || 'bKash / Wallet'} ${booking.transactionId ? `(Txn: ${booking.transactionId})` : ''}</td>
+      </tr>
+      <tr>
+        <td class="label">Base Advance Paid</td>
+        <td class="val">৳${booking.advancePaidAmount || 300} (+৳${vat} VAT)</td>
+      </tr>
+    </table>
+
+    <div class="total-box">
+      <span class="total-label">Total Settled Amount</span>
+      <span class="total-amount">৳${total}</span>
+    </div>
+
+    <div class="warranty-box">
+      <div class="warranty-title">🛡️ 30-Day FixConnect Service Guarantee</div>
+      <div class="warranty-desc">
+        This receipt certifies 30 days of 100% free re-repair warranty valid until <strong>${warrantyExpiry}</strong>. If the same issue recurs within this timeframe, claim free warranty directly from your dashboard.
+      </div>
+    </div>
+
+    <div class="footer">
+      Official Customer Invoice • FixConnect / SkillVerse Platform • 24/7 Support: support@skillverse.com
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([receiptHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `FixConnect_Receipt_INV-2026-${booking.id}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    if (onShowToast) {
+      onShowToast("Receipt Downloaded", `Receipt for ${booking.serviceType} downloaded successfully.`, "success");
+    }
+  };
+
+  const handleCompleteWarranty = async (booking) => {
+    const bookingId = (typeof booking === 'object' && booking !== null) ? booking.id : booking;
+    const targetBooking = (typeof booking === 'object' && booking !== null) ? booking : bookings.find(b => b.id === bookingId);
+    try {
+      const res = await fetch(`${API_BASE}/bookings/${bookingId}/complete-warranty`, {
+        method: 'PUT'
+      });
+      if (res.ok) {
+        fetchCustomerData();
+        setWarrantyDoneBooking(targetBooking || { id: bookingId });
+        setShowWarrantyDoneModal(true);
+      } else {
+        const err = await res.json();
+        if (onShowToast) onShowToast("Error", err.error || "Failed to finalize warranty.", "error");
+      }
+    } catch (e) {
+      console.error(e);
+      if (onShowToast) onShowToast("Error", "Network error finalizing warranty.", "error");
     }
   };
 
@@ -926,58 +1102,185 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
 
       {/* --- SERVICE HISTORY & INVOICES TAB --- */}
       {activeTab === 'history' && (
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)' }}>Service History & Invoices</h3>
+        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1.25rem', color: 'var(--text-heading)', margin: 0 }}>Service History & Invoices</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.3rem 0 0 0' }}>
+                View past completed repairs, download official receipts, rate technicians, and claim free 30-day service warranty.
+              </p>
+            </div>
+            <span className="badge badge-verified" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <ShieldCheck size={14} /> 30-Day SkillVerse Guarantee Active
+            </span>
+          </div>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-            {bookings.filter(b => b.status === 'COMPLETED' || b.status === 'PAID').map((b) => (
-              <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '1rem' }}>
-                <div>
-                  <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
-                    <strong style={{ fontSize: '0.95rem', color: 'var(--text-heading)' }}>{b.serviceType}</strong>
-                    {getStatusBadge(b.status)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+            {bookings.filter(b => b.status === 'COMPLETED' || b.status === 'PAID').map((b) => {
+              const completedDate = new Date(b.completedAt || b.paidAt || b.createdAt);
+              const formattedWorkedDate = isNaN(completedDate.getTime()) ? 'Recently' : completedDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+              const expiryDate = new Date(completedDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+              const formattedExpiryDate = isNaN(expiryDate.getTime()) ? '30 Days' : expiryDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+              const now = new Date();
+              const diffMs = expiryDate.getTime() - now.getTime();
+              const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+              const isExpired = diffMs <= 0;
+
+              return (
+                <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '1.2rem', borderRadius: '14px', border: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div style={{ flex: 1, minWidth: '280px' }}>
+                    <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.3rem' }}>
+                      <strong style={{ fontSize: '1rem', color: 'var(--text-heading)' }}>{b.serviceType}</strong>
+                      {getStatusBadge(b.status)}
+                      
+                      {/* Warranty Status Badges */}
+                      {b.warrantyStatus === 'WARRANTY_COMPLETED' ? (
+                        <span className="badge badge-verified" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid #10b981' }}>
+                          <CheckCircle2 size={12} /> Warranty Service Completed
+                        </span>
+                      ) : b.warrantyStatus === 'WARRANTY_ACCEPTED' ? (
+                        <span className="badge badge-gold" style={{ border: '1px solid #f59e0b', background: 'rgba(245, 158, 11, 0.15)' }}>
+                          <Clock size={12} /> Free Warranty In Progress (Tech Accepted)
+                        </span>
+                      ) : b.warrantyStatus === 'WARRANTY_CLAIMED' ? (
+                        <span className="badge badge-warning" style={{ border: '1px solid #ef4444', color: '#ef4444', background: 'rgba(239, 68, 68, 0.15)' }}>
+                          <Clock size={12} /> Warranty Claimed • Awaiting Tech
+                        </span>
+                      ) : !isExpired ? (
+                        <span className="badge badge-verified" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                          <ShieldCheck size={12} /> 30-Day Warranty Active ({daysRemaining}d left)
+                        </span>
+                      ) : (
+                        <span className="badge badge-secondary" style={{ opacity: 0.6 }}>
+                          Warranty Expired
+                        </span>
+                      )}
+                    </div>
+                    
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.2rem 0' }}>
+                      Technician: <strong>{b.worker?.name || 'Verified Technician'}</strong> • Worked Date: <strong>{formattedWorkedDate}</strong> • Paid: <strong style={{ color: 'var(--primary)' }}>৳{b.agreedCost || b.estimatedCost}</strong>
+                    </p>
+
+                    {b.warrantyProblemDescription && (
+                      <div style={{ marginTop: '0.4rem', padding: '0.4rem 0.7rem', background: 'rgba(245, 158, 11, 0.08)', borderRadius: '8px', borderLeft: '3px solid #f59e0b', fontSize: '0.8rem', color: '#f59e0b' }}>
+                        <strong>Reported Warranty Issue:</strong> {b.warrantyProblemDescription}
+                      </div>
+                    )}
                   </div>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                    Technician: {b.worker?.name} • Paid Amount: <strong>৳{b.agreedCost || b.estimatedCost}</strong>
-                  </p>
-                </div>
-                
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <button
-                    className="btn btn-secondary"
-                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                    onClick={() => {
-                      setInvoiceBooking(b);
-                      setShowInvoiceModal(true);
-                    }}
-                  >
-                    <FileText size={14} /> Receipt
-                  </button>
-                  {b.reviewRating ? (
-                    <span
-                      className="badge badge-gold"
-                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                      title={b.reviewComment ? `Review: "${b.reviewComment}"` : 'Reviewed'}
-                    >
-                      <Star size={13} fill="currentColor" /> Rated {b.reviewRating}/5
-                    </span>
-                  ) : (
+                  
+                  <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <button
-                      className="btn btn-primary"
-                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                      className="btn btn-secondary"
+                      style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}
                       onClick={() => {
-                        setReviewBooking(b);
-                        setRating(5);
-                        setReviewComment('');
-                        setShowReviewModal(true);
+                        setInvoiceBooking(b);
+                        setShowInvoiceModal(true);
                       }}
                     >
-                      <Star size={14} /> Review
+                      <FileText size={14} /> Receipt
                     </button>
-                  )}
+
+                    {b.reviewRating ? (
+                      <span
+                        className="badge badge-gold"
+                        style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                        title={b.reviewComment ? `Review: "${b.reviewComment}"` : 'Reviewed'}
+                      >
+                        <Star size={13} fill="currentColor" /> Rated {b.reviewRating}/5
+                      </span>
+                    ) : (
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}
+                        onClick={() => {
+                          setReviewBooking(b);
+                          setRating(5);
+                          setReviewComment('');
+                          setShowReviewModal(true);
+                        }}
+                      >
+                        <Star size={14} /> Review
+                      </button>
+                    )}
+
+                    {/* Warranty Actions: Claim Warranty / Done */}
+                    {b.warrantyStatus === 'WARRANTY_ACCEPTED' ? (
+                      <button
+                        className="btn btn-primary"
+                        style={{
+                          padding: '0.45rem 1rem',
+                          fontSize: '0.82rem',
+                          background: 'linear-gradient(135deg, #10b981, #059669)',
+                          color: '#fff',
+                          fontWeight: 'bold',
+                          boxShadow: '0 2px 10px rgba(16, 185, 129, 0.3)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem'
+                        }}
+                        onClick={() => handleCompleteWarranty(b)}
+                      >
+                        <CheckCircle2 size={14} /> Done (Mark Finished)
+                      </button>
+                    ) : b.warrantyStatus === 'WARRANTY_CLAIMED' ? (
+                      <button
+                        className="btn btn-secondary"
+                        disabled
+                        style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem', opacity: 0.85, cursor: 'default', color: '#f59e0b', borderColor: '#f59e0b' }}
+                      >
+                        <Clock size={14} /> Pending Tech
+                      </button>
+                    ) : b.warrantyStatus === 'WARRANTY_COMPLETED' ? (
+                      <button
+                        className="btn btn-secondary"
+                        disabled
+                        style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem', opacity: 0.6, cursor: 'default' }}
+                      >
+                        <CheckCircle2 size={14} /> Warranty Done
+                      </button>
+                    ) : !isExpired && !b.warrantyClaimed ? (
+                      <button
+                        className="btn btn-secondary"
+                        style={{
+                          padding: '0.45rem 0.85rem',
+                          fontSize: '0.82rem',
+                          border: '1px solid #10b981',
+                          color: '#10b981',
+                          background: 'rgba(16, 185, 129, 0.08)',
+                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem'
+                        }}
+                        title="Claim free warranty service within 30 days"
+                        onClick={() => {
+                          setWarrantyBooking(b);
+                          setWarrantyProblemInput('');
+                          setShowWarrantyModal(true);
+                        }}
+                      >
+                        <ShieldCheck size={14} /> Claim Warranty
+                      </button>
+                    ) : (
+                      <button
+                        className="btn btn-secondary"
+                        disabled
+                        style={{
+                          padding: '0.45rem 0.85rem',
+                          fontSize: '0.82rem',
+                          opacity: 0.35,
+                          filter: 'blur(1px)',
+                          cursor: 'not-allowed'
+                        }}
+                        title="Warranty period (30 days) has expired for this booking."
+                      >
+                        <ShieldCheck size={14} /> Claim Warranty
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {bookings.filter(b => b.status === 'COMPLETED' || b.status === 'PAID').length === 0 && (
               <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>No completed service records found.</p>
@@ -1385,41 +1688,192 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
         </div>
       )}
 
-      {/* --- INVOICE MODAL --- */}
+      {/* --- INVOICE & WARRANTY RECEIPT MODAL --- */}
       {showInvoiceModal && invoiceBooking && (
-        <div className="toast-popup-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(5, 10, 20, 0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div className="glass-card" style={{ maxWidth: '420px', width: '100%', background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.8rem', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1.1rem', color: 'var(--text-heading)', margin: 0 }}>SERVICE INVOICE</h3>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>#INV-2026-{invoiceBooking.id}</span>
+        <div className="toast-popup-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(5, 10, 20, 0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={(e) => e.target.className.includes('toast-popup-overlay') && setShowInvoiceModal(false)}>
+          <div className="glass-card" style={{ maxWidth: '480px', width: '100%', background: 'var(--bg-secondary)', padding: '1.8rem', borderRadius: '18px', border: '1px solid var(--border-color)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <ShieldCheck size={26} color="#10b981" />
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)', margin: 0, fontWeight: 700 }}>OFFICIAL RECEIPT</h3>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>SkillVerse Verified Service Certificate</span>
+                </div>
+              </div>
+              <span style={{ fontSize: '0.8rem', color: 'var(--accent-gold)', fontWeight: 600, background: 'rgba(245,158,11,0.1)', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
+                #INV-2026-{invoiceBooking.id}
+              </span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.85rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', fontSize: '0.88rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Service:</span>
+                <span style={{ color: 'var(--text-secondary)' }}>Service Name:</span>
                 <strong style={{ color: 'var(--text-heading)' }}>{invoiceBooking.serviceType}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Technician:</span>
-                <strong style={{ color: 'var(--text-heading)' }}>{invoiceBooking.worker?.name}</strong>
+                <span style={{ color: 'var(--text-secondary)' }}>Worked Date:</span>
+                <strong style={{ color: 'var(--text-heading)' }}>
+                  {invoiceBooking.completedAt 
+                    ? new Date(invoiceBooking.completedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : (invoiceBooking.createdAt ? new Date(invoiceBooking.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently')}
+                </strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Customer:</span>
+                <span style={{ color: 'var(--text-secondary)' }}>Certified Technician:</span>
+                <strong style={{ color: 'var(--text-heading)' }}>{invoiceBooking.worker?.name || 'Assigned Technician'} {invoiceBooking.worker?.phone ? `(${invoiceBooking.worker.phone})` : ''}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Client Name:</span>
                 <strong style={{ color: 'var(--text-heading)' }}>{currentUser?.name || 'Customer'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Payment Method:</span>
-                <strong style={{ color: 'var(--text-heading)' }}>{invoiceBooking.paymentMethod || 'bKash'}</strong>
+                <span style={{ color: 'var(--text-secondary)' }}>Service Location:</span>
+                <strong style={{ color: 'var(--text-heading)', maxWidth: '240px', textAlign: 'right', fontSize: '0.8rem' }}>{invoiceBooking.address || currentUser?.address || 'Dhaka, Bangladesh'}</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '0.6rem', marginTop: '0.4rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Final Amount:</span>
-                <strong style={{ fontSize: '1.1rem', color: 'var(--primary)' }}>৳{invoiceBooking.agreedCost || invoiceBooking.estimatedCost}</strong>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Payment Method:</span>
+                <strong style={{ color: 'var(--text-heading)' }}>{invoiceBooking.paymentMethod || 'bKash Wallet'} {invoiceBooking.transactionId ? `(Txn: ${invoiceBooking.transactionId})` : ''}</strong>
+              </div>
+              
+              {/* Financial summary */}
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.8rem', borderRadius: '10px', marginTop: '0.3rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', fontSize: '0.82rem' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Base Advance Paid:</span>
+                  <span>৳{invoiceBooking.advancePaidAmount || 300} (+৳{((invoiceBooking.advancePaidAmount || 300) * 0.05).toFixed(1)} VAT)</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '0.4rem', marginTop: '0.3rem' }}>
+                  <span style={{ fontWeight: 'bold', color: 'var(--text-heading)' }}>Total Settled Amount:</span>
+                  <strong style={{ fontSize: '1.15rem', color: 'var(--primary)' }}>৳{invoiceBooking.agreedCost || invoiceBooking.estimatedCost}</strong>
+                </div>
+              </div>
+
+              {/* 30-Day Service Guarantee terms */}
+              <div style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '10px', padding: '0.8rem', marginTop: '0.3rem', display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                <ShieldCheck size={24} color="#10b981" style={{ flexShrink: 0 }} />
+                <div style={{ fontSize: '0.78rem' }}>
+                  <strong style={{ color: '#10b981', display: 'block' }}>30-Day FixConnect Service Guarantee</strong>
+                  <span style={{ color: 'var(--text-secondary)' }}>
+                    Free re-inspection and repair warranty eligible until {new Date(new Date(invoiceBooking.completedAt || invoiceBooking.createdAt).getTime() + 30*24*60*60*1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}.
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-              <button className="btn btn-secondary" onClick={() => setShowInvoiceModal(false)}>Close Invoice</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', gap: '0.8rem' }}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowInvoiceModal(false)}
+                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+              >
+                Close
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => handleDownloadReceipt(invoiceBooking)}
+                style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}
+              >
+                <Download size={15} /> Download Receipt
+              </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- CLAIM 30-DAY WARRANTY MODAL --- */}
+      {showWarrantyModal && warrantyBooking && (
+        <div className="toast-popup-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(5, 10, 20, 0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={(e) => e.target.className.includes('toast-popup-overlay') && setShowWarrantyModal(false)}>
+          <div className="glass-card" style={{ maxWidth: '480px', width: '100%', background: 'var(--bg-secondary)', padding: '1.8rem', borderRadius: '18px', border: '1px solid var(--border-color)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <ShieldCheck size={24} color="#10b981" />
+                <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)', margin: 0 }}>Claim 30-Day Warranty</h3>
+              </div>
+              <button onClick={() => setShowWarrantyModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <XCircle size={22} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: 1.4 }}>
+              If your <strong>{warrantyBooking.serviceType}</strong> shows the same problem again within 30 days of completion, you can claim 100% free warranty repair.
+            </p>
+
+            {/* Terms breakdown */}
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.9rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.2rem', fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Original Service:</span>
+                <strong style={{ color: 'var(--text-heading)' }}>{warrantyBooking.serviceType}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Assigned Technician:</span>
+                <strong style={{ color: 'var(--text-heading)' }}>{warrantyBooking.worker?.name || 'Technician'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Service Cost:</span>
+                <strong style={{ color: '#10b981' }}>৳0.00 (100% FREE Warranty)</strong>
+              </div>
+              <div style={{ marginTop: '0.4rem', padding: '0.5rem', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '6px', borderLeft: '3px solid #f59e0b', fontSize: '0.78rem', color: '#f59e0b' }}>
+                ⚠️ <strong>Worker Restriction:</strong> {warrantyBooking.worker?.name || 'The technician'} will be blocked from accepting any new jobs until this free warranty claim is completed and confirmed by you.
+              </div>
+            </div>
+
+            <form onSubmit={handleClaimWarranty}>
+              <div style={{ marginBottom: '1.2rem' }}>
+                <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Describe Recurring Issue / Problem</label>
+                <textarea
+                  rows={3}
+                  required
+                  className="form-input"
+                  style={{ width: '100%', padding: '0.7rem' }}
+                  value={warrantyProblemInput}
+                  onChange={(e) => setWarrantyProblemInput(e.target.value)}
+                  placeholder="e.g. The AC started leaking water again / pipe joint still has a slow drip."
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowWarrantyModal(false)}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isClaimingWarranty}
+                  className="btn btn-primary"
+                  style={{ background: 'linear-gradient(135deg, #10b981, #059669)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <ShieldCheck size={16} /> {isClaimingWarranty ? 'Submitting Claim...' : 'Confirm & Claim Warranty'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- WARRANTY COMPLETED SUCCESS MODAL (NO BROWSER ALERT) --- */}
+      {showWarrantyDoneModal && (
+        <div className="toast-popup-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(5, 10, 20, 0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="glass-card" style={{ maxWidth: '440px', width: '100%', background: 'var(--bg-secondary)', padding: '2rem', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', textAlign: 'center' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', border: '2px solid #10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.2rem auto' }}>
+              <CheckCircle2 size={36} color="#10b981" />
+            </div>
+            
+            <h3 style={{ fontSize: '1.3rem', color: 'var(--text-heading)', margin: '0 0 0.5rem 0', fontWeight: 700 }}>
+              Warranty Service Completed!
+            </h3>
+            
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 1.5rem 0' }}>
+              Your free warranty service for <strong>{warrantyDoneBooking?.serviceType || 'the repair'}</strong> has been marked as <strong>Done</strong>. The technician's restrictions have been lifted.
+            </p>
+
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '0.7rem', fontSize: '0.95rem', fontWeight: 700, background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: '10px', cursor: 'pointer' }}
+              onClick={() => {
+                setShowWarrantyDoneModal(false);
+                setWarrantyDoneBooking(null);
+              }}
+            >
+              Okay
+            </button>
           </div>
         </div>
       )}
