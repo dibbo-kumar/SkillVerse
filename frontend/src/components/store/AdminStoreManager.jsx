@@ -14,6 +14,13 @@ export default function AdminStoreManager({ onShowToast }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Scroll to top when switching tabs in AdminStoreManager
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [adminTab]);
+
   // Modals & Form States
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);

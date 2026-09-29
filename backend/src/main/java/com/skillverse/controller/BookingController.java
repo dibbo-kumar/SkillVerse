@@ -173,8 +173,16 @@ public class BookingController {
         // Enforce: Worker must be verified by admin and not busy on another active job
         User worker = booking.getWorker();
         if ("WORKER".equalsIgnoreCase(acceptedBy) && worker != null) {
-            if (!Boolean.TRUE.equals(worker.isVerified()) || !"ACTIVE".equalsIgnoreCase(worker.getStatus())) {
+            boolean isVerifiedWorker = Boolean.TRUE.equals(worker.isVerified()) 
+                    && !"SUSPENDED".equalsIgnoreCase(worker.getStatus()) 
+                    && !"REJECTED".equalsIgnoreCase(worker.getStatus()) 
+                    && !"BANNED".equalsIgnoreCase(worker.getStatus());
+            if (!isVerifiedWorker) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Worker account is unverified or under review. Admin verification is required before accepting bookings."));
+            }
+            if (!"ACTIVE".equalsIgnoreCase(worker.getStatus())) {
+                worker.setStatus("ACTIVE");
+                userRepository.save(worker);
             }
             if (isWorkerBusy(worker.getId(), booking.getId())) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Worker already has an active job in progress. Complete or finalize the current job before accepting another."));
@@ -232,8 +240,18 @@ public class BookingController {
         return bookingRepository.findById(id).map(booking -> {
             if ("WORKER".equalsIgnoreCase(offeredBy)) {
                 User worker = booking.getWorker();
-                if (worker != null && (!Boolean.TRUE.equals(worker.isVerified()) || !"ACTIVE".equalsIgnoreCase(worker.getStatus()))) {
-                    return ResponseEntity.badRequest().body(Map.of("error", "Worker is unverified. Admin verification required to submit counter-offers."));
+                if (worker != null) {
+                    boolean isVerifiedWorker = Boolean.TRUE.equals(worker.isVerified()) 
+                            && !"SUSPENDED".equalsIgnoreCase(worker.getStatus()) 
+                            && !"REJECTED".equalsIgnoreCase(worker.getStatus()) 
+                            && !"BANNED".equalsIgnoreCase(worker.getStatus());
+                    if (!isVerifiedWorker) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "Worker is unverified. Admin verification required to submit counter-offers."));
+                    }
+                    if (!"ACTIVE".equalsIgnoreCase(worker.getStatus())) {
+                        worker.setStatus("ACTIVE");
+                        userRepository.save(worker);
+                    }
                 }
                 booking.setWorkerCounterPrice(price);
                 booking.setLastOfferedBy("WORKER");

@@ -237,9 +237,21 @@ public class VerificationRequestController {
 
     @GetMapping("/worker/{userId}")
     public ResponseEntity<?> getWorkerVerification(@PathVariable Long userId) {
-        return verificationRepository.findTopByUserIdOrderBySubmittedAtDesc(userId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.noContent().build());
+        Optional<VerificationRequest> opt = verificationRepository.findTopByUserIdOrderBySubmittedAtDesc(userId);
+        if (opt.isPresent()) {
+            VerificationRequest req = opt.get();
+            if ("APPROVED".equalsIgnoreCase(req.getStatus())) {
+                userRepository.findById(userId).ifPresent(u -> {
+                    if (!u.isVerified() || !"ACTIVE".equalsIgnoreCase(u.getStatus())) {
+                        u.setVerified(true);
+                        u.setStatus("ACTIVE");
+                        userRepository.save(u);
+                    }
+                });
+            }
+            return ResponseEntity.ok(req);
+        }
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/user/{userId}")

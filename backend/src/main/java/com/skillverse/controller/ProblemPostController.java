@@ -98,8 +98,16 @@ public class ProblemPostController {
             return ResponseEntity.badRequest().body(Map.of("error", "Worker not found"));
         }
 
-        if (!Boolean.TRUE.equals(worker.isVerified()) || !"ACTIVE".equalsIgnoreCase(worker.getStatus())) {
+        boolean isVerifiedWorker = Boolean.TRUE.equals(worker.isVerified()) 
+                && !"SUSPENDED".equalsIgnoreCase(worker.getStatus()) 
+                && !"REJECTED".equalsIgnoreCase(worker.getStatus()) 
+                && !"BANNED".equalsIgnoreCase(worker.getStatus());
+        if (!isVerifiedWorker) {
             return ResponseEntity.badRequest().body(Map.of("error", "Worker is unverified or under review. Admin verification is required to submit quotes on problem posts."));
+        }
+        if (!"ACTIVE".equalsIgnoreCase(worker.getStatus())) {
+            worker.setStatus("ACTIVE");
+            userRepository.save(worker);
         }
 
         // Check if worker already has an active job in progress
@@ -152,8 +160,16 @@ public class ProblemPostController {
         ProblemPost post = acceptedOffer.getProblemPost();
         User worker = acceptedOffer.getWorker();
 
-        if (worker == null || !Boolean.TRUE.equals(worker.isVerified()) || !"ACTIVE".equalsIgnoreCase(worker.getStatus())) {
+        boolean isVerifiedWorker = worker != null && Boolean.TRUE.equals(worker.isVerified()) 
+                && !"SUSPENDED".equalsIgnoreCase(worker.getStatus()) 
+                && !"REJECTED".equalsIgnoreCase(worker.getStatus()) 
+                && !"BANNED".equalsIgnoreCase(worker.getStatus());
+        if (!isVerifiedWorker) {
             return ResponseEntity.badRequest().body(Map.of("error", "Cannot assign problem to an unverified technician."));
+        }
+        if (worker != null && !"ACTIVE".equalsIgnoreCase(worker.getStatus())) {
+            worker.setStatus("ACTIVE");
+            userRepository.save(worker);
         }
 
         // Check if technician currently has an active job in progress

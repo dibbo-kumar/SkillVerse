@@ -32,6 +32,13 @@ export default function AdminAcademyManager({ onShowToast }) {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Scroll to top when switching tabs in AdminAcademyManager
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [activeTab]);
+
   // Course Editing / Creating state
   const [editingCourse, setEditingCourse] = useState(null);
   const [showCourseModal, setShowCourseModal] = useState(false);

@@ -19,11 +19,19 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
     return localStorage.getItem('skillverse_admin_active_tab') || 'overview';
   });
   const [loading, setLoading] = useState(true);
+  const mainContentRef = React.useRef(null);
 
-  // Sync activeTab to localStorage
+  // Sync activeTab to localStorage and scroll to top
   useEffect(() => {
     if (activeTab) {
       localStorage.setItem('skillverse_admin_active_tab', activeTab);
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      mainContentRef.current.scrollTop = 0;
     }
   }, [activeTab]);
 
@@ -402,7 +410,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
       </aside>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <main style={{ flex: 1, padding: '2rem', overflowY: 'auto', maxHeight: 'calc(100vh - 72px)' }}>
+      <main ref={mainContentRef} style={{ flex: 1, padding: '2rem', overflowY: 'auto', maxHeight: 'calc(100vh - 72px)' }}>
         
         {/* ========================================================================= */}
         {/* 1. OVERVIEW DASHBOARD */}

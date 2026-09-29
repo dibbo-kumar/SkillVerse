@@ -41,6 +41,13 @@ export default function CustomerSettings({
 }) {
   const [activeTab, setActiveTab] = useState('personal'); // personal, location, theme, security, notifications, language, privacy, help
 
+  // Scroll to top when switching settings tabs
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [activeTab]);
+
   const isWorker = user?.role === 'WORKER';
 
   // Personal Info Form

@@ -257,10 +257,10 @@ public class AdminController {
             if (user != null) {
                 if ("APPROVED".equals(actionDec)) {
                     user.setVerified(true);
-                    user.setNidNumber(req.getNidNumber());
-                    if ("UNVERIFIED".equalsIgnoreCase(user.getStatus()) || user.getStatus() == null) {
-                        user.setStatus("ACTIVE");
+                    if (req.getNidNumber() != null) {
+                        user.setNidNumber(req.getNidNumber());
                     }
+                    user.setStatus("ACTIVE");
                 } else if ("SUSPENDED".equals(actionDec)) {
                     user.setVerified(false);
                     user.setStatus("SUSPENDED");

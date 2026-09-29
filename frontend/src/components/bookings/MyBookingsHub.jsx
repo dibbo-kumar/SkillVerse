@@ -2,18 +2,25 @@ import React, { useState, useEffect } from 'react';
 import {
   Calendar, Clock, MapPin, CheckCircle2, ShieldCheck, AlertCircle,
   TrendingUp, Award, User, Phone, Wrench, Search, Filter, ArrowRight,
-  Sparkles, DollarSign, FileText, ChevronRight, Download, Heart, Star,
+  Sparkles, DollarSign, FileText, ChevronRight, Download, Heart, Bookmark, BookmarkCheck, Star,
   XCircle, PlayCircle, Lock, RefreshCw, KeyRound, Smartphone, CreditCard, Eye, RotateCcw
 } from 'lucide-react';
 import BookingDetailsModal from './BookingDetailsModal';
 
 const API_BASE = "http://localhost:8081/api";
 
-export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onShowToast, onNavigateToWorkerProfile }) {
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'bookings', 'history', 'saved-technicians'
+export default function MyBookingsHub({ currentUser, rewards, initialTab = 'overview', workers = [], savedWorkerIds = [], onToggleSaveWorker, onAddPoints, onShowToast, onNavigateToWorkerProfile }) {
+  const [activeTab, setActiveTab] = useState(initialTab || 'overview'); // 'overview', 'bookings', 'history', 'saved-technicians'
   const [bookings, setBookings] = useState([]);
   const [problemPosts, setProblemPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Scroll to top when switching tabs in MyBookingsHub
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [activeTab]);
 
   // Status Filter for 'bookings' tab (Removed 'ACTIVE' per user instruction)
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -57,7 +64,26 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
   const [invoiceBooking, setInvoiceBooking] = useState(null);
 
   // Saved Technicians state
-  const [savedWorkers, setSavedWorkers] = useState([]);
+  const [fetchedWorkers, setFetchedWorkers] = useState([]);
+
+  useEffect(() => {
+    if (!workers || workers.length === 0) {
+      fetch(`${API_BASE}/workers`)
+        .then(res => res.json())
+        .then(data => setFetchedWorkers(data || []))
+        .catch(() => {});
+    }
+  }, [workers]);
+
+  const allAvailableWorkers = (workers && workers.length > 0) ? workers : fetchedWorkers;
+  const numericSavedIds = (savedWorkerIds || []).map(Number);
+  const displayedSavedWorkers = allAvailableWorkers.filter(w => numericSavedIds.includes(Number(w.id)));
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   useEffect(() => {
     fetchCustomerData();
@@ -83,16 +109,6 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
       if (resProblems.ok) {
         const dataP = await resProblems.json();
         setProblemPosts(dataP);
-      }
-
-      // 3. Fetch Saved Technicians from localStorage
-      const savedIds = JSON.parse(localStorage.getItem('skillverse_saved_technicians') || '[]');
-      if (savedIds.length > 0) {
-        const resW = await fetch(`${API_BASE}/workers`);
-        if (resW.ok) {
-          const allW = await resW.json();
-          setSavedWorkers(allW.filter(w => savedIds.includes(w.user?.id || w.id)));
-        }
       }
     } catch (err) {
       console.error("Failed to load customer bookings data:", err);
@@ -123,6 +139,23 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
   const handleOpenDetails = (b) => {
     setDetailsBooking(b);
     setShowDetailsModal(true);
+  };
+
+  const handleUnsaveWorker = (workerId) => {
+    const numericId = Number(workerId);
+    if (onToggleSaveWorker) {
+      onToggleSaveWorker(numericId);
+    }
+    const userKey = currentUser ? `skillverse_saved_workers_${currentUser.id || currentUser.email}` : 'skillverse_saved_workers_guest';
+    try {
+      const uSaved = JSON.parse(localStorage.getItem(userKey) || '[]');
+      const updatedUserSaved = (uSaved || []).map(Number).filter(id => id !== numericId);
+      localStorage.setItem(userKey, JSON.stringify(updatedUserSaved));
+    } catch (e) {}
+
+    if (onShowToast) {
+      onShowToast("Technician Removed", "Technician removed from your saved list.", "info");
+    }
   };
 
   const handleAcceptPrice = async (bId) => {
@@ -956,10 +989,13 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
       {/* --- SAVED TECHNICIANS TAB --- */}
       {activeTab === 'saved-technicians' && (
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)' }}>Saved Technicians</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <Bookmark size={22} color="var(--primary)" fill="var(--primary)" />
+            <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)', margin: 0 }}>Saved Technicians ({displayedSavedWorkers.length})</h3>
+          </div>
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-            {savedWorkers.map((w) => (
+            {displayedSavedWorkers.map((w) => (
               <div key={w.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                   <img
@@ -969,20 +1005,30 @@ export default function MyBookingsHub({ currentUser, rewards, onAddPoints, onSho
                   />
                   <div>
                     <strong style={{ fontSize: '0.9rem', color: 'var(--text-heading)', display: 'block' }}>{w.user?.name}</strong>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>⭐ {w.user?.rating || 4.9} • {w.specialization}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>⭐ {w.user?.rating || 4.9} • {w.skills || w.specialization || 'Technical Service'}</span>
                   </div>
                 </div>
 
-                <button
-                  className="btn btn-primary"
-                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                  onClick={() => onNavigateToWorkerProfile && onNavigateToWorkerProfile(w.user?.id || w.id)}
-                >
-                  Book
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '0.4rem 0.65rem', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)' }}
+                    title="Unsave Technician"
+                    onClick={() => handleUnsaveWorker(w.id)}
+                  >
+                    <BookmarkCheck size={14} color="var(--primary)" fill="var(--primary)" /> Unsave
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                    onClick={() => onNavigateToWorkerProfile && onNavigateToWorkerProfile(w.id)}
+                  >
+                    Book Service
+                  </button>
+                </div>
               </div>
             ))}
-            {savedWorkers.length === 0 && (
+            {displayedSavedWorkers.length === 0 && (
               <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem', gridColumn: 'span 2' }}>No saved technicians yet.</p>
             )}
           </div>

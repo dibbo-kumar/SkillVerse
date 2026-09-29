@@ -37,6 +37,13 @@ export default function AcademyCoursesHub({ currentUser, rewards, onUsePoints, o
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('newest'); // newest, popular, rating, free, paid, beginner, intermediate, advanced
 
+  // Scroll to top when switching tabs in AcademyCoursesHub
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [activeTab]);
+
   // Detail Modal / Studio state
   const [viewingCourse, setViewingCourse] = useState(null); // Course object
   const [courseLessons, setCourseLessons] = useState([]);

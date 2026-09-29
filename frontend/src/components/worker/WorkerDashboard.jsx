@@ -21,6 +21,13 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
   const [walletTransactions, setWalletTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Scroll to top when switching subtabs in WorkerDashboard
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [activeSubTab]);
+
   // Selected booking for Details Modal
   const [detailsBooking, setDetailsBooking] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);

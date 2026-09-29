@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   Calendar,
@@ -71,6 +71,13 @@ export default function CustomerProfileHub({
   onThemeChange
 }) {
   const [subTab, setSubTab] = useState(initialSubTab);
+
+  // Scroll to top when switching tabs in CustomerProfileHub
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [subTab]);
 
   // Modals state
   const [activeInvoice, setActiveInvoice] = useState(null);

@@ -24,6 +24,13 @@ function ToolStoreContent({ currentUser, rewards, onUsePoints, onShowToast, cont
   const [activeTab, setActiveTab] = useState('browse'); // 'browse', 'cart', 'orders', 'my-tools', 'wishlist'
   const [orderSubTab, setOrderSubTab] = useState('active'); // 'active', 'delivered', 'cancelled'
 
+  // Scroll to top when switching tabs in Tool Store
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [activeTab, orderSubTab]);
+
   // Cart & Wishlist State
   const [cart, setCart] = useState(() => {
     try {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Star, 
   Sparkles, 
@@ -19,6 +19,13 @@ export default function CustomerReviews({
   onOpenReviewModal
 }) {
   const [activeSubTab, setActiveSubTab] = useState('all'); // all, pending
+
+  // Scroll to top when switching review tabs
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [activeSubTab]);
 
   // Unreviewed bookings
   const unreviewedBookings = completedBookings.filter(b => 

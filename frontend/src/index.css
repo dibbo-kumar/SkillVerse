@@ -2925,23 +2925,28 @@ a {
   text-decoration: underline;
 }
 
-/* Heart button in Find Services technician cards */
+/* Bookmark button in Find Services technician cards */
+.technician-card-bookmark-btn,
 .technician-card-heart-btn {
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid var(--border-color);
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: var(--transition);
+  color: var(--text-primary);
 }
 
+.technician-card-bookmark-btn:hover,
 .technician-card-heart-btn:hover {
-  background: rgba(244, 63, 94, 0.2);
-  border-color: var(--accent-rose);
+  background: rgba(16, 185, 129, 0.18);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: scale(1.08);
 }
 
 /* Custom Floating Toast / Popup Dialog */

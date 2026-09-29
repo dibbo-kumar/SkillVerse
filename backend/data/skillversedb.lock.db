@@ -1,6 +1,6 @@
 #FileLock
-#Tue Sep 29 02:48:47 BDT 2026
-hostName=localhost
-id=1a0e9c6f68cd0b1399d20d0985865d894363e2ed8e4
+#Tue Sep 29 19:21:15 BDT 2026
+hostName=DIBRO
+id=1a0ed5396d132a8177b20589d6c3706a1d64926c7b3
 method=file
-server=localhost\:53511
+server=192.168.0.230\:3612

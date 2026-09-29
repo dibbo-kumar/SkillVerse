@@ -77,6 +77,24 @@ public class DbInitializer implements CommandLineRunner {
                 if (storeCategoryRepository.count() == 0) {
                         seedToolStoreData();
                 }
+
+                // Self-heal any workers who were verified or have an APPROVED verification request
+                try {
+                        List<User> allUsers = userRepository.findAll();
+                        for (User u : allUsers) {
+                                if ("WORKER".equalsIgnoreCase(u.getRole())) {
+                                        boolean hasApprovedReq = verificationRequestRepository.findByUserIdOrderBySubmittedAtDesc(u.getId())
+                                                        .stream().anyMatch(r -> "APPROVED".equalsIgnoreCase(r.getStatus()));
+                                        if (hasApprovedReq || u.isVerified()) {
+                                                if (!"SUSPENDED".equalsIgnoreCase(u.getStatus()) && !"REJECTED".equalsIgnoreCase(u.getStatus())) {
+                                                        u.setVerified(true);
+                                                        u.setStatus("ACTIVE");
+                                                        userRepository.save(u);
+                                                }
+                                        }
+                                }
+                        }
+                } catch (Exception ignored) {}
         }
 
         private void seedVerificationData() {

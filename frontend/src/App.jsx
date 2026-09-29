@@ -28,6 +28,8 @@ import {
   Trash2,
   TrendingUp,
   Heart,
+  Bookmark,
+  BookmarkCheck,
   Navigation,
   XCircle,
   Camera,
@@ -619,8 +621,18 @@ function App() {
 
   const activeTab = getTabFromPath(location.pathname);
 
+  // Global scroll to top on every route and tab change for all users
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [location.pathname, location.search, activeTab]);
+
   const setActiveTab = (tab) => {
     const targetPath = getPathFromTab(tab);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
     if (location.pathname !== targetPath) {
       navigate(targetPath);
     }
@@ -642,6 +654,7 @@ function App() {
 
   const [notifications, setNotifications] = useState([]);
   const [savedWorkerIds, setSavedWorkerIds] = useState([]);
+  const [bookingsInitialTab, setBookingsInitialTab] = useState('overview');
   const [properties, setProperties] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [serviceHistory, setServiceHistory] = useState([]);
@@ -682,7 +695,7 @@ function App() {
     if (savedW) {
       try { setSavedWorkerIds(JSON.parse(savedW)); } catch (e) { setSavedWorkerIds([]); }
     } else {
-      setSavedWorkerIds(isDemoAnis ? [1, 2] : []);
+      setSavedWorkerIds([]);
     }
 
     // Properties
@@ -926,14 +939,102 @@ function App() {
 
   const handleNotificationClick = async (n) => {
     setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, read: true } : item));
-    try {
-      await fetch(`${API_BASE}/notifications/${n.id}/read`, { method: 'PUT' });
-    } catch (e) {}
-    if (n.title?.includes('Offer') || n.title?.includes('Post')) {
-      setShowPostedProblemsModal(true);
-    } else {
-      setActiveTab('my-bookings');
+    if (n.id && typeof n.id === 'number') {
+      try {
+        await fetch(`${API_BASE}/notifications/${n.id}/read`, { method: 'PUT' });
+      } catch (e) {}
     }
+
+    const title = (n.title || '').toLowerCase();
+    const msg = (n.message || '').toLowerCase();
+    const type = (n.type || '').toUpperCase();
+
+    // 1. Worker Role: Always route to Worker Dashboard
+    if (currentUser?.role === 'WORKER') {
+      setShowPostedProblemsModal(false);
+      setShowPostProblemModal(false);
+      setActiveTab('worker');
+      return;
+    }
+
+    // 2. Admin Role: Always route to Admin Dashboard
+    if (currentUser?.role === 'ADMIN') {
+      setShowPostedProblemsModal(false);
+      setShowPostProblemModal(false);
+      setActiveTab('admin');
+      return;
+    }
+
+    // 3. Customer Role: Smart routing based on notification type and topic
+    // A. Explicit Problem Post / Custom Problem Quotes
+    const isProblemPostNotification =
+      type === 'PROBLEM_POST' ||
+      type === 'PROBLEM_OFFER' ||
+      type === 'PROBLEM_POST_OFFER' ||
+      (title.includes('problem') && (title.includes('quote') || title.includes('offer') || title.includes('post'))) ||
+      (msg.includes('problem post') && !title.includes('counter-offer')) ||
+      (title.includes('worker price offer') && msg.includes('problem'));
+
+    if (isProblemPostNotification) {
+      setShowPostedProblemsModal(true);
+      return;
+    }
+
+    // B. Tool Store & Orders
+    const isStoreNotification =
+      type.includes('STORE') ||
+      type.includes('ORDER') ||
+      type.includes('PRODUCT') ||
+      type.includes('TOOL') ||
+      title.includes('store') ||
+      title.includes('order') ||
+      title.includes('tool rental') ||
+      title.includes('product');
+
+    if (isStoreNotification) {
+      setShowPostedProblemsModal(false);
+      setShowPostProblemModal(false);
+      setActiveTab('marketplace');
+      return;
+    }
+
+    // C. Academy / Courses
+    const isAcademyNotification =
+      type.includes('COURSE') ||
+      type.includes('ACADEMY') ||
+      type.includes('ENROLLMENT') ||
+      type.includes('CERTIFICATE') ||
+      title.includes('course') ||
+      title.includes('academy') ||
+      title.includes('lesson') ||
+      title.includes('certificate');
+
+    if (isAcademyNotification) {
+      setShowPostedProblemsModal(false);
+      setShowPostProblemModal(false);
+      setActiveTab('courses');
+      return;
+    }
+
+    // D. Profile & Settings
+    const isProfileNotification =
+      type.includes('REWARD') ||
+      type.includes('PROFILE') ||
+      title.includes('points earned') ||
+      title.includes('tier upgrade') ||
+      title.includes('profile updated');
+
+    if (isProfileNotification) {
+      setShowPostedProblemsModal(false);
+      setShowPostProblemModal(false);
+      setActiveTab('profile');
+      return;
+    }
+
+    // E. Bookings (Direct bookings, Counter Offers, Confirmations, En-route, Arrival, In-progress, Payments, Reviews, Refunds)
+    setShowPostedProblemsModal(false);
+    setShowPostProblemModal(false);
+    setActiveTab('my-bookings');
   };
   const [locationMode, setLocationMode] = useState('gps'); // 'gps' or 'manual'
   const [isGpsLoading, setIsGpsLoading] = useState(false);
@@ -1552,12 +1653,22 @@ function App() {
 
   // Customer Management Handlers
   const handleToggleSaveWorker = (workerId) => {
+    const numericId = Number(workerId);
     setSavedWorkerIds(prev => {
-      if (prev.includes(workerId)) {
-        return prev.filter(id => id !== workerId);
+      const prevNumeric = (prev || []).map(Number);
+      let updated;
+      if (prevNumeric.includes(numericId)) {
+        updated = prevNumeric.filter(id => id !== numericId);
       } else {
-        return [...prev, workerId];
+        updated = [...prevNumeric, numericId];
       }
+      try {
+        if (currentUser) {
+          localStorage.setItem(getUserKey('saved_workers', currentUser), JSON.stringify(updated));
+        }
+        localStorage.removeItem('skillverse_saved_technicians');
+      } catch (e) {}
+      return updated;
     });
   };
 
@@ -2820,7 +2931,7 @@ function App() {
                         return true;
                       })
                       .map(w => {
-                        const isSaved = savedWorkerIds.includes(w.id || w.user?.id);
+                        const isSaved = (savedWorkerIds || []).map(Number).includes(Number(w.id));
                         const wLat = w.latitude || w.user?.latitude || 23.8720;
                         const wLon = w.longitude || w.user?.longitude || 90.3810;
                         const distKm = w.distanceKm != null ? w.distanceKm : calculateDistanceKm(customerLocation.lat, customerLocation.lon, wLat, wLon);
@@ -2838,14 +2949,23 @@ function App() {
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <button
-                                  className="technician-card-heart-btn"
-                                  title={isSaved ? "Saved in Profile" : "Save Technician to Profile"}
+                                  className="technician-card-bookmark-btn"
+                                  title={isSaved ? "Saved • Click to unsave" : "Save Technician"}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleToggleSaveWorker(w.id || w.user?.id);
+                                    handleToggleSaveWorker(w.id);
+                                    if (!isSaved) {
+                                      showToast("Technician Saved", `⭐ ${w.user?.name || 'Technician'} added to your Saved Technicians list.`, "success");
+                                    } else {
+                                      showToast("Technician Removed", `Removed ${w.user?.name || 'Technician'} from your Saved Technicians.`, "info");
+                                    }
                                   }}
                                 >
-                                  <Heart size={16} color={isSaved ? "var(--accent-rose)" : "var(--text-muted)"} fill={isSaved ? "var(--accent-rose)" : "transparent"} />
+                                  {isSaved ? (
+                                    <BookmarkCheck size={16} color="var(--primary)" fill="var(--primary)" />
+                                  ) : (
+                                    <Bookmark size={16} color="var(--text-muted)" />
+                                  )}
                                 </button>
                                 <span className="badge badge-verified">Verified Worker</span>
                               </div>
@@ -2948,10 +3068,14 @@ function App() {
         <MyBookingsHub
           currentUser={currentUser}
           rewards={rewards}
+          initialTab={bookingsInitialTab}
+          workers={workers}
+          savedWorkerIds={savedWorkerIds}
+          onToggleSaveWorker={handleToggleSaveWorker}
           onAddPoints={(pts) => setRewards(prev => ({ ...prev, points: (prev.points || 0) + pts }))}
           onShowToast={(title, msg, type) => showToast(title, msg, type)}
           onNavigateToWorkerProfile={(workerId) => {
-            const w = workers.find(item => item.user?.id === workerId || item.id === workerId);
+            const w = workers.find(item => Number(item.id) === Number(workerId) || Number(item.user?.id) === Number(workerId));
             if (w) setViewingWorker(w);
           }}
         />

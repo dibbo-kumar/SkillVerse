@@ -63,6 +63,18 @@ public class AuthController {
         Optional<User> userOpt = userRepository.findByEmail(loginRequest.getEmail());
         if (userOpt.isPresent()) {
             User user = userOpt.get();
+            if ("WORKER".equalsIgnoreCase(user.getRole())) {
+                verificationRequestRepository.findTopByUserIdOrderBySubmittedAtDesc(user.getId())
+                    .ifPresent(req -> {
+                        if ("APPROVED".equalsIgnoreCase(req.getStatus())) {
+                            if (!user.isVerified() || !"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+                                user.setVerified(true);
+                                user.setStatus("ACTIVE");
+                                userRepository.save(user);
+                            }
+                        }
+                    });
+            }
             return ResponseEntity.ok(user);
         }
         return ResponseEntity.status(401).body("Error: Invalid email or password");
@@ -71,7 +83,21 @@ public class AuthController {
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
         return userRepository.findById(id)
-                .map(ResponseEntity::ok)
+                .map(user -> {
+                    if ("WORKER".equalsIgnoreCase(user.getRole())) {
+                        verificationRequestRepository.findTopByUserIdOrderBySubmittedAtDesc(user.getId())
+                            .ifPresent(req -> {
+                                if ("APPROVED".equalsIgnoreCase(req.getStatus())) {
+                                    if (!user.isVerified() || !"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+                                        user.setVerified(true);
+                                        user.setStatus("ACTIVE");
+                                        userRepository.save(user);
+                                    }
+                                }
+                            });
+                    }
+                    return ResponseEntity.ok(user);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 

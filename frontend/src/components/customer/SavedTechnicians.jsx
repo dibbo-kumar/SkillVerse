@@ -1,6 +1,7 @@
 import React from 'react';
 import { 
-  Heart, 
+  Bookmark,
+  BookmarkCheck,
   ShieldCheck, 
   Star, 
   MapPin, 
@@ -26,7 +27,7 @@ export default function SavedTechnicians({
       <div className="section-header-row">
         <div>
           <h2 className="section-title">
-            <Heart size={24} color="var(--accent-rose)" />
+            <Bookmark size={24} color="var(--primary)" fill="var(--primary)" />
             Saved & Trusted Technicians
           </h2>
           <p className="section-subtitle">
@@ -41,9 +42,9 @@ export default function SavedTechnicians({
 
       {savedWorkers.length === 0 ? (
         <div className="glass-card empty-state-box">
-          <Heart size={48} color="var(--accent-rose)" style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+          <Bookmark size={48} color="var(--primary)" style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
           <h3>No saved technicians yet</h3>
-          <p>When you find skilled technicians you like, tap the heart icon on their card to save them here for instant 1-click rebooking.</p>
+          <p>When you find skilled technicians you like, tap the bookmark icon on their card to save them here for instant 1-click rebooking.</p>
           <button 
             className="btn btn-primary" 
             style={{ marginTop: '1rem' }}
@@ -92,7 +93,7 @@ export default function SavedTechnicians({
                   title="Remove from saved"
                   onClick={() => onToggleSaveWorker(w.id || w.user?.id)}
                 >
-                  <Heart size={18} fill="var(--accent-rose)" color="var(--accent-rose)" />
+                  <BookmarkCheck size={18} fill="var(--primary)" color="var(--primary)" />
                 </button>
               </div>
 
