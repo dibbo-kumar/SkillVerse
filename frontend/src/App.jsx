@@ -2676,20 +2676,20 @@ function App() {
       {isLoggedIn && activeTab === 'customer' && currentUser.role === 'CUSTOMER' && (
         <div>
           {/* Smart AI Diagnostic Assistant Hub */}
-          <div className="glass-card" style={{ margin: '1.5rem 2rem', padding: '1.75rem', borderRadius: '16px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-md)' }}>
+          <div className="glass-card" style={{ margin: '1.5rem 2rem', padding: '1.5rem 1.75rem', borderRadius: '14px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.2rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                <div style={{ width: 42, height: 42, borderRadius: '12px', background: 'var(--primary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Sparkles size={22} color="var(--primary)" />
+                <div style={{ width: 40, height: 40, borderRadius: '10px', background: 'var(--primary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles size={20} color="var(--primary)" />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: '1.25rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-heading)' }}>
+                  <h2 style={{ fontSize: '1.2rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-heading)' }}>
                     Smart AI Diagnostic Assistant
-                    <span style={{ fontSize: '0.72rem', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--accent-emerald)', padding: '0.2rem 0.6rem', borderRadius: '20px', fontWeight: 'bold' }}>
+                    <span className="badge badge-verified" style={{ fontSize: '0.72rem', padding: '0.15rem 0.55rem', borderRadius: '20px' }}>
                       🟢 Online 24/7
                     </span>
                   </h2>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', margin: '0.15rem 0 0 0' }}>
                     Describe any household breakdown or service question for instant AI troubleshooting, safety advice, and cost guidance.
                   </p>
                 </div>
@@ -2706,8 +2706,8 @@ function App() {
             </div>
 
             {/* Quick Diagnostic Suggestion Chips */}
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', alignSelf: 'center', marginRight: '0.2rem' }}>
+            <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', alignSelf: 'center', marginRight: '0.2rem' }}>
                 Quick Diagnostics:
               </span>
               {[
@@ -2738,15 +2738,15 @@ function App() {
                     }
                   }}
                   style={{
-                    background: 'var(--bg-card-hover)',
+                    background: 'var(--bg-secondary)',
                     border: '1px solid var(--border-color)',
-                    color: 'var(--text-primary)',
+                    color: 'var(--text-heading)',
                     borderRadius: '20px',
-                    padding: '0.35rem 0.75rem',
-                    fontSize: '0.78rem',
+                    padding: '0.3rem 0.7rem',
+                    fontSize: '0.76rem',
                     cursor: 'pointer',
-                    fontWeight: 600,
-                    transition: 'all 0.2s ease'
+                    fontWeight: 500,
+                    transition: 'all 0.15s ease'
                   }}
                 >
                   {chip.label}
@@ -2777,7 +2777,7 @@ function App() {
                     color: m.sender === 'user' ? '#ffffff' : 'var(--text-primary)',
                     border: m.sender === 'user' ? 'none' : '1px solid var(--border-color)',
                     padding: '0.75rem 1rem',
-                    borderRadius: m.sender === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
+                    borderRadius: m.sender === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
                     maxWidth: '85%',
                     fontSize: '0.88rem',
                     lineHeight: 1.6,
@@ -2794,36 +2794,36 @@ function App() {
             <div style={{ display: 'flex', gap: '0.6rem' }}>
               <input
                 className="form-input"
-                style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', borderRadius: '10px' }}
+                style={{ padding: '0.65rem 0.95rem', fontSize: '0.88rem', borderRadius: '8px' }}
                 placeholder="Ask Smart AI Assistant anything about your repair, maintenance, or pricing..."
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
               />
-              <button className="btn btn-primary" style={{ padding: '0.75rem 1.4rem', borderRadius: '10px', fontWeight: 700 }} onClick={handleSendMessage}>
-                <span>Send</span> <ArrowRight size={16} />
+              <button className="btn btn-primary" style={{ padding: '0.65rem 1.3rem', borderRadius: '8px', fontWeight: 600 }} onClick={handleSendMessage}>
+                <span>Send</span> <ArrowRight size={15} />
               </button>
             </div>
           </div>
 
           {/* Post Your Problem Entry Point */}
           <div style={{ padding: '0 2rem', marginBottom: '1.5rem' }}>
-            <div className="glass-card" style={{ background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(79, 70, 229, 0.08))', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', padding: '1.25rem 1.5rem' }}>
+            <div className="glass-card" style={{ background: 'var(--primary-subtle)', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', padding: '1.25rem 1.5rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.2rem', margin: '0 0 0.3rem 0', color: 'var(--text-heading)', fontWeight: 'bold' }}>Can't find the right technician?</h3>
+                <h3 style={{ fontSize: '1.15rem', margin: '0 0 0.3rem 0', color: 'var(--text-heading)', fontWeight: 'bold' }}>Can't find the right technician?</h3>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>Post your maintenance problem publicly with preferred date & budget. Technicians will respond with custom offers!</p>
               </div>
               <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
                 <button
                   className="btn btn-secondary"
-                  style={{ padding: '0.7rem 1.2rem', fontWeight: 'bold', fontSize: '0.9rem', border: '1px solid var(--primary)', color: 'var(--primary)' }}
+                  style={{ padding: '0.55rem 1.1rem', fontWeight: '600', fontSize: '0.88rem', border: '1px solid var(--primary)', color: 'var(--primary)' }}
                   onClick={() => setShowPostedProblemsModal(true)}
                 >
                   📋 Your Posted Problems
                 </button>
                 <button
                   className="btn btn-primary"
-                  style={{ padding: '0.7rem 1.4rem', fontWeight: 'bold', fontSize: '0.9rem' }}
+                  style={{ padding: '0.55rem 1.2rem', fontWeight: '600', fontSize: '0.88rem' }}
                   onClick={() => setShowPostProblemModal(true)}
                 >
                   📢 Post Your Problem Now
@@ -2897,9 +2897,9 @@ function App() {
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                       >
-                        <option value="All" style={{ background: '#111827' }}>All Skills & Trades ({allUniqueSkills.length})</option>
+                        <option value="All">All Skills & Trades ({allUniqueSkills.length})</option>
                         {allUniqueSkills.map(cat => (
-                          <option key={cat} value={cat} style={{ background: '#111827' }}>
+                          <option key={cat} value={cat}>
                             {cat}
                           </option>
                         ))}
@@ -2917,13 +2917,13 @@ function App() {
                         value={selectedRadius}
                         onChange={(e) => setSelectedRadius(Number(e.target.value))}
                       >
-                        <option value={999} style={{ background: '#111827' }}>All Areas (Any Distance)</option>
-                        <option value={0.5} style={{ background: '#111827' }}>Within 500 Meters</option>
-                        <option value={1} style={{ background: '#111827' }}>Within 1 km</option>
-                        <option value={3} style={{ background: '#111827' }}>Within 3 km</option>
-                        <option value={5} style={{ background: '#111827' }}>Within 5 km</option>
-                        <option value={10} style={{ background: '#111827' }}>Within 10 km</option>
-                        <option value={20} style={{ background: '#111827' }}>Within 20 km</option>
+                        <option value={999}>All Areas (Any Distance)</option>
+                        <option value={0.5}>Within 500 Meters</option>
+                        <option value={1}>Within 1 km</option>
+                        <option value={3}>Within 3 km</option>
+                        <option value={5}>Within 5 km</option>
+                        <option value={10}>Within 10 km</option>
+                        <option value={20}>Within 20 km</option>
                       </select>
                     </div>
 
@@ -2938,12 +2938,12 @@ function App() {
                         value={selectedRatingFilter}
                         onChange={(e) => setSelectedRatingFilter(e.target.value)}
                       >
-                        <option value="all" style={{ background: '#111827' }}>All Ratings (Any Star)</option>
-                        <option value="high-to-low" style={{ background: '#111827' }}>Highest Rated First (5★ → 1★)</option>
-                        <option value="top" style={{ background: '#111827' }}>Top Rated (4.8★ & Above)</option>
-                        <option value="high" style={{ background: '#111827' }}>High Rated (4.5★ & Above)</option>
-                        <option value="average" style={{ background: '#111827' }}>Average Rated (4.0★ & Above)</option>
-                        <option value="low-to-high" style={{ background: '#111827' }}>Lowest Rated First (1★ → 5★)</option>
+                        <option value="all">All Ratings (Any Star)</option>
+                        <option value="high-to-low">Highest Rated First (5★ → 1★)</option>
+                        <option value="top">Top Rated (4.8★ & Above)</option>
+                        <option value="high">High Rated (4.5★ & Above)</option>
+                        <option value="average">Average Rated (4.0★ & Above)</option>
+                        <option value="low-to-high">Lowest Rated First (1★ → 5★)</option>
                       </select>
                     </div>
 
@@ -2958,13 +2958,13 @@ function App() {
                         value={selectedExpYears}
                         onChange={(e) => setSelectedExpYears(Number(e.target.value) || 0)}
                       >
-                        <option value={0} style={{ background: '#111827' }}>Any Experience Level</option>
-                        <option value={1} style={{ background: '#111827' }}>1+ Year Experience</option>
-                        <option value={2} style={{ background: '#111827' }}>2+ Years Experience</option>
-                        <option value={3} style={{ background: '#111827' }}>3+ Years (Proficient)</option>
-                        <option value={5} style={{ background: '#111827' }}>5+ Years (Senior Pro)</option>
-                        <option value={8} style={{ background: '#111827' }}>8+ Years (Master)</option>
-                        <option value={10} style={{ background: '#111827' }}>10+ Years (Veteran)</option>
+                        <option value={0}>Any Experience Level</option>
+                        <option value={1}>1+ Year Experience</option>
+                        <option value={2}>2+ Years Experience</option>
+                        <option value={3}>3+ Years (Proficient)</option>
+                        <option value={5}>5+ Years (Senior Pro)</option>
+                        <option value={8}>8+ Years (Master)</option>
+                        <option value={10}>10+ Years (Veteran)</option>
                       </select>
                     </div>
 

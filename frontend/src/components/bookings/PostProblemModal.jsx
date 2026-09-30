@@ -223,10 +223,10 @@ export default function PostProblemModal({ isOpen, onClose, currentUser, onProbl
                     className="form-input"
                     style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
                   >
-                    <option value="Today" style={{ background: '#111827' }}>Today (Urgent)</option>
-                    <option value="Tomorrow" style={{ background: '#111827' }}>Tomorrow</option>
-                    <option value="In 2 Days" style={{ background: '#111827' }}>In 2 Days</option>
-                    <option value="Weekend" style={{ background: '#111827' }}>This Weekend</option>
+                    <option value="Today">Today (Urgent)</option>
+                    <option value="Tomorrow">Tomorrow</option>
+                    <option value="In 2 Days">In 2 Days</option>
+                    <option value="Weekend">This Weekend</option>
                   </select>
                 </div>
                 <div>
@@ -237,10 +237,10 @@ export default function PostProblemModal({ isOpen, onClose, currentUser, onProbl
                     className="form-input"
                     style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
                   >
-                    <option value="09:00 AM - 12:00 PM" style={{ background: '#111827' }}>Morning (9-12)</option>
-                    <option value="12:00 PM - 03:00 PM" style={{ background: '#111827' }}>Noon (12-3)</option>
-                    <option value="03:00 PM - 06:00 PM" style={{ background: '#111827' }}>Afternoon (3-6)</option>
-                    <option value="06:00 PM - 09:00 PM" style={{ background: '#111827' }}>Evening (6-9)</option>
+                    <option value="09:00 AM - 12:00 PM">Morning (9-12)</option>
+                    <option value="12:00 PM - 03:00 PM">Noon (12-3)</option>
+                    <option value="03:00 PM - 06:00 PM">Afternoon (3-6)</option>
+                    <option value="06:00 PM - 09:00 PM">Evening (6-9)</option>
                   </select>
                 </div>
               </div>

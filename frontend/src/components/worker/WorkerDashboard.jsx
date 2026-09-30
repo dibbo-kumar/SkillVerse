@@ -999,8 +999,8 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
         gap: '0.45rem',
-        background: 'rgba(0,0,0,0.3)',
-        padding: '0.45rem',
+        background: 'var(--bg-card)',
+        padding: '0.4rem',
         borderRadius: '14px',
         border: '1px solid var(--border-color)',
         width: '100%'
@@ -1080,7 +1080,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
               </div>
 
               {/* Progress Stepper Visualizer */}
-              <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.2rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
+              <div style={{ background: 'var(--bg-secondary)', padding: '1.25rem 1rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem', textAlign: 'center', fontSize: '0.75rem' }}>
                   {[
                     { key: 'CONFIRMED', label: '1. Confirmed', icon: CheckCircle2, done: true },
@@ -1088,24 +1088,35 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                     { key: 'ARRIVED', label: '3. Arrived', icon: MapPin, done: ['ARRIVED', 'IN_PROGRESS', 'COMPLETED', 'PAID'].includes(activeJob.status) },
                     { key: 'IN_PROGRESS', label: '4. Work In Progress', icon: Wrench, done: ['IN_PROGRESS', 'COMPLETED', 'PAID'].includes(activeJob.status) },
                     { key: 'COMPLETED', label: '5. Payment Settled', icon: DollarSign, done: ['COMPLETED', 'PAID'].includes(activeJob.status) }
-                  ].map((st, idx) => (
-                    <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem' }}>
-                      <div
-                        style={{
-                          width: 32, height: 32, borderRadius: '50%',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: st.done ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-                          color: st.done ? '#000000' : 'var(--text-muted)',
-                          fontWeight: 'bold'
-                        }}
-                      >
-                        <st.icon size={16} />
+                  ].map((st, idx) => {
+                    const isCurrent = activeJob.status === st.key;
+                    return (
+                      <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
+                        <div
+                          style={{
+                            width: 36, height: 36, borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: st.done ? 'var(--primary)' : 'var(--bg-card)',
+                            color: st.done ? '#ffffff' : 'var(--text-muted)',
+                            border: `2px solid ${st.done ? 'var(--primary)' : 'var(--border-color)'}`,
+                            fontWeight: 'bold',
+                            boxShadow: isCurrent ? '0 0 0 4px var(--primary-subtle)' : 'none',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <st.icon size={17} color={st.done ? '#ffffff' : 'var(--text-muted)'} />
+                        </div>
+                        <span style={{
+                          color: st.done ? 'var(--text-heading)' : 'var(--text-secondary)',
+                          fontWeight: isCurrent ? 700 : st.done ? 600 : 500,
+                          fontSize: '0.76rem',
+                          lineHeight: 1.3
+                        }}>
+                          {st.label}
+                        </span>
                       </div>
-                      <span style={{ color: st.done ? '#ffffff' : 'var(--text-muted)', fontWeight: activeJob.status === st.key ? 'bold' : 'normal' }}>
-                        {st.label}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -2319,12 +2330,12 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                       value={withdrawBankName}
                       onChange={(e) => setWithdrawBankName(e.target.value)}
                     >
-                      <option value="Dutch-Bangla Bank" style={{ background: '#111827' }}>Dutch-Bangla Bank Limited (DBBL)</option>
-                      <option value="BRAC Bank" style={{ background: '#111827' }}>BRAC Bank PLC</option>
-                      <option value="Islami Bank" style={{ background: '#111827' }}>Islami Bank Bangladesh</option>
-                      <option value="City Bank" style={{ background: '#111827' }}>The City Bank Limited</option>
-                      <option value="Eastern Bank" style={{ background: '#111827' }}>Eastern Bank PLC (EBL)</option>
-                      <option value="Sonali Bank" style={{ background: '#111827' }}>Sonali Bank Limited</option>
+                      <option value="Dutch-Bangla Bank">Dutch-Bangla Bank Limited (DBBL)</option>
+                      <option value="BRAC Bank">BRAC Bank PLC</option>
+                      <option value="Islami Bank">Islami Bank Bangladesh</option>
+                      <option value="City Bank">The City Bank Limited</option>
+                      <option value="Eastern Bank">Eastern Bank PLC (EBL)</option>
+                      <option value="Sonali Bank">Sonali Bank Limited</option>
                     </select>
                   </div>
 
@@ -2742,7 +2753,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                           }}
                         >
                           {BANGLADESH_DIVISIONS.map(d => (
-                            <option key={d} value={d} style={{ background: '#111827' }}>{d}</option>
+                            <option key={d} value={d}>{d}</option>
                           ))}
                         </select>
                       </div>
@@ -2766,7 +2777,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                           }}
                         >
                           {(BANGLADESH_DISTRICTS[verifForm.division] || ['Dhaka']).map(dist => (
-                            <option key={dist} value={dist} style={{ background: '#111827' }}>{dist}</option>
+                            <option key={dist} value={dist}>{dist}</option>
                           ))}
                         </select>
                       </div>
@@ -2787,7 +2798,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                           }}
                         >
                           {(BANGLADESH_CITIES[verifForm.district] || ['Uttara', 'Dhanmondi', 'Gulshan', 'Mirpur', 'Sadar']).map(city => (
-                            <option key={city} value={city} style={{ background: '#111827' }}>{city}</option>
+                            <option key={city} value={city}>{city}</option>
                           ))}
                         </select>
                       </div>
@@ -2951,7 +2962,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                           onChange={(e) => setSelectedSkillCategory(e.target.value)}
                         >
                           {AVAILABLE_SKILLS_LIST.map(skill => (
-                            <option key={skill} value={skill} style={{ background: '#111827' }}>{skill}</option>
+                            <option key={skill} value={skill}>{skill}</option>
                           ))}
                         </select>
 
@@ -2962,7 +2973,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                           onChange={(e) => setSelectedSkillYears(parseInt(e.target.value) || 1)}
                         >
                           {[1, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20].map(yr => (
-                            <option key={yr} value={yr} style={{ background: '#111827' }}>
+                            <option key={yr} value={yr}>
                               {yr} {yr === 1 ? 'Year' : 'Years'} Exp
                             </option>
                           ))}
@@ -3023,7 +3034,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                             }}
                           >
                             <span style={{ fontWeight: 600, color: '#34d399' }}>{item.skill}</span>
-                            <span style={{ background: 'rgba(0,0,0,0.3)', padding: '0.05rem 0.3rem', borderRadius: '4px', fontSize: '0.68rem', color: '#94a3b8' }}>
+                            <span style={{ background: 'var(--bg-secondary)', padding: '0.05rem 0.3rem', borderRadius: '4px', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
                               {item.years} {item.years === 1 ? 'yr' : 'yrs'}
                             </span>
                             <button
@@ -3257,7 +3268,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                   </div>
                 </div>
 
-                <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                <div style={{ background: 'var(--bg-secondary)', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                   🔒 <strong>Technician Safety Code:</strong> By submitting this verification dossier, you agree to SkillVerse Home Service Standards, background compliance, and authentic document submission.
                 </div>
 

@@ -79,7 +79,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
       fetch(`${API_BASE}/workers`)
         .then(res => res.json())
         .then(data => setFetchedWorkers(data || []))
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [workers]);
 
@@ -159,7 +159,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
       const uSaved = JSON.parse(localStorage.getItem(userKey) || '[]');
       const updatedUserSaved = (uSaved || []).map(Number).filter(id => id !== numericId);
       localStorage.setItem(userKey, JSON.stringify(updatedUserSaved));
-    } catch (e) {}
+    } catch (e) { }
 
     if (onShowToast) {
       onShowToast("Technician Removed", "Technician removed from your saved list.", "info");
@@ -366,7 +366,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
 
   const handleDownloadReceipt = (booking) => {
     if (!booking) return;
-    const workedDate = booking.completedAt 
+    const workedDate = booking.completedAt
       ? new Date(booking.completedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
       : (booking.createdAt ? new Date(booking.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently');
     const warrantyExpiry = new Date(new Date(booking.completedAt || booking.createdAt || Date.now()).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -540,7 +540,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1280px', margin: '0 auto' }}>
-      
+
       {/* Page Header */}
       <div className="glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '2rem' }}>
         <div>
@@ -587,7 +587,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
       {/* --- OVERVIEW TAB --- */}
       {activeTab === 'overview' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          
+
           {/* Interactive Metric Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.2rem' }}>
             <div
@@ -713,9 +713,9 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
                 const isWorkerCounter = (b.status === 'NEGOTIATING' || b.status === 'COUNTERED' || b.status === 'PENDING') && (b.lastOfferedBy === 'WORKER' || (!b.lastOfferedBy && b.workerCounterPrice));
                 const isCustomerWaiting = (b.status === 'PENDING' || b.status === 'NEGOTIATING') && (b.lastOfferedBy === 'CUSTOMER' || !b.lastOfferedBy);
                 const currentPrice = (b.status === 'NEGOTIATING' || b.status === 'COUNTERED' || b.status === 'PENDING')
-                  ? (b.lastOfferedBy === 'WORKER' 
-                      ? (b.workerCounterPrice || b.estimatedCost || b.agreedCost) 
-                      : (b.customerOfferPrice || b.estimatedCost || b.agreedCost))
+                  ? (b.lastOfferedBy === 'WORKER'
+                    ? (b.workerCounterPrice || b.estimatedCost || b.agreedCost)
+                    : (b.customerOfferPrice || b.estimatedCost || b.agreedCost))
                   : (b.agreedCost || b.estimatedCost || b.workerCounterPrice || b.customerOfferPrice);
 
                 return (
@@ -752,8 +752,8 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
                         )}
                       </div>
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.3rem', marginBottom: 0 }}>
-                        Technician: <strong style={{ color: 'var(--text-heading)' }}>{b.worker?.name || 'Searching...'}</strong> • 
-                        Price: <strong style={{ color: 'var(--primary)' }}>৳{currentPrice}</strong> • 
+                        Technician: <strong style={{ color: 'var(--text-heading)' }}>{b.worker?.name || 'Searching...'}</strong> •
+                        Price: <strong style={{ color: 'var(--primary)' }}>৳{currentPrice}</strong> •
                         Address: {b.address}
                       </p>
                     </div>
@@ -863,7 +863,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
       {/* --- BOOKINGS TAB (ROW-WISE LIST VIEW) --- */}
       {activeTab === 'bookings' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
+
           {/* Status Filter Pills (ALL, PENDING, NEGOTIATING, CONFIRMED, COMPLETED, CANCELLED) */}
           <div className="glass-card" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', padding: '0.8rem' }}>
             {['ALL', 'PENDING', 'NEGOTIATING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'].map((st) => (
@@ -884,9 +884,9 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
               const isWorkerCounter = (b.status === 'NEGOTIATING' || b.status === 'COUNTERED' || b.status === 'PENDING') && (b.lastOfferedBy === 'WORKER' || (!b.lastOfferedBy && b.workerCounterPrice));
               const isCustomerWaiting = (b.status === 'PENDING' || b.status === 'NEGOTIATING') && (b.lastOfferedBy === 'CUSTOMER' || !b.lastOfferedBy);
               const currentPrice = (b.status === 'NEGOTIATING' || b.status === 'COUNTERED' || b.status === 'PENDING')
-                ? (b.lastOfferedBy === 'WORKER' 
-                    ? (b.workerCounterPrice || b.estimatedCost || b.agreedCost) 
-                    : (b.customerOfferPrice || b.estimatedCost || b.agreedCost))
+                ? (b.lastOfferedBy === 'WORKER'
+                  ? (b.workerCounterPrice || b.estimatedCost || b.agreedCost)
+                  : (b.customerOfferPrice || b.estimatedCost || b.agreedCost))
                 : (b.agreedCost || b.estimatedCost || b.workerCounterPrice || b.customerOfferPrice);
 
               return (
@@ -989,19 +989,19 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
                       </>
                     )}
 
-                      {(!b.advancePaid && (b.status === 'AWAITING_ADVANCE' || b.status === 'ACCEPTED' || b.status === 'PRICE_AGREED')) && (
-                        <button
-                          className="btn btn-primary"
-                          style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', background: 'linear-gradient(90deg, #f59e0b, #d97706)', color: '#ffffff', fontWeight: 'bold' }}
-                          onClick={() => {
-                            setAdvanceBooking(b);
-                            setShowAdvanceModal(true);
-                          }}
-                          title="Pay minimum base advance to confirm technician dispatch"
-                        >
-                          💳 Pay Base Advance (৳{((b.basePrice || 300) * 1.05).toFixed(0)})
-                        </button>
-                      )}
+                    {(!b.advancePaid && (b.status === 'AWAITING_ADVANCE' || b.status === 'ACCEPTED' || b.status === 'PRICE_AGREED')) && (
+                      <button
+                        className="btn btn-primary"
+                        style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', background: 'linear-gradient(90deg, #f59e0b, #d97706)', color: '#ffffff', fontWeight: 'bold' }}
+                        onClick={() => {
+                          setAdvanceBooking(b);
+                          setShowAdvanceModal(true);
+                        }}
+                        title="Pay minimum base advance to confirm technician dispatch"
+                      >
+                        💳 Pay Base Advance (৳{((b.basePrice || 300) * 1.05).toFixed(0)})
+                      </button>
+                    )}
 
                     {isCustomerWaiting && (
                       <button
@@ -1114,7 +1114,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
               <ShieldCheck size={14} /> 30-Day SkillVerse Guarantee Active
             </span>
           </div>
-          
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
             {bookings.filter(b => b.status === 'COMPLETED' || b.status === 'PAID').map((b) => {
               const completedDate = new Date(b.completedAt || b.paidAt || b.createdAt);
@@ -1132,7 +1132,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
                     <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.3rem' }}>
                       <strong style={{ fontSize: '1rem', color: 'var(--text-heading)' }}>{b.serviceType}</strong>
                       {getStatusBadge(b.status)}
-                      
+
                       {/* Warranty Status Badges */}
                       {b.warrantyStatus === 'WARRANTY_COMPLETED' ? (
                         <span className="badge badge-verified" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid #10b981' }}>
@@ -1156,7 +1156,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
                         </span>
                       )}
                     </div>
-                    
+
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.2rem 0' }}>
                       Technician: <strong>{b.worker?.name || 'Verified Technician'}</strong> • Worked Date: <strong>{formattedWorkedDate}</strong> • Paid: <strong style={{ color: 'var(--primary)' }}>৳{b.agreedCost || b.estimatedCost}</strong>
                     </p>
@@ -1167,7 +1167,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
                       </div>
                     )}
                   </div>
-                  
+
                   <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <button
                       className="btn btn-secondary"
@@ -1296,7 +1296,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
             <Bookmark size={22} color="var(--primary)" fill="var(--primary)" />
             <h3 style={{ fontSize: '1.2rem', color: 'var(--text-heading)', margin: 0 }}>Saved Technicians ({displayedSavedWorkers.length})</h3>
           </div>
-          
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
             {displayedSavedWorkers.map((w) => (
               <div key={w.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
@@ -1713,7 +1713,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>Worked Date:</span>
                 <strong style={{ color: 'var(--text-heading)' }}>
-                  {invoiceBooking.completedAt 
+                  {invoiceBooking.completedAt
                     ? new Date(invoiceBooking.completedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                     : (invoiceBooking.createdAt ? new Date(invoiceBooking.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently')}
                 </strong>
@@ -1734,7 +1734,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
                 <span style={{ color: 'var(--text-secondary)' }}>Payment Method:</span>
                 <strong style={{ color: 'var(--text-heading)' }}>{invoiceBooking.paymentMethod || 'bKash Wallet'} {invoiceBooking.transactionId ? `(Txn: ${invoiceBooking.transactionId})` : ''}</strong>
               </div>
-              
+
               {/* Financial summary */}
               <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.8rem', borderRadius: '10px', marginTop: '0.3rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', fontSize: '0.82rem' }}>
@@ -1753,7 +1753,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
                 <div style={{ fontSize: '0.78rem' }}>
                   <strong style={{ color: '#10b981', display: 'block' }}>30-Day FixConnect Service Guarantee</strong>
                   <span style={{ color: 'var(--text-secondary)' }}>
-                    Free re-inspection and repair warranty eligible until {new Date(new Date(invoiceBooking.completedAt || invoiceBooking.createdAt).getTime() + 30*24*60*60*1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}.
+                    Free re-inspection and repair warranty eligible until {new Date(new Date(invoiceBooking.completedAt || invoiceBooking.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}.
                   </span>
                 </div>
               </div>
@@ -1855,11 +1855,11 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
             <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', border: '2px solid #10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.2rem auto' }}>
               <CheckCircle2 size={36} color="#10b981" />
             </div>
-            
+
             <h3 style={{ fontSize: '1.3rem', color: 'var(--text-heading)', margin: '0 0 0.5rem 0', fontWeight: 700 }}>
               Warranty Service Completed!
             </h3>
-            
+
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 1.5rem 0' }}>
               Your free warranty service for <strong>{warrantyDoneBooking?.serviceType || 'the repair'}</strong> has been marked as <strong>Done</strong>. The technician's restrictions have been lifted.
             </p>

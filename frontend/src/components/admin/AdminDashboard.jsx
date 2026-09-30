@@ -1189,7 +1189,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
                   </div>
 
                   {/* Full Details Breakdown */}
-                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.4rem', borderRadius: '12px', fontSize: '0.85rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.2rem', marginBottom: '1.5rem', border: '1px solid var(--border-color)' }}>
+                  <div style={{ background: 'var(--bg-card)', padding: '1.4rem', borderRadius: '12px', fontSize: '0.85rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.2rem', marginBottom: '1.5rem', border: '1px solid var(--border-color)' }}>
                     <div>
                       <div style={{ color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>
                         👤 Legal Identity & Contact

@@ -126,7 +126,7 @@ export default function PostedProblemsHub({ isOpen, onClose, currentUser, onAcce
         </div>
 
         {/* Tab Filter */}
-        <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(0,0,0,0.3)', padding: '0.4rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-card)', padding: '0.4rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
           <button
             onClick={() => setActiveTab('OPEN')}
             className={`btn ${activeTab === 'OPEN' ? 'btn-primary' : 'btn-secondary'}`}
@@ -203,7 +203,7 @@ export default function PostedProblemsHub({ isOpen, onClose, currentUser, onAcce
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', maxHeight: '320px', overflowY: 'auto' }}>
                   {offers.map((off) => (
-                    <div key={off.id} style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    <div key={off.id} style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                           <img
