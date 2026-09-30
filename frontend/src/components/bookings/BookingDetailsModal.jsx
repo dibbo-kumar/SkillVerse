@@ -134,213 +134,220 @@ export default function BookingDetailsModal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1.5rem'
+        padding: '1rem'
       }}
       onClick={(e) => e.target.className.includes('toast-popup-overlay') && onClose()}
     >
       <div
-        className="glass-card"
+        className="glass-card modal-content-wide"
         style={{
-          maxWidth: '650px',
-          width: '100%',
-          maxHeight: '90vh',
+          maxWidth: '860px',
+          width: '92vw',
+          maxHeight: '92vh',
           overflowY: 'auto',
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-color)',
-          borderRadius: '20px',
-          padding: '2rem',
+          borderRadius: '18px',
+          padding: '1.4rem 1.6rem',
           color: 'var(--text-primary)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '1.2rem'
+          gap: '0.9rem'
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.7rem' }}>
           <div>
-            <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
-              <h2 style={{ fontSize: '1.4rem', color: 'var(--text-heading)', margin: 0 }}>{booking.serviceType}</h2>
+            <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '1.25rem', color: 'var(--text-heading)', margin: 0, fontWeight: 700 }}>{booking.serviceType}</h2>
               {getStatusBadge(booking.status)}
             </div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
               Booking #{booking.id} • Base Advance: ৳{booking.basePrice || 300} (+5% VAT)
             </span>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-            <XCircle size={26} />
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', padding: '0.35rem', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
+            <XCircle size={20} />
           </button>
         </div>
 
-        {/* Worker Counter Offer Banner */}
-        {isWorkerCounter && (
-          <div style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-gold)' }}>
-                <Clock size={18} />
-                <strong style={{ fontSize: '0.95rem' }}>Technician Proposed Counter Offer</strong>
+        {/* 2-Column Grid Layout */}
+        <div className="modal-two-col">
+          {/* Left Column: Technician, OTP, Timer, Negotiation / Advance banners */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+            {/* Worker Counter Offer Banner */}
+            {isWorkerCounter && (
+              <div style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '10px', padding: '0.75rem 0.9rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent-gold)' }}>
+                    <Clock size={15} />
+                    <strong style={{ fontSize: '0.85rem' }}>Counter Offer Received</strong>
+                  </div>
+                  <strong style={{ fontSize: '1.1rem', color: 'var(--accent-gold)' }}>৳{currentPrice}</strong>
+                </div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  Technician proposed <strong>৳{currentPrice}</strong> for this service.
+                </p>
+                <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
+                  <button
+                    className="btn btn-primary"
+                    style={{ fontSize: '0.74rem', padding: '0.35rem 0.7rem' }}
+                    onClick={() => {
+                      if (onAcceptPrice) onAcceptPrice(booking.id);
+                      if (onOpenAdvanceModal) onOpenAdvanceModal(booking);
+                      onClose();
+                    }}
+                  >
+                    <CheckCircle2 size={12} /> Accept & Pay Advance
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.74rem', padding: '0.35rem 0.65rem' }}
+                    onClick={() => {
+                      if (onOpenCounterModal) onOpenCounterModal(booking);
+                      onClose();
+                    }}
+                  >
+                    <RotateCcw size={12} /> Counter
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.74rem', padding: '0.35rem 0.65rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                    onClick={() => {
+                      if (onCancelBooking) onCancelBooking(booking.id);
+                      onClose();
+                    }}
+                  >
+                    <XCircle size={12} /> Cancel
+                  </button>
+                </div>
               </div>
-              <strong style={{ fontSize: '1.2rem', color: 'var(--accent-gold)' }}>৳{currentPrice}</strong>
-            </div>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
-              The technician reviewed your problem and proposed <strong>৳{currentPrice}</strong>.
-            </p>
-            <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
-              <button
-                className="btn btn-primary"
-                style={{ fontSize: '0.8rem', padding: '0.45rem 1rem' }}
-                onClick={() => {
-                  if (onAcceptPrice) onAcceptPrice(booking.id);
-                  if (onOpenAdvanceModal) onOpenAdvanceModal(booking);
-                  onClose();
-                }}
-              >
-                <CheckCircle2 size={14} /> Accept Counter (৳{currentPrice}) & Pay Advance
-              </button>
-              <button
-                className="btn btn-secondary"
-                style={{ fontSize: '0.8rem', padding: '0.45rem 0.9rem' }}
-                onClick={() => {
-                  if (onOpenCounterModal) onOpenCounterModal(booking);
-                  onClose();
-                }}
-              >
-                <RotateCcw size={14} /> Propose Counter
-              </button>
-              <button
-                className="btn btn-secondary"
-                style={{ fontSize: '0.8rem', padding: '0.45rem 0.9rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
-                onClick={() => {
-                  if (onCancelBooking) onCancelBooking(booking.id);
-                  onClose();
-                }}
-              >
-                <XCircle size={14} /> Cancel
-              </button>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* Advance Payment Prompt */}
-        {isAdvanceNeeded && (
-          <div style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '12px', padding: '1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
-            <div>
-              <strong style={{ color: 'var(--accent-gold)', fontSize: '0.95rem', display: 'block' }}>
-                💳 Minimum Base Advance Required
-              </strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Pay minimum base advance of ৳{booking.basePrice || 300} (+ 5% VAT ৳{((booking.basePrice || 300) * 0.05).toFixed(1)}) to confirm dispatch.
-              </span>
+            {/* Advance Payment Prompt */}
+            {isAdvanceNeeded && (
+              <div style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '10px', padding: '0.75rem 0.9rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem' }}>
+                <div>
+                  <strong style={{ color: 'var(--accent-gold)', fontSize: '0.85rem', display: 'block' }}>
+                    💳 Base Advance Required
+                  </strong>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                    Pay ৳{((booking.basePrice || 300) * 1.05).toFixed(1)} to confirm technician dispatch.
+                  </span>
+                </div>
+                <button
+                  className="btn btn-primary"
+                  style={{ background: 'linear-gradient(90deg, #f59e0b, #d97706)', padding: '0.4rem 0.85rem', fontSize: '0.78rem', whiteSpace: 'nowrap' }}
+                  onClick={() => {
+                    if (onOpenAdvanceModal) onOpenAdvanceModal(booking);
+                    onClose();
+                  }}
+                >
+                  Pay Advance →
+                </button>
+              </div>
+            )}
+
+            {/* Arrival Timer */}
+            {['CONFIRMED', 'ON_THE_WAY'].includes(booking.status) && booking.advancePaid && (
+              <ModalArrivalTimer booking={booking} onTimeoutRefund={onTimeoutRefund} />
+            )}
+
+            {/* Technician Profile Card */}
+            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '10px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+                <img
+                  src={booking.worker?.profilePicture || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=120"}
+                  alt={booking.worker?.name}
+                  style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }}
+                />
+                <div>
+                  <h4 style={{ fontSize: '0.9rem', color: 'var(--text-heading)', margin: 0 }}>{booking.worker?.name || 'Assigned Technician'}</h4>
+                  <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: '0.15rem 0 0 0' }}>
+                    ⭐ {booking.worker?.rating || 4.9} • Phone: <strong style={{ color: 'var(--text-heading)' }}>{booking.worker?.phone || '01911223344'}</strong>
+                  </p>
+                </div>
+              </div>
+
+              {isConfirmedOrActive && (
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  <a href={`tel:${booking.worker?.phone || '01911223344'}`} className="btn btn-primary" style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem', textDecoration: 'none' }}>
+                    <Phone size={11} /> Call
+                  </a>
+                  <button className="btn btn-secondary" style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem' }} onClick={() => alert("Connecting live technician chat...")}>
+                    <MessageSquare size={11} /> Chat
+                  </button>
+                </div>
+              )}
             </div>
-            <button
-              className="btn btn-primary"
-              style={{ background: 'linear-gradient(90deg, #f59e0b, #d97706)', padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
-              onClick={() => {
-                if (onOpenAdvanceModal) onOpenAdvanceModal(booking);
-                onClose();
-              }}
-            >
-              Pay Advance (৳{((booking.basePrice || 300) * 1.05).toFixed(1)}) →
-            </button>
-          </div>
-        )}
 
-        {/* Arrival Timer */}
-        {['CONFIRMED', 'ON_THE_WAY'].includes(booking.status) && booking.advancePaid && (
-          <ModalArrivalTimer booking={booking} onTimeoutRefund={onTimeoutRefund} />
-        )}
-
-        {/* Technician Profile Card with Direct Contact Unlocked */}
-        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <img
-              src={booking.worker?.profilePicture || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=120"}
-              alt={booking.worker?.name}
-              style={{ width: 50, height: 50, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }}
-            />
-            <div>
-              <h4 style={{ fontSize: '0.95rem', color: 'var(--text-heading)', margin: 0 }}>{booking.worker?.name || 'Assigned Technician'}</h4>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
-                ⭐ {booking.worker?.rating || 4.9} • Phone: <strong style={{ color: 'var(--text-heading)' }}>{booking.worker?.phone || '01911223344'}</strong>
-              </p>
-            </div>
-          </div>
-
-          {isConfirmedOrActive && (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <a href={`tel:${booking.worker?.phone || '01911223344'}`} className="btn btn-primary" style={{ fontSize: '0.75rem', padding: '0.3rem 0.7rem', textDecoration: 'none' }}>
-                <Phone size={12} /> Call
-              </a>
-              <button className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '0.3rem 0.7rem' }} onClick={() => alert("Opening chat...")}>
-                <MessageSquare size={12} /> Chat
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Problem Description & Attached Image */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-          <h4 style={{ fontSize: '0.9rem', color: 'var(--accent-blue)', margin: 0 }}>Service & Problem Details</h4>
-          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.8rem', borderRadius: '10px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
-            <p style={{ color: 'var(--text-secondary)', margin: 0 }}>{booking.description}</p>
-            {booking.beforePhoto && (
-              <div style={{ marginTop: '0.6rem' }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Attached Issue Photo:</span>
-                <img src={booking.beforePhoto} alt="Attached Inspection" style={{ width: '100%', maxHeight: '160px', objectFit: 'contain', borderRadius: '6px', background: '#000' }} />
+            {/* OTP Codes */}
+            {['CONFIRMED', 'ON_THE_WAY', 'ARRIVED'].includes(booking.status) && (
+              <div style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.25)', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>🔑 Arrival Start OTP:</span>
+                <span style={{ fontSize: '1.05rem', fontWeight: 'bold', fontFamily: 'monospace', color: 'var(--text-heading)', background: '#000', padding: '0.15rem 0.6rem', borderRadius: '4px' }}>
+                  {booking.startVerificationCode || '4829'}
+                </span>
               </div>
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.8rem', fontSize: '0.85rem' }}>
-            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Service Address</span>
-              <strong style={{ color: 'var(--text-heading)' }}>{booking.address}</strong>
+          {/* Right Column: Problem description, address, price lock & actions */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+            {/* Problem & Address */}
+            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
+              <div style={{ fontSize: '0.72rem', color: 'var(--accent-blue)', fontWeight: 600, marginBottom: '0.25rem' }}>Service Problem Notes:</div>
+              <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: 1.35 }}>{booking.description || 'General maintenance fix requested'}</p>
+              {booking.beforePhoto && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <img src={booking.beforePhoto} alt="Issue inspection" style={{ width: '100%', maxHeight: '110px', objectFit: 'cover', borderRadius: '6px', background: '#000' }} />
+                </div>
+              )}
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Scheduled Time</span>
-              <strong style={{ color: 'var(--text-heading)' }}>{booking.preferredDate || 'Tomorrow'} ({booking.preferredTime || '10:00 AM'})</strong>
+
+            {/* Address & Schedule */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.5rem', fontSize: '0.78rem' }}>
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.55rem 0.7rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Service Location</span>
+                <strong style={{ color: 'var(--text-heading)', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{booking.address}</strong>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.55rem 0.7rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Schedule</span>
+                <strong style={{ color: 'var(--text-heading)' }}>{booking.preferredDate || 'Tomorrow'}</strong>
+              </div>
+            </div>
+
+            {/* Financial Summary */}
+            <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '0.7rem 0.9rem', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>
+                  {booking.agreedCost ? 'Agreed Deal Price' : 'Estimated Cost'}
+                </span>
+                <strong style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>৳{currentPrice}</strong>
+              </div>
+              {booking.paymentStatus === 'PAID' && (
+                <span className="badge badge-gold" style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}>
+                  Paid & Settled
+                </span>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Financial Lock Summary */}
-        <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>
-              {booking.agreedCost ? 'Final Agreed Deal Price' : 'Current Proposed Price'}
-            </span>
-            <strong style={{ fontSize: '1.4rem', color: 'var(--primary)' }}>৳{currentPrice}</strong>
-          </div>
-          {booking.paymentStatus === 'PAID' && (
-            <span className="badge badge-gold" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>
-              Paid & Settled
-            </span>
-          )}
-        </div>
-
-        {/* OTP Codes */}
-        {['CONFIRMED', 'ON_THE_WAY', 'ARRIVED'].includes(booking.status) && (
-          <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '0.8rem', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>🔑 Arrival Start OTP:</span>
-            <span style={{ fontSize: '1.2rem', fontWeight: 'bold', fontFamily: 'monospace', color: 'var(--text-heading)', background: '#000', padding: '0.2rem 0.8rem', borderRadius: '6px' }}>
-              {booking.startVerificationCode || '4829'}
-            </span>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+        {/* Footer Actions */}
+        <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.7rem', borderTop: '1px solid var(--border-color)', marginTop: '0.2rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {['IN_PROGRESS', 'COMPLETION_REQUESTED'].includes(booking.status) && (
               <button
                 className="btn btn-primary"
-                style={{ fontSize: '0.8rem', padding: '0.45rem 1rem', background: 'linear-gradient(90deg, #10b981, #059669)' }}
+                style={{ fontSize: '0.76rem', padding: '0.4rem 0.9rem', background: 'linear-gradient(90deg, #10b981, #059669)' }}
                 onClick={() => {
                   if (onStartPayment) onStartPayment(booking);
                   onClose();
                 }}
               >
-                <CreditCard size={14} /> Complete & Pay (৳{currentPrice})
+                <CreditCard size={13} /> Complete & Pay (৳{currentPrice})
               </button>
             )}
 
@@ -348,29 +355,29 @@ export default function BookingDetailsModal({
               <>
                 <button
                   className="btn btn-secondary"
-                  style={{ fontSize: '0.8rem', padding: '0.45rem 0.9rem' }}
+                  style={{ fontSize: '0.76rem', padding: '0.4rem 0.8rem' }}
                   onClick={() => {
                     if (onLeaveReview) onLeaveReview(booking);
                     onClose();
                   }}
                 >
-                  <Star size={14} /> {booking.reviewRating ? 'Update Review' : 'Leave Review'}
+                  <Star size={13} /> {booking.reviewRating ? 'Update Review' : 'Leave Review'}
                 </button>
                 <button
                   className="btn btn-secondary"
-                  style={{ fontSize: '0.8rem', padding: '0.45rem 0.9rem' }}
+                  style={{ fontSize: '0.76rem', padding: '0.4rem 0.8rem' }}
                   onClick={() => {
                     if (onViewInvoice) onViewInvoice(booking);
                     onClose();
                   }}
                 >
-                  <FileText size={14} /> Invoice
+                  <FileText size={13} /> Invoice
                 </button>
               </>
             )}
           </div>
 
-          <button className="btn btn-secondary" onClick={onClose} style={{ padding: '0.45rem 1.2rem', fontSize: '0.85rem' }}>
+          <button className="btn btn-secondary" onClick={onClose} style={{ padding: '0.4rem 1.1rem', fontSize: '0.8rem' }}>
             Close
           </button>
         </div>

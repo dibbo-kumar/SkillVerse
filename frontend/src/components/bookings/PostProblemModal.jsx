@@ -117,249 +117,244 @@ export default function PostProblemModal({ isOpen, onClose, currentUser, onProbl
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1.5rem'
+        padding: '1rem'
       }}
       onClick={(e) => e.target.className.includes('toast-popup-overlay') && onClose()}
     >
       <div 
-        className="glass-card"
+        className="glass-card modal-content-wide"
         style={{
-          maxWidth: '600px',
-          width: '100%',
-          maxHeight: '90vh',
+          maxWidth: '860px',
+          width: '92vw',
+          maxHeight: '92vh',
           overflowY: 'auto',
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-color)',
-          borderRadius: '20px',
+          borderRadius: '18px',
           boxShadow: 'var(--shadow-lg)',
-          padding: '2rem',
+          padding: '1.4rem 1.6rem',
           color: 'var(--text-primary)'
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
-            <div style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '0.6rem', borderRadius: '12px', color: 'var(--accent-blue)', display: 'flex' }}>
-              <Sparkles size={24} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.7rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', gap: '0.7rem', alignItems: 'center' }}>
+            <div style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '0.45rem', borderRadius: '10px', color: 'var(--accent-blue)', display: 'flex' }}>
+              <Sparkles size={20} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.3rem', color: 'var(--text-heading)', margin: 0 }}>Post Your Problem</h2>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>Technicians will view your post and send custom price offers</p>
+              <h2 style={{ fontSize: '1.2rem', color: 'var(--text-heading)', margin: 0, fontWeight: 700 }}>Post Service Problem</h2>
+              <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: 0 }}>Technicians in your area will review details and send quotes</p>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-            <XCircle size={24} />
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', padding: '0.35rem', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
+            <XCircle size={20} />
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-          
-          {/* Category */}
-          <div>
-            <label className="form-label">Service Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="form-input"
-              style={{ width: '100%', padding: '0.7rem' }}
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
+        {/* Form Body - 2 Column Layout */}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+          <div className="modal-two-col">
+            {/* Left Column: Category, Title, Appliance info, Schedule, Budget */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+              {/* Category */}
+              <div>
+                <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Service Category</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="form-input"
+                  style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
+                >
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
 
-          {/* Title */}
-          <div>
-            <label className="form-label">Problem Title</label>
-            <input
-              type="text"
-              className="form-input"
-              style={{ width: '100%', padding: '0.7rem' }}
-              placeholder="e.g. AC running but not cooling effectively"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-          </div>
+              {/* Title */}
+              <div>
+                <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Problem Title</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
+                  placeholder="e.g. AC compressor humming but not cooling"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                />
+              </div>
 
-          {/* Description */}
-          <div>
-            <label className="form-label">Detailed Description</label>
-            <textarea
-              rows={3}
-              className="form-input"
-              style={{ width: '100%', padding: '0.7rem', resize: 'vertical' }}
-              placeholder="Describe the issue, noise, duration, or specific service requirements..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-            />
-          </div>
-
-          {/* Appliance & Budget */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-            <div>
-              <label className="form-label">Appliance / Device Info</label>
-              <input
-                type="text"
-                className="form-input"
-                style={{ width: '100%', padding: '0.7rem' }}
-                placeholder="e.g. General 1.5 Ton Inverter AC"
-                value={applianceInfo}
-                onChange={(e) => setApplianceInfo(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="form-label">Expected Budget (BDT ৳)</label>
-              <input
-                type="number"
-                className="form-input"
-                style={{ width: '100%', padding: '0.7rem' }}
-                placeholder="1000"
-                value={budgetPrice}
-                onChange={(e) => setBudgetPrice(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Schedule */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-            <div>
-              <label className="form-label">Preferred Date</label>
-              <select
-                value={preferredDate}
-                onChange={(e) => setPreferredDate(e.target.value)}
-                className="form-input"
-                style={{ width: '100%', padding: '0.7rem' }}
-              >
-                <option value="Today" style={{ background: '#111827' }}>Today (Urgent)</option>
-                <option value="Tomorrow" style={{ background: '#111827' }}>Tomorrow</option>
-                <option value="In 2 Days" style={{ background: '#111827' }}>In 2 Days</option>
-                <option value="Weekend" style={{ background: '#111827' }}>This Weekend</option>
-              </select>
-            </div>
-            <div>
-              <label className="form-label">Preferred Time Slot</label>
-              <select
-                value={preferredTime}
-                onChange={(e) => setPreferredTime(e.target.value)}
-                className="form-input"
-                style={{ width: '100%', padding: '0.7rem' }}
-              >
-                <option value="09:00 AM - 12:00 PM" style={{ background: '#111827' }}>Morning (9 AM - 12 PM)</option>
-                <option value="12:00 PM - 03:00 PM" style={{ background: '#111827' }}>Noon (12 PM - 3 PM)</option>
-                <option value="03:00 PM - 06:00 PM" style={{ background: '#111827' }}>Afternoon (3 PM - 6 PM)</option>
-                <option value="06:00 PM - 09:00 PM" style={{ background: '#111827' }}>Evening (6 PM - 9 PM)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Address */}
-          <div>
-            <label className="form-label">Service Address</label>
-            <input
-              type="text"
-              className="form-input"
-              style={{ width: '100%', padding: '0.7rem' }}
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              required
-            />
-          </div>
-
-          {/* Diagnostic Photo Attachment from Device */}
-          <div>
-            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>Diagnostic Problem Photo</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Helps technicians give accurate quotes</span>
-            </label>
-
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/*"
-              onChange={handleDevicePhotoChange}
-              style={{ display: 'none' }}
-            />
-
-            {!photoPreview ? (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                style={{
-                  border: '2px dashed rgba(255,255,255,0.2)',
-                  borderRadius: '12px',
-                  padding: '1.5rem',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.02)',
-                  transition: 'var(--transition)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '0.6rem'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
-                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'}
-              >
-                <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(37, 99, 235, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-blue)' }}>
-                  <Upload size={22} />
+              {/* Appliance info & Budget */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.5rem' }}>
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Appliance Info</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
+                    placeholder="e.g. Gree 1.5T Inverter"
+                    value={applianceInfo}
+                    onChange={(e) => setApplianceInfo(e.target.value)}
+                  />
                 </div>
                 <div>
-                  <strong style={{ fontSize: '0.9rem', color: 'var(--text-heading)', display: 'block' }}>Upload problem photo from your device</strong>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>PNG, JPG, JPEG, WEBP up to 5MB</span>
+                  <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Budget (BDT ৳)</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)' }}
+                    placeholder="1000"
+                    value={budgetPrice}
+                    onChange={(e) => setBudgetPrice(e.target.value)}
+                  />
                 </div>
-                <button type="button" className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '0.35rem 0.9rem', pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Camera size={14} /> Choose File
-                </button>
               </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', padding: '0.8rem 1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                  <img src={photoPreview} alt="Problem preview" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)' }} />
-                  <div>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-heading)', display: 'block' }}>{fileName || 'problem-photo.jpg'}</strong>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                      <CheckCircle2 size={13} /> Attached from device
-                    </span>
-                  </div>
+
+              {/* Schedule: Date & Time */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Preferred Date</label>
+                  <select
+                    value={preferredDate}
+                    onChange={(e) => setPreferredDate(e.target.value)}
+                    className="form-input"
+                    style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
+                  >
+                    <option value="Today" style={{ background: '#111827' }}>Today (Urgent)</option>
+                    <option value="Tomorrow" style={{ background: '#111827' }}>Tomorrow</option>
+                    <option value="In 2 Days" style={{ background: '#111827' }}>In 2 Days</option>
+                    <option value="Weekend" style={{ background: '#111827' }}>This Weekend</option>
+                  </select>
                 </div>
-                <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
-                  <button
-                    type="button"
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Preferred Time Slot</label>
+                  <select
+                    value={preferredTime}
+                    onChange={(e) => setPreferredTime(e.target.value)}
+                    className="form-input"
+                    style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
+                  >
+                    <option value="09:00 AM - 12:00 PM" style={{ background: '#111827' }}>Morning (9-12)</option>
+                    <option value="12:00 PM - 03:00 PM" style={{ background: '#111827' }}>Noon (12-3)</option>
+                    <option value="03:00 PM - 06:00 PM" style={{ background: '#111827' }}>Afternoon (3-6)</option>
+                    <option value="06:00 PM - 09:00 PM" style={{ background: '#111827' }}>Evening (6-9)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Description, Address, Photo Uploader */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+              {/* Description */}
+              <div>
+                <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Problem Description</label>
+                <textarea
+                  rows={2}
+                  className="form-input"
+                  style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem', resize: 'none' }}
+                  placeholder="Describe specific symptoms, noise, or service requirements..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Address */}
+              <div>
+                <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Service Address</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Diagnostic Photo Attachment */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+                  <label className="form-label" style={{ fontSize: '0.74rem', margin: 0 }}>Diagnostic Photo (Optional)</label>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Helps get accurate quotes</span>
+                </div>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleDevicePhotoChange}
+                  style={{ display: 'none' }}
+                />
+
+                {!photoPreview ? (
+                  <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="btn btn-secondary"
-                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
+                    style={{
+                      border: '1px dashed rgba(255,255,255,0.2)',
+                      borderRadius: '8px',
+                      padding: '0.65rem 0.8rem',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.02)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.6rem'
+                    }}
                   >
-                    Change Photo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleRemovePhoto}
-                    style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32 }}
-                    title="Remove attached photo"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
+                    <Upload size={16} color="var(--accent-blue)" />
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Click to upload diagnostic image (under 5MB)</span>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px', padding: '0.4rem 0.7rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <img src={photoPreview} alt="Problem preview" style={{ width: 38, height: 38, objectFit: 'cover', borderRadius: '6px' }} />
+                      <div>
+                        <strong style={{ fontSize: '0.76rem', color: 'var(--text-heading)', display: 'block' }}>{fileName || 'problem-photo.jpg'}</strong>
+                        <span style={{ fontSize: '0.68rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <CheckCircle2 size={11} /> Attached
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="btn btn-secondary"
+                        style={{ padding: '0.2rem 0.5rem', fontSize: '0.68rem' }}
+                      >
+                        Change
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemovePhoto}
+                        style={{ background: 'rgba(239, 68, 68, 0.15)', border: 'none', color: '#ef4444', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
+          <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end', paddingTop: '0.7rem', borderTop: '1px solid var(--border-color)', marginTop: '0.3rem' }}>
+            <button type="button" className="btn btn-secondary" style={{ padding: '0.45rem 1rem', fontSize: '0.82rem' }} onClick={onClose}>
               Cancel
             </button>
             <button
               type="submit"
               className="btn btn-primary"
               disabled={isSubmitting}
-              style={{ background: 'linear-gradient(90deg, #2563eb, #4f46e5)', padding: '0.7rem 1.4rem' }}
+              style={{ padding: '0.45rem 1.3rem', fontSize: '0.82rem', fontWeight: 600 }}
             >
-              {isSubmitting ? 'Posting Problem...' : '📢 Post Problem Now'}
+              {isSubmitting ? 'Posting...' : '📢 Post Problem Now'}
             </button>
           </div>
 

@@ -483,7 +483,7 @@ a {
   font-size: 0.9rem;
 }
 
-/* Modal and Popups */
+/* Modal and Popups - Standardized Fixed Dimensions */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -506,11 +506,64 @@ a {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   width: 100%;
-  max-width: 550px;
-  max-height: 90vh;
+  max-width: 540px;
+  max-height: 92vh;
   overflow-y: auto;
-  padding: 2rem;
-  animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  padding: 1.5rem;
+  animation: modalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-content-wide,
+.modal-wide {
+  max-width: 860px !important;
+  width: 92vw !important;
+}
+
+.modal-content-standard {
+  max-width: 520px !important;
+  width: 92vw !important;
+}
+
+.modal-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .modal-two-col {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Slim custom scrollbars for modal contents */
+.modal-content::-webkit-scrollbar,
+.glass-card::-webkit-scrollbar,
+.worker-details-floating-card::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track,
+.glass-card::-webkit-scrollbar-track,
+.worker-details-floating-card::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb,
+.glass-card::-webkit-scrollbar-thumb,
+.worker-details-floating-card::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover,
+.glass-card::-webkit-scrollbar-thumb:hover,
+.worker-details-floating-card::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
 }
 
 [data-theme='dark'] .modal-content {
@@ -521,7 +574,7 @@ a {
 @keyframes modalFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(10px);
+    transform: scale(0.96) translateY(8px);
   }
   to {
     opacity: 1;
@@ -2949,21 +3002,10 @@ a {
   transform: scale(1.08);
 }
 
-/* Custom Floating Toast / Popup Dialog */
-.toast-popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(5, 8, 16, 0.75);
-  backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
+.faq-list {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.8rem;
 }
 
 .faq-item {

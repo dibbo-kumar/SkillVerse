@@ -3284,103 +3284,117 @@ function App() {
 
         return (
           <div className="toast-popup-overlay" onClick={(e) => e.target.className.includes('toast-popup-overlay') && setViewingWorker(null)}>
-            <div className="worker-details-floating-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '620px', maxHeight: '90vh', overflowY: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div className="worker-details-floating-card modal-content-wide" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '860px', width: '92vw', padding: '1.4rem 1.6rem', maxHeight: '92vh', overflowY: 'auto' }}>
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.8rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
                   <img
                     src={viewingWorker.user?.profilePicture}
                     alt={viewingWorker.user?.name}
-                    style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }}
+                    style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }}
                   />
                   <div>
-                    <h2 style={{ fontSize: '1.4rem', marginBottom: '0.2rem' }}>{viewingWorker.user?.name}</h2>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <span className="badge badge-verified"><ShieldCheck size={13} /> NID Verified Expert</span>
-                      <span className="badge badge-gold"><Award size={13} /> {viewingWorker.careerLevel || 'Master'} Rank</span>
+                      <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>{viewingWorker.user?.name}</h2>
+                      <span className="badge badge-verified" style={{ fontSize: '0.72rem', padding: '0.15rem 0.45rem' }}><ShieldCheck size={12} /> NID Verified</span>
+                      <span className="badge badge-gold" style={{ fontSize: '0.72rem', padding: '0.15rem 0.45rem' }}><Award size={12} /> {viewingWorker.careerLevel || 'Master'} Rank</span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                      ⭐ {avgRating} Rating • {viewingWorker.experienceYears || 5}+ Years Exp • Base: ৳{wBasePrice}
                     </div>
                   </div>
                 </div>
-                <button className="btn-icon" onClick={() => setViewingWorker(null)} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '50%', padding: '0.4rem' }}>
-                  <XCircle size={22} color="var(--text-muted)" />
+                <button onClick={() => setViewingWorker(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', padding: '0.35rem', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}>
+                  <XCircle size={20} />
                 </button>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.8rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '10px', marginBottom: '1.2rem', border: '1px solid var(--border-color)' }}>
-                <div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Average Rating:</span>
-                  <div style={{ fontWeight: 'bold', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <Award size={15} /> {avgRating} / 5.0
-                  </div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Experience:</span>
-                  <div style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{viewingWorker.experienceYears || 7}+ Years</div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Fixed Base Price:</span>
-                  <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>BDT {wBasePrice}</div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Initial Advance:</span>
-                  <div style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>BDT {Math.round(wBasePrice * 1.05)} (Inc. 5% VAT)</div>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '1.2rem' }}>
-                <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>Service Area & Location</h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', color: 'var(--primary)' }}>
-                  <MapPin size={16} /> <strong>{viewingWorker.serviceArea || viewingWorker.user?.address}</strong>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '1.2rem' }}>
-                <h4 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>Skills & Specialization</h4>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {(viewingWorker.skills || '').split(',').map((skill, sIdx) => (
-                    <span key={sIdx} className="badge badge-pending" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-                      {skill.trim()}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Dynamic Client Feedbacks & Reviews */}
-              <div style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                <h4 style={{ fontSize: '0.95rem', color: 'var(--accent-gold)', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Sparkles size={15} /> Authentic Client Reviews & Ratings</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{viewingWorkerReviews.length} Verified Review(s)</span>
-                </h4>
-
-                {loadingWorkerReviews ? (
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>Loading reviews...</div>
-                ) : viewingWorkerReviews.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '200px', overflowY: 'auto' }}>
-                    {viewingWorkerReviews.map((rev, rIdx) => (
-                      <div key={rIdx} style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '6px', borderLeft: '3px solid var(--accent-gold)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                          <strong style={{ fontSize: '0.85rem', color: 'var(--text-heading)' }}>{rev.customerName || rev.customer?.name || 'Verified Customer'}</strong>
-                          <span style={{ color: 'var(--accent-gold)', fontSize: '0.8rem', fontWeight: 'bold' }}>⭐ {rev.rating || 5}.0</span>
-                        </div>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 0.3rem 0', fontStyle: 'italic', lineHeight: 1.4 }}>
-                          "{rev.comment || rev.reviewComment || 'Great service!'}"
-                        </p>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                          Service: {rev.serviceType || 'Maintenance'} {rev.reviewedAt ? `• ${new Date(rev.reviewedAt).toLocaleDateString()}` : ''}
-                        </div>
+              {/* 2-Column Grid */}
+              <div className="modal-two-col">
+                {/* Left Column: Stats, Location, Skills */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Rating:</span>
+                      <div style={{ fontWeight: 'bold', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem' }}>
+                        <Award size={13} /> {avgRating} / 5.0
                       </div>
-                    ))}
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Experience:</span>
+                      <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '0.85rem' }}>{viewingWorker.experienceYears || 7}+ Years</div>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Base Price:</span>
+                      <div style={{ fontWeight: 'bold', color: 'var(--primary)', fontSize: '0.85rem' }}>৳{wBasePrice}</div>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Initial Advance:</span>
+                      <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '0.85rem' }}>৳{Math.round(wBasePrice * 1.05)} (Inc. 5% VAT)</div>
+                    </div>
                   </div>
-                ) : (
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '0.75rem' }}>
-                    No reviews published yet for this technician. Book now and leave your feedback after service completion!
+
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.65rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Service Coverage & Location</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: 'var(--primary)', fontWeight: 600 }}>
+                      <MapPin size={14} /> <span>{viewingWorker.serviceArea || viewingWorker.user?.address || 'Dhaka Metropolitan'}</span>
+                    </div>
                   </div>
-                )}
+
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', fontWeight: 600 }}>Specializations & Skills</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                      {(viewingWorker.skills || '').split(',').map((skill, sIdx) => (
+                        <span key={sIdx} className="badge badge-pending" style={{ fontSize: '0.72rem', background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '0.2rem 0.5rem' }}>
+                          {skill.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Customer Reviews */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: 'var(--accent-gold)', fontWeight: 700 }}>
+                      <Sparkles size={14} /> Verified Client Reviews
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{viewingWorkerReviews.length} Review(s)</span>
+                  </div>
+
+                  {loadingWorkerReviews ? (
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>Loading reviews...</div>
+                  ) : viewingWorkerReviews.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
+                      {viewingWorkerReviews.map((rev, rIdx) => (
+                        <div key={rIdx} style={{ background: 'rgba(255,255,255,0.02)', padding: '0.5rem 0.7rem', borderRadius: '6px', borderLeft: '3px solid var(--accent-gold)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
+                            <strong style={{ fontSize: '0.78rem', color: 'var(--text-heading)' }}>{rev.customerName || rev.customer?.name || 'Verified Customer'}</strong>
+                            <span style={{ color: 'var(--accent-gold)', fontSize: '0.72rem', fontWeight: 'bold' }}>⭐ {rev.rating || 5}.0</span>
+                          </div>
+                          <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: '0 0 0.15rem 0', fontStyle: 'italic', lineHeight: 1.3 }}>
+                            "{rev.comment || rev.reviewComment || 'Great service!'}"
+                          </p>
+                          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                            {rev.serviceType || 'Maintenance'} {rev.reviewedAt ? `• ${new Date(rev.reviewedAt).toLocaleDateString()}` : ''}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
+                      No reviews published yet. Book now and share your feedback after completion!
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                <button className="btn btn-secondary" onClick={() => setViewingWorker(null)}>Close</button>
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '0.8rem', marginTop: '1rem' }}>
+                <button className="btn btn-secondary" style={{ padding: '0.45rem 1rem', fontSize: '0.82rem' }} onClick={() => setViewingWorker(null)}>Close</button>
                 <button
                   className="btn btn-primary"
+                  style={{ padding: '0.45rem 1.2rem', fontSize: '0.82rem', fontWeight: 600 }}
                   onClick={() => {
                     const w = viewingWorker;
                     setViewingWorker(null);
@@ -3391,7 +3405,7 @@ function App() {
                     });
                   }}
                 >
-                  Select & Book Service
+                  Select & Book Service →
                 </button>
               </div>
             </div>
@@ -3399,258 +3413,314 @@ function App() {
         );
       })()}
 
-      {/* --- UPGRADED BOOKING CONFIRMATION MODAL --- */}
+      {/* --- UPGRADED BOOKING CONFIRMATION MODAL (NO SCROLLING, FIXED 2-COLUMN WIDE LAYOUT) --- */}
       {selectedWorker && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '540px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.2rem' }}>
-              <img src={selectedWorker.user?.profilePicture || selectedWorker.profilePicture || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} alt={selectedWorker.user?.name || selectedWorker.name || 'Technician'} style={{ width: 50, height: 50, borderRadius: '50%', objectFit: 'cover' }} />
-              <div>
-                <h2 style={{ fontSize: '1.3rem' }}>Assign: {selectedWorker.user?.name || selectedWorker.name || 'Technician'}</h2>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Rank Level: <strong>{selectedWorker.careerLevel || 'Standard'}</strong></div>
-              </div>
-            </div>
-
-            {/* Mandatory Base Price & 5% VAT Breakdown Notice */}
-            <div style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.08))', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px', padding: '0.85rem', marginBottom: '1.2rem', fontSize: '0.85rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                <span>Worker Base Advance (Minimum Required):</span>
-                <strong>BDT {selectedWorker.basePrice || 300}</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', color: 'var(--text-muted)' }}>
-                <span>SkillVerse Platform VAT (5%):</span>
-                <span>+ BDT {(((selectedWorker.basePrice || 300) * 0.05)).toFixed(2)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.4rem', color: 'var(--primary)', fontWeight: 'bold' }}>
-                <span>Total Advance Payable Upon Confirmation:</span>
-                <span>BDT {(((selectedWorker.basePrice || 300) * 1.05)).toFixed(2)}</span>
-              </div>
-              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.74rem', color: 'var(--text-muted)', lineHeight: 1.35 }}>
-                💡 <em>Note: When the worker accepts/counters, you will pay this advance to confirm. Live dispatch timer (1 hr per 1000m) begins immediately with instant refund protection if delayed!</em>
-              </p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-              <div>
-                <label className="form-label">Service Category</label>
-                <input className="form-input" style={{ fontSize: '0.9rem' }} value={(selectedWorker.skills || '').split(',')[0]?.trim() || 'General Service'} readOnly />
-              </div>
-              <div>
-                <label className="form-label">Suggested Cost (BDT)</label>
-                <input className="form-input" style={{ fontSize: '0.9rem' }} value={bookingCost} readOnly />
-              </div>
-            </div>
-
-            {/* Custom pricing offer option */}
-            <div style={{ marginBottom: '1rem' }}>
-              <label className="form-label">Offer Your Price (Optional BDT)</label>
-              <input
-                type="number"
-                className="form-input"
-                placeholder={`e.g. ${bookingCost}`}
-                value={offeredPrice}
-                onChange={e => setOfferedPrice(e.target.value)}
-              />
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Technician can review and counter-offer this pricing suggestion.</span>
-            </div>
-
-            {/* Service Location / Address Selector with GPS & Manual toggle */}
-            <div style={{ marginBottom: '1rem' }}>
-              <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Select Service Location</span>
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  <button
-                    type="button"
-                    className={`btn ${locationMode === 'gps' ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
-                    onClick={() => {
-                      setLocationMode('gps');
-                      handleFetchGpsLocation();
-                    }}
-                  >
-                    <Navigation size={12} /> Share GPS Location
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn ${locationMode === 'manual' ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
-                    onClick={() => setLocationMode('manual')}
-                  >
-                    Write Down Location
-                  </button>
-                </div>
-              </label>
-
-              {locationMode === 'gps' ? (
-                <div style={{ background: 'rgba(16, 185, 129, 0.06)', padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-                    <MapPin size={16} color="var(--primary)" />
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--primary)' }}>
-                      {isGpsLoading ? 'Detecting current GPS coordinates...' : 'GPS Location Captured'}
+        <div className="modal-overlay" onClick={(e) => e.target.className.includes('modal-overlay') && setSelectedWorker(null)}>
+          <div className="modal-content modal-content-wide" style={{ maxWidth: '860px', width: '92vw', padding: '1.3rem 1.6rem', maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            {/* Top Bar Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.7rem', marginBottom: '0.9rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                <img 
+                  src={selectedWorker.user?.profilePicture || selectedWorker.profilePicture || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} 
+                  alt={selectedWorker.user?.name || selectedWorker.name || 'Technician'} 
+                  style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} 
+                />
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Book {selectedWorker.user?.name || selectedWorker.name || 'Technician'}</h2>
+                    <span className="badge badge-verified" style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem' }}>
+                      <ShieldCheck size={12} /> {selectedWorker.careerLevel || 'Master'} Rank
                     </span>
                   </div>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={bookingAddress || 'GPS Location: 23.8759° N, 90.3795° E (Uttara Sector 12)'}
-                    onChange={(e) => setBookingAddress(e.target.value)}
-                  />
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
-                    This exact GPS location will be shared with the technician so they can navigate to your doorstep.
+                  <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                    ⭐ {selectedWorker.user?.rating || 4.9} • {selectedWorker.experienceYears || 5}+ yrs exp • {selectedWorker.serviceArea || selectedWorker.user?.address || 'Dhaka Area'}
+                  </span>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setSelectedWorker(null);
+                  setOfferedPrice('');
+                  setBookingAddress('');
+                  setSelectedApplianceId('');
+                  setSelectedPhotoPreset(null);
+                  setCustomPhotoUrl('');
+                }}
+                style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', padding: '0.35rem', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
+              >
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            {/* 2-Column Grid Layout */}
+            <div className="modal-two-col">
+              {/* Left Column: Pricing breakdown, Category, Custom offer, Location */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* Advance & VAT Breakdown Pill */}
+                <div style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(59,130,246,0.06))', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '10px', padding: '0.7rem 0.9rem', fontSize: '0.8rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Technician Base Advance:</span>
+                    <strong style={{ color: 'var(--text-primary)' }}>৳{selectedWorker.basePrice || 300}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem', color: 'var(--text-muted)' }}>
+                    <span>Platform VAT (5%):</span>
+                    <span>+৳{(((selectedWorker.basePrice || 300) * 0.05)).toFixed(1)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '0.3rem', color: 'var(--primary)', fontWeight: 'bold' }}>
+                    <span>Total Advance Payable:</span>
+                    <span style={{ fontSize: '0.92rem' }}>৳{(((selectedWorker.basePrice || 300) * 1.05)).toFixed(1)}</span>
+                  </div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.25rem', fontStyle: 'italic' }}>
+                    🛡️ Advance is paid upon worker confirmation. 1hr/km dispatch protection with instant refund if delayed.
                   </div>
                 </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {addresses.length > 0 && (
-                    <select
-                      className="form-select"
-                      value={bookingAddress}
-                      onChange={(e) => setBookingAddress(e.target.value)}
-                    >
-                      <option value="">-- Choose a Saved Address --</option>
-                      {addresses.map(a => (
-                        <option key={a.id} value={a.address}>
-                          {a.label} ({a.type}) - {a.address} {a.isDefault ? '⭐ [Default]' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Enter house, flat, road, and landmark (e.g. House 14, Road 4, Sector 12, Uttara, Dhaka)"
-                    value={bookingAddress}
-                    onChange={(e) => setBookingAddress(e.target.value)}
-                    required
-                  />
-                </div>
-              )}
-            </div>
 
-            <div style={{ marginBottom: '1rem' }}>
-              <label className="form-label">Describe the problem</label>
-              <textarea
-                className="form-textarea"
-                rows="2"
-                placeholder="Describe specific fixes needed (e.g. compressor oil leak, broken safety valve)"
-                value={bookingDesc}
-                onChange={(e) => setBookingDesc(e.target.value)}
-              />
-            </div>
-
-            {/* Attach photo section */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Attach Problem Photo (Optional)</span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Worker will see this image</span>
-              </label>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                  <label className="btn btn-secondary" style={{ fontSize: '0.78rem', padding: '0.4rem', justifyContent: 'center', cursor: 'pointer' }}>
-                    <Camera size={14} /> Upload Local Image
-                    <input
-                      type="file"
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                      onChange={e => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setCustomPhotoUrl(reader.result);
-                            setSelectedPhotoPreset(null);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                  </label>
-
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    style={{ fontSize: '0.78rem', padding: '0.4rem', justifyContent: 'center', borderColor: 'rgba(59, 130, 246, 0.4)', color: '#60a5fa' }}
-                    onClick={() => {
-                      setCustomPhotoUrl("https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?w=600");
-                      setSelectedPhotoPreset(null);
-                    }}
-                  >
-                    💡 Use Demo Problem Photo
-                  </button>
+                {/* Category & Suggested Cost */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.5rem' }}>
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Service Category</label>
+                    <input className="form-input" style={{ fontSize: '0.8rem', padding: '0.35rem 0.55rem' }} value={(selectedWorker.skills || '').split(',')[0]?.trim() || 'General Service'} readOnly />
+                  </div>
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Suggested Cost</label>
+                    <input className="form-input" style={{ fontSize: '0.8rem', padding: '0.35rem 0.55rem', fontWeight: 600, color: 'var(--primary)' }} value={`৳ ${bookingCost}`} readOnly />
+                  </div>
                 </div>
 
-                {/* Direct Image URL input */}
+                {/* Offer Price Input */}
                 <div>
+                  <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Your Offer Price (Optional BDT)</span>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Technician may counter</span>
+                  </label>
                   <input
-                    type="text"
+                    type="number"
                     className="form-input"
-                    style={{ fontSize: '0.82rem', padding: '0.4rem 0.6rem' }}
-                    placeholder="Or paste image URL (e.g. https://images.unsplash.com/...)"
-                    value={customPhotoUrl?.startsWith('data:') ? '' : (customPhotoUrl || '')}
-                    onChange={e => {
-                      setCustomPhotoUrl(e.target.value);
-                      setSelectedPhotoPreset(null);
-                    }}
+                    style={{ fontSize: '0.8rem', padding: '0.35rem 0.55rem' }}
+                    placeholder={`e.g. ${bookingCost}`}
+                    value={offeredPrice}
+                    onChange={e => setOfferedPrice(e.target.value)}
                   />
                 </div>
 
-                {/* Demo preset buttons */}
-                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Quick Presets:</span>
-                  {[
-                    { label: 'AC Unit', url: 'https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?w=600' },
-                    { label: 'Electrical', url: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600' },
-                    { label: 'Plumbing', url: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600' },
-                    { label: 'Appliance', url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600' }
-                  ].map((preset, pIdx) => (
-                    <button
-                      key={pIdx}
-                      type="button"
-                      className="badge"
-                      style={{
-                        background: customPhotoUrl === preset.url ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-                        color: customPhotoUrl === preset.url ? '#000000' : 'var(--text-secondary)',
-                        border: '1px solid var(--border-color)',
-                        cursor: 'pointer',
-                        padding: '0.2rem 0.5rem'
-                      }}
-                      onClick={() => {
-                        setCustomPhotoUrl(preset.url);
+                {/* Service Location Selector */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                    <label className="form-label" style={{ fontSize: '0.74rem', margin: 0 }}>Service Location</label>
+                    <div style={{ display: 'flex', gap: '0.3rem' }}>
+                      <button
+                        type="button"
+                        className={`btn ${locationMode === 'gps' ? 'btn-primary' : 'btn-secondary'}`}
+                        style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem' }}
+                        onClick={() => {
+                          setLocationMode('gps');
+                          handleFetchGpsLocation();
+                        }}
+                      >
+                        <Navigation size={11} /> Share GPS
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn ${locationMode === 'manual' ? 'btn-primary' : 'btn-secondary'}`}
+                        style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem' }}
+                        onClick={() => setLocationMode('manual')}
+                      >
+                        Manual Address
+                      </button>
+                    </div>
+                  </div>
+
+                  {locationMode === 'gps' ? (
+                    <div style={{ background: 'rgba(16, 185, 129, 0.06)', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.2rem' }}>
+                        <MapPin size={13} color="var(--primary)" />
+                        <span style={{ fontSize: '0.74rem', fontWeight: 'bold', color: 'var(--primary)' }}>
+                          {isGpsLoading ? 'Detecting GPS...' : 'GPS Live Location'}
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ fontSize: '0.76rem', padding: '0.3rem 0.5rem' }}
+                        value={bookingAddress || 'GPS Location: 23.8759° N, 90.3795° E (Uttara Sector 12)'}
+                        onChange={(e) => setBookingAddress(e.target.value)}
+                      />
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                      {addresses.length > 0 && (
+                        <select
+                          className="form-select"
+                          style={{ fontSize: '0.76rem', padding: '0.3rem 0.5rem' }}
+                          value={bookingAddress}
+                          onChange={(e) => setBookingAddress(e.target.value)}
+                        >
+                          <option value="">-- Choose Saved Address --</option>
+                          {addresses.map(a => (
+                            <option key={a.id} value={a.address}>
+                              {a.label} ({a.type}) - {a.address}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ fontSize: '0.76rem', padding: '0.3rem 0.5rem' }}
+                        placeholder="House, Road, Area, Landmark (e.g. House 14, Road 4, Uttara)"
+                        value={bookingAddress}
+                        onChange={(e) => setBookingAddress(e.target.value)}
+                        required
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Problem Description & Photo Attachment */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* Describe Problem */}
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Describe the Problem</label>
+                  <textarea
+                    className="form-textarea"
+                    rows="3"
+                    style={{ fontSize: '0.8rem', padding: '0.4rem 0.55rem', resize: 'none' }}
+                    placeholder="Describe issue (e.g. AC cooling gas leak, water dripping, strange noise)"
+                    value={bookingDesc}
+                    onChange={(e) => setBookingDesc(e.target.value)}
+                  />
+                </div>
+
+                {/* Diagnostic Photo Section */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                    <label className="form-label" style={{ fontSize: '0.74rem', margin: 0 }}>Diagnostic Photo (Optional)</label>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Helps technician prepare</span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                      <label className="btn btn-secondary" style={{ fontSize: '0.72rem', padding: '0.35rem 0.5rem', justifyContent: 'center', cursor: 'pointer' }}>
+                        <Camera size={13} /> Upload Image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={e => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setCustomPhotoUrl(reader.result);
+                                setSelectedPhotoPreset(null);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ fontSize: '0.72rem', padding: '0.35rem 0.5rem', justifyContent: 'center', borderColor: 'rgba(59, 130, 246, 0.35)', color: '#60a5fa' }}
+                        onClick={() => {
+                          setCustomPhotoUrl("https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?w=600");
+                          setSelectedPhotoPreset(null);
+                        }}
+                      >
+                        💡 Use Demo Photo
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      className="form-input"
+                      style={{ fontSize: '0.76rem', padding: '0.3rem 0.5rem' }}
+                      placeholder="Or paste image URL (https://...)"
+                      value={customPhotoUrl?.startsWith('data:') ? '' : (customPhotoUrl || '')}
+                      onChange={e => {
+                        setCustomPhotoUrl(e.target.value);
                         setSelectedPhotoPreset(null);
                       }}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
+                    />
 
-                {/* Preview Box */}
-                {customPhotoUrl && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', background: 'rgba(255,255,255,0.03)', padding: '0.6rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.4)' }}>
-                    <img src={customPhotoUrl} alt="Attached Preview" style={{ width: '80px', height: '55px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)' }} />
-                    <div>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 'bold', display: 'block' }}>✔ Photo Attached</span>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Assigned worker will see this diagnostic photo</span>
+                    {/* Presets */}
+                    <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Presets:</span>
+                      {[
+                        { label: 'AC Unit', url: 'https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?w=600' },
+                        { label: 'Electrical', url: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600' },
+                        { label: 'Plumbing', url: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600' },
+                        { label: 'Appliance', url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600' }
+                      ].map((preset, pIdx) => (
+                        <button
+                          key={pIdx}
+                          type="button"
+                          className="badge"
+                          style={{
+                            background: customPhotoUrl === preset.url ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
+                            color: customPhotoUrl === preset.url ? '#000000' : 'var(--text-secondary)',
+                            border: '1px solid var(--border-color)',
+                            cursor: 'pointer',
+                            fontSize: '0.68rem',
+                            padding: '0.15rem 0.4rem'
+                          }}
+                          onClick={() => {
+                            setCustomPhotoUrl(preset.url);
+                            setSelectedPhotoPreset(null);
+                          }}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
                     </div>
-                    <button type="button" className="btn-icon" onClick={() => setCustomPhotoUrl('')} style={{ marginLeft: 'auto' }}>
-                      <Trash2 size={15} color="var(--accent-rose)" />
-                    </button>
+
+                    {/* Photo Preview */}
+                    {customPhotoUrl && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: 'rgba(255,255,255,0.03)', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.35)' }}>
+                        <img src={customPhotoUrl} alt="Preview" style={{ width: '56px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                        <div style={{ flex: 1 }}>
+                          <span style={{ fontSize: '0.74rem', color: 'var(--primary)', fontWeight: 'bold', display: 'block' }}>✔ Photo Attached</span>
+                          <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Shared with technician for diagnosis</span>
+                        </div>
+                        <button type="button" className="btn-icon" onClick={() => setCustomPhotoUrl('')}>
+                          <Trash2 size={13} color="var(--accent-rose)" />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-              <button className="btn btn-secondary" onClick={() => {
-                setSelectedWorker(null);
-                setOfferedPrice('');
-                setBookingAddress('');
-                setSelectedApplianceId('');
-                setSelectedPhotoPreset(null);
-                setCustomPhotoUrl('');
-              }}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleCreateBooking}>Confirm & Dispatch</button>
+            {/* Footer Buttons */}
+            <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '0.8rem', marginTop: '0.9rem' }}>
+              <button 
+                type="button"
+                className="btn btn-secondary" 
+                style={{ padding: '0.45rem 1rem', fontSize: '0.82rem' }}
+                onClick={() => {
+                  setSelectedWorker(null);
+                  setOfferedPrice('');
+                  setBookingAddress('');
+                  setSelectedApplianceId('');
+                  setSelectedPhotoPreset(null);
+                  setCustomPhotoUrl('');
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                className="btn btn-primary" 
+                style={{ padding: '0.45rem 1.3rem', fontSize: '0.82rem', fontWeight: 600 }}
+                onClick={handleCreateBooking}
+              >
+                Confirm & Dispatch →
+              </button>
             </div>
           </div>
         </div>
@@ -3658,42 +3728,50 @@ function App() {
 
       {/* --- PAYMENT SHEET MODAL --- */}
       {payingBooking && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '460px' }}>
-            <h2 style={{ fontSize: '1.30rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.8rem' }}>
-              💳 Secure Direct Payment Gateways
-            </h2>
+        <div className="modal-overlay" onClick={(e) => e.target.className.includes('modal-overlay') && setPayingBooking(null)}>
+          <div className="modal-content modal-content-standard" style={{ maxWidth: '500px', padding: '1.5rem' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.7rem', marginBottom: '1rem' }}>
+              <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>
+                💳 Secure Payment Gateway
+              </h2>
+              <button onClick={() => setPayingBooking(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <XCircle size={20} />
+              </button>
+            </div>
 
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-              Verify contract completion for <strong>{payingBooking.serviceType}</strong>. Funds will be directly disbursed to worker wallet.
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              Verify contract completion for <strong>{payingBooking.serviceType}</strong> with <strong>{payingBooking.worker?.name || 'Technician'}</strong>.
             </p>
 
-            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-              <span>Payable Amount:</span>
-              <strong style={{ color: 'var(--primary)', fontSize: '1.1rem' }}>BDT {payingBooking.estimatedCost}</strong>
+            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <span style={{ fontSize: '0.85rem' }}>Total Payable Amount:</span>
+              <strong style={{ color: 'var(--primary)', fontSize: '1.15rem' }}>BDT ৳{payingBooking.estimatedCost}</strong>
             </div>
 
             {/* Payment options selection */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label className="form-label">Select Payment Channel</label>
+            <div style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontSize: '0.76rem', marginBottom: '0.3rem' }}>Select Payment Channel</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
                 <button
+                  type="button"
                   className={`btn ${paymentMethod === 'bkash' ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ justifyContent: 'center', fontSize: '0.8rem', padding: '0.5rem' }}
+                  style={{ justifyContent: 'center', fontSize: '0.78rem', padding: '0.45rem' }}
                   onClick={() => setPaymentMethod('bkash')}
                 >
                   bKash / Nagad
                 </button>
                 <button
+                  type="button"
                   className={`btn ${paymentMethod === 'bank' ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ justifyContent: 'center', fontSize: '0.8rem', padding: '0.5rem' }}
+                  style={{ justifyContent: 'center', fontSize: '0.78rem', padding: '0.45rem' }}
                   onClick={() => setPaymentMethod('bank')}
                 >
                   Card / Bank
                 </button>
                 <button
+                  type="button"
                   className={`btn ${paymentMethod === 'cash' ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ justifyContent: 'center', fontSize: '0.8rem', padding: '0.5rem' }}
+                  style={{ justifyContent: 'center', fontSize: '0.78rem', padding: '0.45rem' }}
                   onClick={() => setPaymentMethod('cash')}
                 >
                   Cash on Hand
@@ -3702,13 +3780,14 @@ function App() {
             </div>
 
             {paymentMethod !== 'cash' && (
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label className="form-label">
+              <div style={{ marginBottom: '1rem' }}>
+                <label className="form-label" style={{ fontSize: '0.76rem', marginBottom: '0.3rem' }}>
                   {paymentMethod === 'bkash' ? 'bKash / Nagad Mobile Wallet Number' : 'Bank Account / Card Number'}
                 </label>
                 <input
                   type="text"
                   className="form-input"
+                  style={{ fontSize: '0.82rem', padding: '0.45rem 0.6rem' }}
                   placeholder={paymentMethod === 'bkash' ? 'e.g. 01811223344' : 'e.g. 1234-5678-9012'}
                   value={walletNumber}
                   onChange={e => setWalletNumber(e.target.value)}
@@ -3717,14 +3796,14 @@ function App() {
             )}
 
             {paymentMethod === 'cash' && (
-              <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '0.8rem', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.2)', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
-                Hand over <strong>BDT {payingBooking.estimatedCost}</strong> in cash directly to technician <strong>{payingBooking.worker?.name}</strong> upon completion inspection.
+              <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '0.7rem', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.2)', marginBottom: '1rem', fontSize: '0.78rem' }}>
+                Hand over <strong>BDT ৳{payingBooking.estimatedCost}</strong> in cash directly to technician upon completion inspection.
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-              <button className="btn btn-secondary" onClick={() => setPayingBooking(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={submitSimulatedPayment}>Confirm & Authorize Payment</button>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '0.8rem' }}>
+              <button className="btn btn-secondary" style={{ padding: '0.45rem 0.9rem', fontSize: '0.82rem' }} onClick={() => setPayingBooking(null)}>Cancel</button>
+              <button className="btn btn-primary" style={{ padding: '0.45rem 1.1rem', fontSize: '0.82rem' }} onClick={submitSimulatedPayment}>Confirm & Pay</button>
             </div>
           </div>
         </div>

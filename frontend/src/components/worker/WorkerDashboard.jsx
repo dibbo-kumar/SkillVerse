@@ -2335,7 +2335,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
       )}
 
       {/* ============================================================ */}
-      {/* --- 5-STEP WORKER VERIFICATION WIZARD MODAL --- */}
+      {/* --- 5-STEP WORKER VERIFICATION WIZARD MODAL (FIXED WIDESCREEN NO-SCROLL) --- */}
       {/* ============================================================ */}
       {showVerifModal && (
         <div
@@ -2343,43 +2343,42 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
           style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10000,
             background: 'rgba(5, 10, 20, 0.88)', backdropFilter: 'blur(12px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
-            overflowY: 'auto'
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
           }}
           onClick={(e) => e.target.className.includes('toast-popup-overlay') && setShowVerifModal(false)}
         >
           <div
-            className="glass-card"
+            className="glass-card modal-content-wide"
             style={{
-              maxWidth: '750px', width: '100%', maxHeight: '92vh', overflowY: 'auto',
-              background: 'var(--bg-secondary)', padding: '2rem', borderRadius: '22px',
-              border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '1.4rem'
+              maxWidth: '860px', width: '92vw', maxHeight: '92vh', overflowY: 'auto',
+              background: 'var(--bg-secondary)', padding: '1.4rem 1.6rem', borderRadius: '18px',
+              border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.9rem'
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
-                <div style={{ width: 40, height: 40, borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
-                  <ShieldCheck size={22} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.6rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <div style={{ width: 36, height: 36, borderRadius: '8px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                  <ShieldCheck size={20} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '1.25rem', color: 'var(--text-heading)', margin: 0 }}>Technician Verification Dossier</h3>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Step {verifStep} of 5: {verifStep === 1 ? 'Personal & NID' : verifStep === 2 ? 'Address Details' : verifStep === 3 ? 'Professional Experience' : verifStep === 4 ? 'Payout Setup' : 'Review & Submit'}</span>
+                  <h3 style={{ fontSize: '1.15rem', color: 'var(--text-heading)', margin: 0, fontWeight: 700 }}>Technician Verification Dossier</h3>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>Step {verifStep} of 5: {verifStep === 1 ? 'Personal & NID' : verifStep === 2 ? 'Address & Service Location' : verifStep === 3 ? 'Professional Experience' : verifStep === 4 ? 'Payout Setup' : 'Review & Submit'}</span>
                 </div>
               </div>
 
-              <button onClick={() => setShowVerifModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                <XCircle size={24} />
+              <button onClick={() => setShowVerifModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', padding: '0.35rem', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
+                <XCircle size={20} />
               </button>
             </div>
 
             {/* Stepper Progress Bar */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem', textAlign: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.35rem', textAlign: 'center' }}>
               {[
                 { s: 1, label: '1. Identity' },
-                { s: 2, label: '2. Address' },
-                { s: 3, label: '3. Professional' },
+                { s: 2, label: '2. Address & Location' },
+                { s: 3, label: '3. Experience' },
                 { s: 4, label: '4. Payout' },
                 { s: 5, label: '5. Review' }
               ].map((stepItem) => (
@@ -2387,9 +2386,9 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                   key={stepItem.s}
                   onClick={() => setVerifStep(stepItem.s)}
                   style={{
-                    padding: '0.5rem 0.2rem',
-                    borderRadius: '8px',
-                    fontSize: '0.75rem',
+                    padding: '0.35rem 0.2rem',
+                    borderRadius: '6px',
+                    fontSize: '0.72rem',
                     fontWeight: 'bold',
                     cursor: 'pointer',
                     background: verifStep === stepItem.s
@@ -2412,350 +2411,348 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
             {/* ================= STEP 1: PERSONAL & IDENTITY ================= */}
             {verifStep === 1 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                <div style={{ background: 'rgba(56, 189, 248, 0.08)', padding: '0.8rem 1rem', borderRadius: '10px', border: '1px solid rgba(56, 189, 248, 0.2)', fontSize: '0.8rem', color: '#bae6fd' }}>
-                  ℹ️ Provide your official National ID (NID) and identity photo. Your phone number must be verified via SMS OTP simulator.
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                <div style={{ background: 'rgba(56, 189, 248, 0.08)', padding: '0.5rem 0.8rem', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.2)', fontSize: '0.75rem', color: '#bae6fd' }}>
+                  ℹ️ Provide official NID details and verify your phone number via SMS OTP code.
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Full Legal Name (as per NID) *</label>
-                    <input
-                      type="text"
-                      required
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.65rem' }}
-                      value={verifForm.fullName}
-                      onChange={(e) => setVerifForm({ ...verifForm, fullName: e.target.value })}
-                      placeholder="e.g. Kamrul Islam"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Date of Birth *</label>
-                    <input
-                      type="date"
-                      required
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.65rem' }}
-                      value={verifForm.dateOfBirth}
-                      onChange={(e) => setVerifForm({ ...verifForm, dateOfBirth: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                {/* Phone & OTP Simulator */}
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Phone Number & Verification *</label>
-                    {phoneOtpVerified || verifForm.phoneVerified ? (
-                      <span className="badge badge-verified" style={{ fontSize: '0.75rem' }}>✔ Phone OTP Verified</span>
-                    ) : (
-                      <span className="badge badge-pending" style={{ fontSize: '0.75rem' }}>⚠️ Verification Pending</span>
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '0.6rem' }}>
-                    <input
-                      type="text"
-                      required
-                      className="form-input"
-                      style={{ flex: 1, padding: '0.65rem' }}
-                      value={verifForm.phone}
-                      onChange={(e) => setVerifForm({ ...verifForm, phone: e.target.value })}
-                      placeholder="01711223344"
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      style={{ fontSize: '0.8rem', padding: '0.65rem 1rem' }}
-                      onClick={handleSendPhoneOtp}
-                    >
-                      {phoneOtpSent ? '🔄 Resend OTP' : '📲 Send OTP Code'}
-                    </button>
-                  </div>
-
-                  {phoneOtpSent && !phoneOtpVerified && (
-                    <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', background: 'rgba(16, 185, 129, 0.08)', padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                      <div style={{ flex: 1 }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>
-                          Simulated SMS Code: <strong style={{ color: 'var(--primary)', letterSpacing: '0.1rem' }}>{phoneOtpSimulatedCode}</strong>
-                        </span>
+                <div className="modal-two-col">
+                  {/* Left Column: Personal info & OTP */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '0.5rem' }}>
+                      <div>
+                        <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Full Legal Name (as per NID) *</label>
                         <input
                           type="text"
-                          maxLength="6"
+                          required
                           className="form-input"
-                          style={{ width: '100%', padding: '0.5rem', marginTop: '0.3rem', fontSize: '1rem', letterSpacing: '0.2rem', textAlign: 'center', fontWeight: 'bold' }}
-                          placeholder="Enter OTP"
-                          value={phoneOtpInput}
-                          onChange={(e) => setPhoneOtpInput(e.target.value)}
+                          style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
+                          value={verifForm.fullName}
+                          onChange={(e) => setVerifForm({ ...verifForm, fullName: e.target.value })}
+                          placeholder="e.g. Kamrul Islam"
                         />
                       </div>
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        style={{ padding: '0.65rem 1rem', fontSize: '0.8rem', height: 'fit-content' }}
-                        onClick={handleVerifyPhoneOtp}
-                      >
-                        Verify OTP ✔
-                      </button>
+                      <div>
+                        <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Date of Birth *</label>
+                        <input
+                          type="date"
+                          required
+                          className="form-input"
+                          style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
+                          value={verifForm.dateOfBirth}
+                          onChange={(e) => setVerifForm({ ...verifForm, dateOfBirth: e.target.value })}
+                        />
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                {/* NID Number */}
-                <div>
-                  <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>National ID (NID) Number *</label>
-                  <input
-                    type="text"
-                    required
-                    className="form-input"
-                    style={{ width: '100%', padding: '0.65rem', fontFamily: 'monospace' }}
-                    value={verifForm.nidNumber}
-                    onChange={(e) => setVerifForm({ ...verifForm, nidNumber: e.target.value })}
-                    placeholder="10 or 17 digit NID number (e.g. 5928194028)"
-                  />
-                </div>
+                    {/* Phone & OTP Simulator */}
+                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.65rem 0.8rem', borderRadius: '10px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label className="form-label" style={{ fontSize: '0.74rem', margin: 0 }}>Phone & SMS OTP *</label>
+                        {phoneOtpVerified || verifForm.phoneVerified ? (
+                          <span className="badge badge-verified" style={{ fontSize: '0.68rem', padding: '0.1rem 0.4rem' }}>✔ Verified</span>
+                        ) : (
+                          <span className="badge badge-pending" style={{ fontSize: '0.68rem', padding: '0.1rem 0.4rem' }}>⚠️ Pending</span>
+                        )}
+                      </div>
 
-                {/* NID Photos & Selfie */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.9rem' }}>
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>NID Front Image *</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <div style={{ display: 'flex', gap: '0.4rem' }}>
+                        <input
+                          type="text"
+                          required
+                          className="form-input"
+                          style={{ flex: 1, padding: '0.35rem 0.55rem', fontSize: '0.8rem' }}
+                          value={verifForm.phone}
+                          onChange={(e) => setVerifForm({ ...verifForm, phone: e.target.value })}
+                          placeholder="01711223344"
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.72rem', padding: '0.35rem 0.7rem', whiteSpace: 'nowrap' }}
+                          onClick={handleSendPhoneOtp}
+                        >
+                          {phoneOtpSent ? '🔄 Resend' : '📲 Send Code'}
+                        </button>
+                      </div>
+
+                      {phoneOtpSent && !phoneOtpVerified && (
+                        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', background: 'rgba(16, 185, 129, 0.08)', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Code: <strong style={{ color: 'var(--primary)' }}>{phoneOtpSimulatedCode}</strong></span>
+                          <input
+                            type="text"
+                            maxLength="6"
+                            className="form-input"
+                            style={{ flex: 1, padding: '0.25rem 0.4rem', fontSize: '0.85rem', letterSpacing: '0.15rem', textAlign: 'center', fontWeight: 'bold' }}
+                            placeholder="OTP"
+                            value={phoneOtpInput}
+                            onChange={(e) => setPhoneOtpInput(e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            style={{ padding: '0.3rem 0.65rem', fontSize: '0.72rem' }}
+                            onClick={handleVerifyPhoneOtp}
+                          >
+                            Verify ✔
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>National ID (NID) Number *</label>
                       <input
                         type="text"
+                        required
                         className="form-input"
-                        style={{ width: '100%', padding: '0.45rem', fontSize: '0.75rem' }}
-                        value={verifForm.nidFrontPhoto.substring(0, 40) + (verifForm.nidFrontPhoto.length > 40 ? '...' : '')}
-                        onChange={(e) => setVerifForm({ ...verifForm, nidFrontPhoto: e.target.value })}
-                        placeholder="Image URL or choose file..."
+                        style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem', fontFamily: 'monospace' }}
+                        value={verifForm.nidNumber}
+                        onChange={(e) => setVerifForm({ ...verifForm, nidNumber: e.target.value })}
+                        placeholder="10 or 17 digit NID number (e.g. 5928194028)"
                       />
-                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                        <label className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <UploadCloud size={13} /> Select from PC
+                    </div>
+                  </div>
+
+                  {/* Right Column: NID Photos & Selfie */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '0.15rem' }}>NID Front Image *</label>
+                      <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.74rem' }}
+                          value={verifForm.nidFrontPhoto.substring(0, 35) + (verifForm.nidFrontPhoto.length > 35 ? '...' : '')}
+                          onChange={(e) => setVerifForm({ ...verifForm, nidFrontPhoto: e.target.value })}
+                          placeholder="Image URL or upload..."
+                        />
+                        <label className="btn btn-secondary" style={{ fontSize: '0.68rem', padding: '0.3rem 0.55rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <UploadCloud size={11} /> Upload
                           <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleLocalPhotoUpload(e, 'nidFrontPhoto')} />
                         </label>
                         <button
                           type="button"
                           className="btn btn-secondary"
-                          style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}
+                          style={{ fontSize: '0.65rem', padding: '0.25rem 0.45rem' }}
                           onClick={() => setVerifForm({ ...verifForm, nidFrontPhoto: 'https://images.unsplash.com/photo-1589330694653-dad6ef0190b8?w=600' })}
                         >
-                          Sample
+                          Demo
                         </button>
                       </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>NID Back Image *</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <input
-                        type="text"
-                        className="form-input"
-                        style={{ width: '100%', padding: '0.45rem', fontSize: '0.75rem' }}
-                        value={verifForm.nidBackPhoto.substring(0, 40) + (verifForm.nidBackPhoto.length > 40 ? '...' : '')}
-                        onChange={(e) => setVerifForm({ ...verifForm, nidBackPhoto: e.target.value })}
-                        placeholder="Image URL or choose file..."
-                      />
-                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                        <label className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <UploadCloud size={13} /> Select from PC
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '0.15rem' }}>NID Back Image *</label>
+                      <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.74rem' }}
+                          value={verifForm.nidBackPhoto.substring(0, 35) + (verifForm.nidBackPhoto.length > 35 ? '...' : '')}
+                          onChange={(e) => setVerifForm({ ...verifForm, nidBackPhoto: e.target.value })}
+                          placeholder="Image URL or upload..."
+                        />
+                        <label className="btn btn-secondary" style={{ fontSize: '0.68rem', padding: '0.3rem 0.55rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <UploadCloud size={11} /> Upload
                           <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleLocalPhotoUpload(e, 'nidBackPhoto')} />
                         </label>
                         <button
                           type="button"
                           className="btn btn-secondary"
-                          style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}
+                          style={{ fontSize: '0.65rem', padding: '0.25rem 0.45rem' }}
                           onClick={() => setVerifForm({ ...verifForm, nidBackPhoto: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=600' })}
                         >
-                          Sample
+                          Demo
                         </button>
                       </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Profile / Selfie Photo *</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <input
-                        type="text"
-                        className="form-input"
-                        style={{ width: '100%', padding: '0.45rem', fontSize: '0.75rem' }}
-                        value={verifForm.profileSelfiePhoto.substring(0, 40) + (verifForm.profileSelfiePhoto.length > 40 ? '...' : '')}
-                        onChange={(e) => setVerifForm({ ...verifForm, profileSelfiePhoto: e.target.value })}
-                        placeholder="Image URL or choose file..."
-                      />
-                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                        <label className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <UploadCloud size={13} /> Select from PC
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '0.15rem' }}>Selfie / Profile Image *</label>
+                      <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.74rem' }}
+                          value={verifForm.profileSelfiePhoto.substring(0, 35) + (verifForm.profileSelfiePhoto.length > 35 ? '...' : '')}
+                          onChange={(e) => setVerifForm({ ...verifForm, profileSelfiePhoto: e.target.value })}
+                          placeholder="Image URL or upload..."
+                        />
+                        <label className="btn btn-secondary" style={{ fontSize: '0.68rem', padding: '0.3rem 0.55rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <UploadCloud size={11} /> Upload
                           <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleLocalPhotoUpload(e, 'profileSelfiePhoto')} />
                         </label>
                         <button
                           type="button"
                           className="btn btn-secondary"
-                          style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}
+                          style={{ fontSize: '0.65rem', padding: '0.25rem 0.45rem' }}
                           onClick={() => setVerifForm({ ...verifForm, profileSelfiePhoto: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=600' })}
                         >
-                          Sample
+                          Demo
                         </button>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.4rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.6rem' }}>
                   <button
                     type="button"
                     className="btn btn-primary"
-                    style={{ padding: '0.65rem 1.4rem' }}
+                    style={{ padding: '0.45rem 1.2rem', fontSize: '0.82rem', fontWeight: 600 }}
                     onClick={() => setVerifStep(2)}
                   >
-                    Next: Address Details →
+                    Next: Address & Location →
                   </button>
                 </div>
               </div>
             )}
 
-            {/* ================= STEP 2: ADDRESS DETAILS ================= */}
+            {/* ================= STEP 2: ADDRESS & PUBLIC SERVICE LOCATION (FIXED 2-COLUMN NO SCROLL) ================= */}
             {verifStep === 2 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                <div style={{ background: 'rgba(59, 130, 246, 0.08)', padding: '0.8rem 1rem', borderRadius: '10px', border: '1px solid rgba(59, 130, 246, 0.2)', fontSize: '0.8rem', color: '#93c5fd' }}>
-                  📍 Accurate present and permanent addresses are required for local dispatch safety and police verification records.
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ background: 'rgba(59, 130, 246, 0.08)', padding: '0.45rem 0.8rem', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)', fontSize: '0.74rem', color: '#93c5fd' }}>
+                  📍 Accurate present address and pinned service base are required for customer discovery and safe dispatch.
                 </div>
 
-                <div>
-                  <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Present / Current Living Address *</label>
-                  <input
-                    type="text"
-                    required
-                    className="form-input"
-                    style={{ width: '100%', padding: '0.65rem' }}
-                    value={verifForm.presentAddress}
-                    onChange={(e) => setVerifForm({ ...verifForm, presentAddress: e.target.value })}
-                    placeholder="House 14, Road 4, Sector 12, Uttara"
-                  />
-                </div>
-
-                <div>
-                  <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Permanent / Home Address *</label>
-                  <input
-                    type="text"
-                    required
-                    className="form-input"
-                    style={{ width: '100%', padding: '0.65rem' }}
-                    value={verifForm.permanentAddress}
-                    onChange={(e) => setVerifForm({ ...verifForm, permanentAddress: e.target.value })}
-                    placeholder="Vill: Rasulpur, P.O: Bancharampur, Brahmanbaria"
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.8rem' }}>
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Division *</label>
-                    <select
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.65rem' }}
-                      value={verifForm.division}
-                      onChange={(e) => setVerifForm({ ...verifForm, division: e.target.value })}
-                    >
-                      {['Dhaka', 'Chittagong', 'Rajshahi', 'Khulna', 'Sylhet', 'Barisal', 'Rangpur', 'Mymensingh'].map(d => (
-                        <option key={d} value={d} style={{ background: '#111827' }}>{d}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>District *</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.65rem' }}
-                      value={verifForm.district}
-                      onChange={(e) => setVerifForm({ ...verifForm, district: e.target.value })}
-                      placeholder="Dhaka"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>City / Area *</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.65rem' }}
-                      value={verifForm.cityArea}
-                      onChange={(e) => setVerifForm({ ...verifForm, cityArea: e.target.value })}
-                      placeholder="Uttara / Mirpur"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Postal Code *</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.65rem' }}
-                      value={verifForm.postalCode}
-                      onChange={(e) => setVerifForm({ ...verifForm, postalCode: e.target.value })}
-                      placeholder="1230"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Detailed Landmark & Area Instructions (Optional)</label>
-                  <textarea
-                    rows={2}
-                    className="form-input"
-                    style={{ width: '100%', padding: '0.65rem' }}
-                    value={verifForm.detailedAddress}
-                    onChange={(e) => setVerifForm({ ...verifForm, detailedAddress: e.target.value })}
-                    placeholder="Near Milestone College, 3rd floor apartment..."
-                  />
-                </div>
-
-                {/* --- SERVICE LOCATION (FOR CUSTOMER MATCHING & DISPATCH) --- */}
-                <div style={{
-                  background: 'rgba(16, 185, 129, 0.05)',
-                  padding: '1.2rem',
-                  borderRadius: '14px',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.9rem'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div className="modal-two-col">
+                  {/* Left Column: Residential Addresses */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Compass size={18} color="#10b981" />
-                        <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-heading)' }}>
-                          Public Service Location (Customer Discovery Base) *
+                      <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.15rem' }}>Present / Current Living Address *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.38rem 0.55rem', fontSize: '0.78rem' }}
+                        value={verifForm.presentAddress}
+                        onChange={(e) => setVerifForm({ ...verifForm, presentAddress: e.target.value })}
+                        placeholder="House 14, Road 4, Sector 12, Uttara, Dhaka"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.15rem' }}>Permanent / Home Address *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.38rem 0.55rem', fontSize: '0.78rem' }}
+                        value={verifForm.permanentAddress}
+                        onChange={(e) => setVerifForm({ ...verifForm, permanentAddress: e.target.value })}
+                        placeholder="Vill: Rasulpur, Brahmanbaria"
+                      />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.35rem' }}>
+                      <div>
+                        <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '0.1rem' }}>Division *</label>
+                        <select
+                          className="form-input"
+                          style={{ width: '100%', padding: '0.35rem 0.4rem', fontSize: '0.74rem' }}
+                          value={verifForm.division}
+                          onChange={(e) => setVerifForm({ ...verifForm, division: e.target.value })}
+                        >
+                          {['Dhaka', 'Chittagong', 'Rajshahi', 'Khulna', 'Sylhet', 'Barisal', 'Rangpur', 'Mymensingh'].map(d => (
+                            <option key={d} value={d} style={{ background: '#111827' }}>{d}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '0.1rem' }}>District *</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          style={{ width: '100%', padding: '0.35rem 0.4rem', fontSize: '0.74rem' }}
+                          value={verifForm.district}
+                          onChange={(e) => setVerifForm({ ...verifForm, district: e.target.value })}
+                          placeholder="Dhaka"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '0.1rem' }}>City / Area *</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          style={{ width: '100%', padding: '0.35rem 0.4rem', fontSize: '0.74rem' }}
+                          value={verifForm.cityArea}
+                          onChange={(e) => setVerifForm({ ...verifForm, cityArea: e.target.value })}
+                          placeholder="Uttara"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '0.1rem' }}>Postal Code *</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          style={{ width: '100%', padding: '0.35rem 0.4rem', fontSize: '0.74rem' }}
+                          value={verifForm.postalCode}
+                          onChange={(e) => setVerifForm({ ...verifForm, postalCode: e.target.value })}
+                          placeholder="1230"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '0.15rem' }}>Landmark & Area Instructions (Optional)</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.35rem 0.55rem', fontSize: '0.76rem' }}
+                        value={verifForm.detailedAddress}
+                        onChange={(e) => setVerifForm({ ...verifForm, detailedAddress: e.target.value })}
+                        placeholder="Near Milestone College, Sector 12"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right Column: Public Service Location Card (Customer Discovery Base) */}
+                  <div style={{
+                    background: 'rgba(16, 185, 129, 0.05)',
+                    padding: '0.9rem',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(16, 185, 129, 0.25)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.65rem'
+                  }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Compass size={16} color="#10b981" />
+                        <h4 style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-heading)', fontWeight: 700 }}>
+                          Public Service Base Pin *
                         </h4>
                       </div>
-                      <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        Customers within your service radius will match and book you based on this point. (No manual typing)
+                      <p style={{ margin: '0.15rem 0 0', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                        Customers in this radius discover and book you based on this pinpoint.
                       </p>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {/* Quick GPS & Map Select Buttons */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
                       <button
                         type="button"
                         className="btn btn-secondary"
                         onClick={handleUseCurrentLocationForVerif}
                         disabled={isDetectingGps}
                         style={{
-                          fontSize: '0.75rem',
-                          padding: '0.45rem 0.8rem',
+                          fontSize: '0.72rem',
+                          padding: '0.35rem 0.5rem',
+                          justifyContent: 'center',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.4rem',
+                          gap: '0.3rem',
                           background: 'rgba(16, 185, 129, 0.15)',
                           borderColor: 'rgba(16, 185, 129, 0.3)',
                           color: '#34d399'
                         }}
                       >
-                        <Navigation size={13} className={isDetectingGps ? 'animate-spin' : ''} />
-                        {isDetectingGps ? 'Detecting GPS...' : 'Use My Current Location'}
+                        <Navigation size={12} className={isDetectingGps ? 'animate-spin' : ''} />
+                        {isDetectingGps ? 'Detecting...' : 'Use My GPS'}
                       </button>
 
                       <button
@@ -2763,322 +2760,317 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                         className="btn btn-primary"
                         onClick={() => setShowLocationPickerModal(true)}
                         style={{
-                          fontSize: '0.75rem',
-                          padding: '0.45rem 0.8rem',
+                          fontSize: '0.72rem',
+                          padding: '0.35rem 0.5rem',
+                          justifyContent: 'center',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.4rem',
+                          gap: '0.3rem',
                           background: 'linear-gradient(90deg, #10b981, #059669)'
                         }}
                       >
-                        <MapPin size={13} />
-                        Select Location on Map
+                        <MapPin size={12} />
+                        Select on Map
                       </button>
                     </div>
-                  </div>
 
-                  {/* Read-only Location Coordinates & Area Display */}
-                  <div style={{
-                    background: 'rgba(5, 10, 20, 0.6)',
-                    padding: '0.8rem 1rem',
-                    borderRadius: '10px',
-                    border: '1px solid var(--border-color)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '0.6rem'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <MapPin size={16} color="#10b981" />
-                      <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-heading)' }}>
-                          {verifForm.serviceArea || 'Sector 11, Uttara, Dhaka'}
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                          Service Area Name (Displayed to nearby customers)
+                    {/* Pin Status Box */}
+                    <div style={{
+                      background: 'rgba(5, 10, 20, 0.6)',
+                      padding: '0.65rem 0.8rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.35rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <MapPin size={14} color="#10b981" />
+                        <div>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-heading)' }}>
+                            {verifForm.serviceArea || 'Sector 11, Uttara, Dhaka'}
+                          </div>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                            Active Service Area (Customer Matchpoint)
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                      <span className="badge" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-                        Lat: {Number(verifForm.latitude || 23.8720).toFixed(5)}
-                      </span>
-                      <span className="badge" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-                        Lon: {Number(verifForm.longitude || 90.3810).toFixed(5)}
-                      </span>
-                      <span className="badge badge-verified" style={{ fontSize: '0.7rem' }}>
-                        ✔ Pin Active
-                      </span>
+                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontFamily: 'monospace', fontSize: '0.7rem', marginTop: '0.1rem' }}>
+                        <span className="badge" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', padding: '0.1rem 0.35rem' }}>
+                          Lat: {Number(verifForm.latitude || 23.8720).toFixed(4)}
+                        </span>
+                        <span className="badge" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', padding: '0.1rem 0.35rem' }}>
+                          Lon: {Number(verifForm.longitude || 90.3810).toFixed(4)}
+                        </span>
+                        <span className="badge badge-verified" style={{ fontSize: '0.68rem', padding: '0.1rem 0.35rem' }}>
+                          ✔ Active Pin
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => setVerifStep(1)}>← Back</button>
-                  <button type="button" className="btn btn-primary" onClick={() => setVerifStep(3)}>Next: Professional Experience →</button>
+                {/* Navigation Buttons */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.6rem' }}>
+                  <button type="button" className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }} onClick={() => setVerifStep(1)}>← Back</button>
+                  <button type="button" className="btn btn-primary" style={{ padding: '0.4rem 1.2rem', fontSize: '0.8rem', fontWeight: 600 }} onClick={() => setVerifStep(3)}>Next: Professional Experience →</button>
                 </div>
               </div>
             )}
 
             {/* ================= STEP 3: PROFESSIONAL INFO ================= */}
             {verifStep === 3 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                <div style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '0.8rem 1rem', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.2)', fontSize: '0.8rem', color: '#fde68a' }}>
-                  💡 Training certificates are <strong>optional</strong> because seasoned field technicians may rely on hands-on field experience.
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '0.45rem 0.8rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.2)', fontSize: '0.74rem', color: '#fde68a' }}>
+                  💡 Certificates are optional; experienced field technicians can highlight their hands-on skills.
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Skills & Services Provided (comma separated) *</label>
-                    <input
-                      type="text"
-                      required
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.65rem' }}
-                      value={verifForm.skills}
-                      onChange={(e) => setVerifForm({ ...verifForm, skills: e.target.value })}
-                      placeholder="AC Repair, Electrical, Plumbing, Generator Maintenance"
-                    />
-                  </div>
+                <div className="modal-two-col">
+                  {/* Left Column: Skills & Bio */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '0.5rem' }}>
+                      <div>
+                        <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.15rem' }}>Skills & Services Provided *</label>
+                        <input
+                          type="text"
+                          required
+                          className="form-input"
+                          style={{ width: '100%', padding: '0.38rem 0.55rem', fontSize: '0.78rem' }}
+                          value={verifForm.skills}
+                          onChange={(e) => setVerifForm({ ...verifForm, skills: e.target.value })}
+                          placeholder="AC Repair, Electrical, Plumbing"
+                        />
+                      </div>
 
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Years of Experience *</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="40"
-                      required
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.65rem' }}
-                      value={verifForm.experienceYears}
-                      onChange={(e) => setVerifForm({ ...verifForm, experienceYears: parseInt(e.target.value) || 0 })}
-                    />
-                  </div>
-                </div>
+                      <div>
+                        <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.15rem' }}>Years Exp *</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="40"
+                          required
+                          className="form-input"
+                          style={{ width: '100%', padding: '0.38rem 0.55rem', fontSize: '0.78rem' }}
+                          value={verifForm.experienceYears}
+                          onChange={(e) => setVerifForm({ ...verifForm, experienceYears: parseInt(e.target.value) || 0 })}
+                        />
+                      </div>
+                    </div>
 
-                <div>
-                  <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Work Experience Description *</label>
-                  <textarea
-                    rows={3}
-                    className="form-input"
-                    style={{ width: '100%', padding: '0.65rem' }}
-                    value={verifForm.experienceDescription}
-                    onChange={(e) => setVerifForm({ ...verifForm, experienceDescription: e.target.value })}
-                    placeholder="Describe your technical background, brands handled, major troubleshooting capabilities..."
-                  />
-                </div>
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.15rem' }}>Work Experience Description *</label>
+                      <textarea
+                        rows={2}
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.38rem 0.55rem', fontSize: '0.78rem', resize: 'none' }}
+                        value={verifForm.experienceDescription}
+                        onChange={(e) => setVerifForm({ ...verifForm, experienceDescription: e.target.value })}
+                        placeholder="Technical background, brands handled, major troubleshooting capabilities..."
+                      />
+                    </div>
 
-                <div>
-                  <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Previous Employer / Company (if applicable)</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    style={{ width: '100%', padding: '0.65rem' }}
-                    value={verifForm.previousEmployer}
-                    onChange={(e) => setVerifForm({ ...verifForm, previousEmployer: e.target.value })}
-                    placeholder="e.g. Walton Service Center / Self-employed contractor"
-                  />
-                </div>
-
-                {/* Optional Certificates / Documents */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.9rem' }}>
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Experience / Training Cert (Optional)</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.15rem' }}>Previous Employer / Company</label>
                       <input
                         type="text"
                         className="form-input"
-                        style={{ width: '100%', padding: '0.45rem', fontSize: '0.75rem' }}
-                        value={verifForm.experienceCertPhoto ? (verifForm.experienceCertPhoto.substring(0, 35) + '...') : ''}
-                        onChange={(e) => setVerifForm({ ...verifForm, experienceCertPhoto: e.target.value })}
-                        placeholder="Certificate URL or upload from PC..."
+                        style={{ width: '100%', padding: '0.38rem 0.55rem', fontSize: '0.78rem' }}
+                        value={verifForm.previousEmployer}
+                        onChange={(e) => setVerifForm({ ...verifForm, previousEmployer: e.target.value })}
+                        placeholder="e.g. Walton Service Center / Self-employed"
                       />
-                      <label className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', width: 'fit-content' }}>
-                        <UploadCloud size={13} /> Select from PC
-                        <input type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={(e) => handleLocalPhotoUpload(e, 'experienceCertPhoto')} />
-                      </label>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Previous Work Photo / Proof (Optional)</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <input
-                        type="text"
-                        className="form-input"
-                        style={{ width: '100%', padding: '0.45rem', fontSize: '0.75rem' }}
-                        value={verifForm.workProofPhoto ? (verifForm.workProofPhoto.substring(0, 35) + '...') : ''}
-                        onChange={(e) => setVerifForm({ ...verifForm, workProofPhoto: e.target.value })}
-                        placeholder="Work site photo or upload from PC..."
-                      />
-                      <label className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', width: 'fit-content' }}>
-                        <UploadCloud size={13} /> Select from PC
-                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleLocalPhotoUpload(e, 'workProofPhoto')} />
-                      </label>
+                  {/* Right Column: Optional Certs & Proof Photos */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '0.15rem' }}>Training Certificate (Optional)</label>
+                      <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.74rem' }}
+                          value={verifForm.experienceCertPhoto ? (verifForm.experienceCertPhoto.substring(0, 30) + '...') : ''}
+                          onChange={(e) => setVerifForm({ ...verifForm, experienceCertPhoto: e.target.value })}
+                          placeholder="Certificate URL or upload..."
+                        />
+                        <label className="btn btn-secondary" style={{ fontSize: '0.68rem', padding: '0.3rem 0.55rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <UploadCloud size={11} /> Upload
+                          <input type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={(e) => handleLocalPhotoUpload(e, 'experienceCertPhoto')} />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '0.15rem' }}>Work Site Photo / Proof (Optional)</label>
+                      <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.74rem' }}
+                          value={verifForm.workProofPhoto ? (verifForm.workProofPhoto.substring(0, 30) + '...') : ''}
+                          onChange={(e) => setVerifForm({ ...verifForm, workProofPhoto: e.target.value })}
+                          placeholder="Work site photo or upload..."
+                        />
+                        <label className="btn btn-secondary" style={{ fontSize: '0.68rem', padding: '0.3rem 0.55rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <UploadCloud size={11} /> Upload
+                          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleLocalPhotoUpload(e, 'workProofPhoto')} />
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => setVerifStep(2)}>← Back</button>
-                  <button type="button" className="btn btn-primary" onClick={() => setVerifStep(4)}>Next: Payout Setup →</button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.6rem' }}>
+                  <button type="button" className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }} onClick={() => setVerifStep(2)}>← Back</button>
+                  <button type="button" className="btn btn-primary" style={{ padding: '0.4rem 1.2rem', fontSize: '0.8rem', fontWeight: 600 }} onClick={() => setVerifStep(4)}>Next: Payout Setup →</button>
                 </div>
               </div>
             )}
 
             {/* ================= STEP 4: PAYOUT SETUP ================= */}
             {verifStep === 4 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                <div style={{ background: 'rgba(168, 85, 247, 0.08)', padding: '0.8rem 1rem', borderRadius: '10px', border: '1px solid rgba(168, 85, 247, 0.2)', fontSize: '0.8rem', color: '#e9d5ff' }}>
-                  💳 SkillVerse pays technicians 95% of job revenue directly to your chosen mobile wallet or bank account.
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ background: 'rgba(168, 85, 247, 0.08)', padding: '0.45rem 0.8rem', borderRadius: '8px', border: '1px solid rgba(168, 85, 247, 0.2)', fontSize: '0.74rem', color: '#e9d5ff' }}>
+                  💳 SkillVerse pays technicians 95% of job revenue directly to your mobile wallet or bank account.
                 </div>
 
-                <div>
-                  <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Preferred Payout Channel *</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.6rem', marginTop: '0.3rem' }}>
-                    {['bKash', 'Nagad', 'Rocket', 'Bank'].map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => setVerifForm({ ...verifForm, payoutMethod: m })}
-                        style={{
-                          padding: '0.7rem',
-                          borderRadius: '10px',
-                          border: verifForm.payoutMethod === m ? '2px solid var(--primary)' : '1px solid var(--border-color)',
-                          background: verifForm.payoutMethod === m ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.02)',
-                          color: verifForm.payoutMethod === m ? 'var(--primary)' : 'var(--text-secondary)',
-                          fontWeight: 'bold',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="modal-two-col">
+                  {/* Left: Channel Selector */}
                   <div>
-                    <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      {verifForm.payoutMethod === 'Bank' ? 'Bank Account Number *' : `${verifForm.payoutMethod} Wallet Number *`}
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.65rem', fontFamily: 'monospace' }}
-                      value={verifForm.payoutAccount}
-                      onChange={(e) => setVerifForm({ ...verifForm, payoutAccount: e.target.value })}
-                      placeholder={verifForm.payoutMethod === 'Bank' ? 'e.g. 2050123456789' : '01711223344'}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Account Holder Name *</label>
-                    <input
-                      type="text"
-                      required
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.65rem' }}
-                      value={verifForm.payoutAccountHolder}
-                      onChange={(e) => setVerifForm({ ...verifForm, payoutAccountHolder: e.target.value })}
-                      placeholder="e.g. Kamrul Islam"
-                    />
-                  </div>
-                </div>
-
-                {verifForm.payoutMethod === 'Bank' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div>
-                      <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Bank Name *</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        style={{ width: '100%', padding: '0.65rem' }}
-                        value={verifForm.payoutBankName}
-                        onChange={(e) => setVerifForm({ ...verifForm, payoutBankName: e.target.value })}
-                        placeholder="e.g. Dutch-Bangla Bank"
-                      />
-                    </div>
-                    <div>
-                      <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Branch Name *</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        style={{ width: '100%', padding: '0.65rem' }}
-                        value={verifForm.payoutBankBranch}
-                        onChange={(e) => setVerifForm({ ...verifForm, payoutBankBranch: e.target.value })}
-                        placeholder="e.g. Uttara Branch"
-                      />
+                    <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Preferred Payout Channel *</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.4rem' }}>
+                      {['bKash', 'Nagad', 'Rocket', 'Bank'].map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setVerifForm({ ...verifForm, payoutMethod: m })}
+                          style={{
+                            padding: '0.5rem',
+                            borderRadius: '8px',
+                            border: verifForm.payoutMethod === m ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                            background: verifForm.payoutMethod === m ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.02)',
+                            color: verifForm.payoutMethod === m ? 'var(--primary)' : 'var(--text-secondary)',
+                            fontWeight: 'bold',
+                            fontSize: '0.8rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {m}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                )}
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => setVerifStep(3)}>← Back</button>
-                  <button type="button" className="btn btn-primary" onClick={() => setVerifStep(5)}>Next: Review & Submit →</button>
+                  {/* Right: Account details */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.15rem' }}>
+                        {verifForm.payoutMethod === 'Bank' ? 'Bank Account Number *' : `${verifForm.payoutMethod} Mobile Number *`}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.38rem 0.55rem', fontSize: '0.78rem', fontFamily: 'monospace' }}
+                        value={verifForm.payoutAccount}
+                        onChange={(e) => setVerifForm({ ...verifForm, payoutAccount: e.target.value })}
+                        placeholder={verifForm.payoutMethod === 'Bank' ? 'e.g. 2050123456789' : '01711223344'}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.15rem' }}>Account Holder Name *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.38rem 0.55rem', fontSize: '0.78rem' }}
+                        value={verifForm.payoutAccountHolder}
+                        onChange={(e) => setVerifForm({ ...verifForm, payoutAccountHolder: e.target.value })}
+                        placeholder="e.g. Kamrul Islam"
+                      />
+                    </div>
+
+                    {verifForm.payoutMethod === 'Bank' && (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                        <div>
+                          <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '0.1rem' }}>Bank Name *</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            style={{ width: '100%', padding: '0.35rem 0.45rem', fontSize: '0.74rem' }}
+                            value={verifForm.payoutBankName}
+                            onChange={(e) => setVerifForm({ ...verifForm, payoutBankName: e.target.value })}
+                            placeholder="DBBL"
+                          />
+                        </div>
+                        <div>
+                          <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '0.1rem' }}>Branch Name *</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            style={{ width: '100%', padding: '0.35rem 0.45rem', fontSize: '0.74rem' }}
+                            value={verifForm.payoutBankBranch}
+                            onChange={(e) => setVerifForm({ ...verifForm, payoutBankBranch: e.target.value })}
+                            placeholder="Uttara"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.6rem' }}>
+                  <button type="button" className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }} onClick={() => setVerifStep(3)}>← Back</button>
+                  <button type="button" className="btn btn-primary" style={{ padding: '0.4rem 1.2rem', fontSize: '0.8rem', fontWeight: 600 }} onClick={() => setVerifStep(5)}>Next: Review & Submit →</button>
                 </div>
               </div>
             )}
 
             {/* ================= STEP 5: REVIEW & SUBMIT ================= */}
             {verifStep === 5 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                  <h4 style={{ fontSize: '0.95rem', color: 'var(--primary)', margin: '0 0 0.4rem 0' }}>📋 Verification Dossier Summary</h4>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '0.6rem 0.85rem', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                  <h4 style={{ fontSize: '0.88rem', color: 'var(--primary)', margin: '0 0 0.2rem 0', fontWeight: 700 }}>📋 Verification Dossier Summary</h4>
+                  <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: 0 }}>
                     Please review your identity and address details before submitting for Admin approval.
                   </p>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', fontSize: '0.85rem' }}>
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>LEGAL NAME & NID</span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', fontSize: '0.78rem' }}>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>LEGAL NAME & NID</span>
                     <strong style={{ color: 'var(--text-heading)' }}>{verifForm.fullName}</strong>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.2rem' }}>NID: {verifForm.nidNumber} • DOB: {verifForm.dateOfBirth}</div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.72rem', marginTop: '0.15rem' }}>NID: {verifForm.nidNumber}</div>
                   </div>
 
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>PHONE & OTP STATUS</span>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>PHONE & OTP</span>
                     <strong style={{ color: 'var(--text-heading)' }}>{verifForm.phone}</strong>
-                    <div style={{ color: phoneOtpVerified || verifForm.phoneVerified ? '#34d399' : '#f59e0b', fontSize: '0.8rem', marginTop: '0.2rem' }}>
-                      {phoneOtpVerified || verifForm.phoneVerified ? '✔ Phone Verified' : '⚠️ OTP Not Verified'}
+                    <div style={{ color: phoneOtpVerified || verifForm.phoneVerified ? '#34d399' : '#f59e0b', fontSize: '0.72rem', marginTop: '0.15rem' }}>
+                      {phoneOtpVerified || verifForm.phoneVerified ? '✔ Verified' : '⚠️ Unverified'}
                     </div>
                   </div>
 
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>PRESENT ADDRESS (PRIVATE)</span>
-                    <strong style={{ color: 'var(--text-heading)' }}>{verifForm.presentAddress}</strong>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.2rem' }}>{verifForm.cityArea}, {verifForm.division}</div>
-                  </div>
-
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>PUBLIC SERVICE BASE</span>
-                    <strong style={{ color: '#10b981' }}>{verifForm.serviceArea}</strong>
-                    <div style={{ color: '#38bdf8', fontSize: '0.78rem', marginTop: '0.2rem', fontFamily: 'monospace' }}>
-                      ({Number(verifForm.latitude || 23.8720).toFixed(4)}, {Number(verifForm.longitude || 90.3810).toFixed(4)})
-                    </div>
-                  </div>
-
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>PAYOUT METHOD</span>
-                    <strong style={{ color: 'var(--text-heading)' }}>{verifForm.payoutMethod}: {verifForm.payoutAccount}</strong>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.2rem' }}>Holder: {verifForm.payoutAccountHolder}</div>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>PUBLIC SERVICE BASE</span>
+                    <strong style={{ color: '#10b981' }}>{verifForm.serviceArea || 'Uttara, Dhaka'}</strong>
                   </div>
                 </div>
 
-                <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.8rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  🔒 <strong>Technician Safety Code:</strong> By submitting this verification dossier, you agree to SkillVerse Home Service Standards, zero-tolerance background compliance, and authentic document submission.
+                <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  🔒 <strong>Technician Safety Code:</strong> By submitting this verification dossier, you agree to SkillVerse Home Service Standards, background compliance, and authentic document submission.
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => setVerifStep(4)}>← Back</button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.6rem' }}>
+                  <button type="button" className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }} onClick={() => setVerifStep(4)}>← Back</button>
                   <button
                     type="button"
                     className="btn btn-primary"
-                    style={{ padding: '0.7rem 1.6rem', fontSize: '0.9rem', background: 'linear-gradient(90deg, #10b981, #059669)' }}
+                    style={{ padding: '0.45rem 1.4rem', fontSize: '0.82rem', fontWeight: 600, background: 'linear-gradient(90deg, #10b981, #059669)' }}
                     onClick={handleSubmitVerification}
                   >
                     🚀 Submit Verification Dossier →
