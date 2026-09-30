@@ -35,7 +35,8 @@ import {
   Camera,
   Sun,
   Moon,
-  Palette
+  Palette,
+  Star
 } from 'lucide-react';
 import CustomerProfileHub from './components/customer/CustomerProfileHub';
 import CustomerSettings from './components/customer/CustomerSettings';
@@ -51,6 +52,7 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import NotificationBell from './components/notifications/NotificationBell';
 import PostedProblemsHub from './components/bookings/PostedProblemsHub';
 import LandingPage from './components/landing/LandingPage';
+import { AVAILABLE_SKILLS_LIST } from './data/bangladeshGeoData';
 
 const API_BASE = "http://localhost:8081/api";
 
@@ -1051,38 +1053,60 @@ function App() {
     setToastPopup({ title, message, type, onDone });
   };
 
-  // GPS Location Fetcher
+  // GPS Location Fetcher for Customer Service Location
   const handleFetchGpsLocation = () => {
     setIsGpsLoading(true);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const lat = pos.coords.latitude.toFixed(4);
-          const lon = pos.coords.longitude.toFixed(4);
-          setBookingAddress(`GPS Location (${lat}, ${lon}) - Sector 12, Uttara, Dhaka`);
+        async (pos) => {
+          const lat = Number(pos.coords.latitude.toFixed(5));
+          const lon = Number(pos.coords.longitude.toFixed(5));
+          let resolvedAddr = `GPS Location (${lat}, ${lon}) - Uttara, Dhaka`;
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=16`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.display_name) {
+                resolvedAddr = data.display_name.split(',').slice(0, 4).join(', ');
+              }
+            }
+          } catch (ignored) {}
+
+          setCustomerLocation(prev => ({ ...prev, lat, lon, address: resolvedAddr }));
+          setBookingAddress(resolvedAddr);
           setIsGpsLoading(false);
+          showToast("Service Location Updated", `📍 Location set to: ${resolvedAddr}`, "success");
         },
-        () => {
-          setBookingAddress('House 14, Road 4, Sector 12, Uttara, Dhaka (GPS Shared)');
+        (err) => {
+          console.warn("GPS Geolocation Error:", err);
+          const fallback = currentUser?.address || customerLocation?.address || 'House 14, Road 4, Sector 12, Uttara, Dhaka';
+          setBookingAddress(fallback);
           setIsGpsLoading(false);
-        }
+          showToast("Location Detected", `📍 Using profile address: ${fallback}`, "info");
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
       );
     } else {
-      setBookingAddress('House 14, Road 4, Sector 12, Uttara, Dhaka');
+      const fallback = currentUser?.address || customerLocation?.address || 'House 14, Road 4, Sector 12, Uttara, Dhaka';
+      setBookingAddress(fallback);
       setIsGpsLoading(false);
+      showToast("Location Set", `📍 ${fallback}`, "info");
     }
   };
 
-  // Technician Search & Radius Filter States
+  // Technician Search, Category, Radius, Rating & Experience Filter States
   const [skillSearchQuery, setSkillSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedRadius, setSelectedRadius] = useState(999); // km (999 = All Areas)
+  const [selectedRatingFilter, setSelectedRatingFilter] = useState('all'); // 'all', 'high-to-low', 'top', 'high', 'average', 'low-to-high'
+  const [selectedExpYears, setSelectedExpYears] = useState(0); // 0 = Any Experience
   const [technicianDisplayLimit, setTechnicianDisplayLimit] = useState(6); // Max 2 rows by default
+  const [showTechnicianMap, setShowTechnicianMap] = useState(false); // Hidden by default; toggled via button
 
   // Reset display limit when filter criteria changes
   useEffect(() => {
     setTechnicianDisplayLimit(6);
-  }, [skillSearchQuery, selectedCategory, selectedRadius]);
+  }, [skillSearchQuery, selectedCategory, selectedRadius, selectedRatingFilter, selectedExpYears]);
 
   const RADIUS_OPTIONS = [
     { label: '500m', value: 0.5 },
@@ -1851,7 +1875,8 @@ function App() {
       setBookingAddress(options.propertyAddress);
     } else {
       const defaultAddr = addresses.find(a => a.isDefault);
-      setBookingAddress(defaultAddr ? (defaultAddr.address || defaultAddr.fullAddress || '') : (addresses[0]?.address || addresses[0]?.fullAddress || 'Uttara Sector 12, Dhaka'));
+      const activeCustAddr = customerLocation?.address || currentUser?.address || (defaultAddr ? (defaultAddr.address || defaultAddr.fullAddress) : 'Sector 12, Uttara, Dhaka');
+      setBookingAddress(activeCustAddr);
     }
   };
 
@@ -2848,85 +2873,209 @@ function App() {
               </div>
             </div>
 
-            {/* Category Chips */}
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-              {CATEGORY_CHIPS.map(cat => (
-                <button
-                  key={cat}
-                  className={`btn ${selectedCategory === cat ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ padding: '0.3rem 0.8rem', fontSize: '0.8rem', borderRadius: '20px' }}
-                  onClick={() => setSelectedCategory(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+            {/* Multi-Filter Toolbar: Skill, Distance, Rating, and Experience Years Dropdowns */}
+            {(() => {
+              const allUniqueSkills = Array.from(new Set([
+                ...(AVAILABLE_SKILLS_LIST || []),
+                ...(workers || []).flatMap(w => (w.skills || '').split(',').map(s => s.replace(/\(.*?\)/g, '').trim()))
+              ])).filter(Boolean);
 
-            {/* Radius Filter */}
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <MapPin size={14} color="var(--primary)" /> Search Radius:
-              </span>
-              {RADIUS_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  className={`btn ${selectedRadius === opt.value ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ padding: '0.25rem 0.7rem', fontSize: '0.75rem', borderRadius: '16px' }}
-                  onClick={() => setSelectedRadius(opt.value)}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+              const hasActiveFilters = selectedCategory !== 'All' || selectedRadius < 900 || selectedRatingFilter !== 'all' || selectedExpYears > 0 || skillSearchQuery.trim();
+
+              return (
+                <div style={{ marginBottom: '1.4rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.75rem', alignItems: 'end' }}>
+                    
+                    {/* 1. Skill / Category Dropdown */}
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.8rem', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-heading)' }}>
+                        <Briefcase size={14} color="var(--primary)" /> Trade / Skill:
+                      </label>
+                      <select
+                        className="form-input"
+                        style={{ width: '100%', fontSize: '0.86rem', padding: '0.55rem 0.75rem', borderRadius: '10px' }}
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                      >
+                        <option value="All" style={{ background: '#111827' }}>All Skills & Trades ({allUniqueSkills.length})</option>
+                        {allUniqueSkills.map(cat => (
+                          <option key={cat} value={cat} style={{ background: '#111827' }}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 2. Distance / Radius Dropdown */}
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.8rem', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-heading)' }}>
+                        <MapPin size={14} color="#38bdf8" /> Distance / Radius:
+                      </label>
+                      <select
+                        className="form-input"
+                        style={{ width: '100%', fontSize: '0.86rem', padding: '0.55rem 0.75rem', borderRadius: '10px' }}
+                        value={selectedRadius}
+                        onChange={(e) => setSelectedRadius(Number(e.target.value))}
+                      >
+                        <option value={999} style={{ background: '#111827' }}>All Areas (Any Distance)</option>
+                        <option value={0.5} style={{ background: '#111827' }}>Within 500 Meters</option>
+                        <option value={1} style={{ background: '#111827' }}>Within 1 km</option>
+                        <option value={3} style={{ background: '#111827' }}>Within 3 km</option>
+                        <option value={5} style={{ background: '#111827' }}>Within 5 km</option>
+                        <option value={10} style={{ background: '#111827' }}>Within 10 km</option>
+                        <option value={20} style={{ background: '#111827' }}>Within 20 km</option>
+                      </select>
+                    </div>
+
+                    {/* 3. Rating Dropdown */}
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.8rem', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-heading)' }}>
+                        <Star size={14} color="var(--accent-gold)" fill="var(--accent-gold)" /> Rating:
+                      </label>
+                      <select
+                        className="form-input"
+                        style={{ width: '100%', fontSize: '0.86rem', padding: '0.55rem 0.75rem', borderRadius: '10px' }}
+                        value={selectedRatingFilter}
+                        onChange={(e) => setSelectedRatingFilter(e.target.value)}
+                      >
+                        <option value="all" style={{ background: '#111827' }}>All Ratings (Any Star)</option>
+                        <option value="high-to-low" style={{ background: '#111827' }}>Highest Rated First (5★ → 1★)</option>
+                        <option value="top" style={{ background: '#111827' }}>Top Rated (4.8★ & Above)</option>
+                        <option value="high" style={{ background: '#111827' }}>High Rated (4.5★ & Above)</option>
+                        <option value="average" style={{ background: '#111827' }}>Average Rated (4.0★ & Above)</option>
+                        <option value="low-to-high" style={{ background: '#111827' }}>Lowest Rated First (1★ → 5★)</option>
+                      </select>
+                    </div>
+
+                    {/* 4. Years of Experience Dropdown */}
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.8rem', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-heading)' }}>
+                        <Award size={14} color="var(--accent-emerald)" /> Years of Experience:
+                      </label>
+                      <select
+                        className="form-input"
+                        style={{ width: '100%', fontSize: '0.86rem', padding: '0.55rem 0.75rem', borderRadius: '10px' }}
+                        value={selectedExpYears}
+                        onChange={(e) => setSelectedExpYears(Number(e.target.value) || 0)}
+                      >
+                        <option value={0} style={{ background: '#111827' }}>Any Experience Level</option>
+                        <option value={1} style={{ background: '#111827' }}>1+ Year Experience</option>
+                        <option value={2} style={{ background: '#111827' }}>2+ Years Experience</option>
+                        <option value={3} style={{ background: '#111827' }}>3+ Years (Proficient)</option>
+                        <option value={5} style={{ background: '#111827' }}>5+ Years (Senior Pro)</option>
+                        <option value={8} style={{ background: '#111827' }}>8+ Years (Master)</option>
+                        <option value={10} style={{ background: '#111827' }}>10+ Years (Veteran)</option>
+                      </select>
+                    </div>
+
+                  </div>
+
+                  {/* Reset Filters Quick Button */}
+                  {hasActiveFilters && (
+                    <div style={{ marginTop: '0.65rem', display: 'flex', justifyContent: 'flex-end' }}>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '0.25rem 0.75rem', fontSize: '0.78rem', borderRadius: '16px', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                        onClick={() => {
+                          setSelectedCategory('All');
+                          setSelectedRadius(999);
+                          setSelectedRatingFilter('all');
+                          setSelectedExpYears(0);
+                          setSkillSearchQuery('');
+                        }}
+                      >
+                        ✕ Reset All Filters
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Interactive Technician Map */}
             {(() => {
-              const filteredSearchWorkers = workers
-                .filter(w => w.user?.verified)
+              const filteredSearchWorkers = (workers || [])
+                .filter(w => !w.user || w.user.verified || w.user.isVerified || w.user.status === 'ACTIVE' || w.available !== false)
                 .filter(w => {
+                  const workerSkillsStr = (w.skills || '').toLowerCase();
+
                   // Skill / keyword search filter
                   if (skillSearchQuery.trim()) {
                     const q = skillSearchQuery.toLowerCase();
-                    const skillMatch = (w.skills || '').toLowerCase().includes(q);
+                    const skillMatch = workerSkillsStr.includes(q);
                     const nameMatch = (w.user?.name || '').toLowerCase().includes(q);
                     const areaMatch = (w.serviceArea || '').toLowerCase().includes(q);
                     if (!skillMatch && !nameMatch && !areaMatch) return false;
                   }
-                  // Category chip filter
-                  if (selectedCategory !== 'All') {
-                    const catLower = selectedCategory.toLowerCase();
-                    if (catLower.includes('ac')) {
-                      const hasAc = (w.skills || '').toLowerCase().includes('ac') || (w.skills || '').toLowerCase().includes('hvac');
-                      if (!hasAc) return false;
-                    } else if (catLower.includes('plumb')) {
-                      if (!(w.skills || '').toLowerCase().includes('plumb')) return false;
-                    } else if (catLower.includes('electr')) {
-                      if (!(w.skills || '').toLowerCase().includes('electr')) return false;
-                    } else if (catLower.includes('paint')) {
-                      if (!(w.skills || '').toLowerCase().includes('paint')) return false;
-                    } else {
-                      if (!(w.skills || '').toLowerCase().includes(catLower)) return false;
+
+                  // Category dropdown filter (Matches any of worker's skills)
+                  if (selectedCategory && selectedCategory !== 'All') {
+                    const catLower = selectedCategory.toLowerCase().trim();
+                    let matches = workerSkillsStr.includes(catLower);
+
+                    if (!matches) {
+                      const tokens = catLower.split(/[^a-z0-9]+/).filter(t => t.length >= 3 && !['and', 'repair', 'servicing', 'fitting', 'systems'].includes(t));
+                      for (const token of tokens) {
+                        if (workerSkillsStr.includes(token)) {
+                          matches = true;
+                          break;
+                        }
+                      }
+                    }
+
+                    if (!matches) {
+                      if (catLower.includes('ac') && (workerSkillsStr.includes('ac') || workerSkillsStr.includes('hvac'))) matches = true;
+                      else if (catLower.includes('plumb') && workerSkillsStr.includes('plumb')) matches = true;
+                      else if (catLower.includes('electr') && workerSkillsStr.includes('electr')) matches = true;
+                      else if (catLower.includes('paint') && workerSkillsStr.includes('paint')) matches = true;
+                      else if (catLower.includes('carpenter') && (workerSkillsStr.includes('carpenter') || workerSkillsStr.includes('wood'))) matches = true;
+                      else if (catLower.includes('cctv') && (workerSkillsStr.includes('cctv') || workerSkillsStr.includes('security'))) matches = true;
+                    }
+
+                    if (!matches) return false;
+                  }
+
+                  // 3. Minimum Experience Years Filter
+                  if (selectedExpYears > 0) {
+                    const workerExp = w.experienceYears || 0;
+                    if (workerExp < selectedExpYears) {
+                      const skillExpMatches = workerSkillsStr.matchAll(/\((\d+)\s*(?:yrs|years|yr)?\)/g);
+                      let hasQualifiedSkill = false;
+                      for (const sem of skillExpMatches) {
+                        if (parseInt(sem[1], 10) >= selectedExpYears) {
+                          hasQualifiedSkill = true;
+                          break;
+                        }
+                      }
+                      if (!hasQualifiedSkill) return false;
                     }
                   }
+
+                  // 4. Rating Threshold Filter
+                  if (selectedRatingFilter === 'top' || selectedRatingFilter === 'high' || selectedRatingFilter === 'average') {
+                    const r = Number(w.user?.rating || 4.8);
+                    if (selectedRatingFilter === 'top' && r < 4.8) return false;
+                    if (selectedRatingFilter === 'high' && r < 4.5) return false;
+                    if (selectedRatingFilter === 'average' && r < 4.0) return false;
+                  }
+
                   return true;
+                })
+                .sort((a, b) => {
+                  const ratingA = Number(a.user?.rating || 4.8);
+                  const ratingB = Number(b.user?.rating || 4.8);
+                  if (selectedRatingFilter === 'high-to-low' || selectedRatingFilter === 'top' || selectedRatingFilter === 'high') {
+                    return ratingB - ratingA;
+                  }
+                  if (selectedRatingFilter === 'low-to-high') {
+                    return ratingA - ratingB;
+                  }
+                  return 0;
                 });
 
               return (
                 <>
-                  <TechnicianMap
-                    customerLocation={customerLocation}
-                    workers={filteredSearchWorkers}
-                    selectedRadiusKm={selectedRadius}
-                    onSelectWorker={(w) => {
-                      handleOpenBookingModalWithOptions({
-                        worker: w,
-                        serviceType: w.skills.split(',')[0],
-                        suggestedCost: (w.basePrice || 300) * 2
-                      });
-                    }}
-                  />
-
-                  {/* Filtered Technician Cards with 2-Row Maximum & Load More */}
+                  {/* Filtered Technician Matching Results Header & Map Toggle Button */}
                   {(() => {
                     const matchingWorkers = filteredSearchWorkers.filter(w => {
                       // Radius filter (Haversine)
@@ -2941,6 +3090,58 @@ function App() {
 
                     return (
                       <>
+                        {/* Results Header with Map View Toggle Button */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem', marginBottom: '1.2rem', padding: '0.2rem 0' }}>
+                          <div>
+                            <h3 style={{ fontSize: '1.2rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-heading)' }}>
+                              Matched Verified Technicians
+                              <span className="badge badge-verified" style={{ fontSize: '0.78rem', padding: '0.15rem 0.5rem' }}>
+                                {matchingWorkers.length} {matchingWorkers.length === 1 ? 'Worker' : 'Workers'} Found
+                              </span>
+                            </h3>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
+                              Showing active pros matching your skill, distance, rating, and experience filters.
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            className={`btn ${showTechnicianMap ? 'btn-primary' : 'btn-secondary'}`}
+                            onClick={() => setShowTechnicianMap(prev => !prev)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.45rem',
+                              fontSize: '0.85rem',
+                              padding: '0.5rem 1rem',
+                              borderRadius: '12px',
+                              fontWeight: 600
+                            }}
+                          >
+                            <MapPin size={16} color={showTechnicianMap ? '#fff' : 'var(--primary)'} />
+                            {showTechnicianMap ? '🗺️ Hide Interactive Map' : '🗺️ Show Interactive Map'}
+                          </button>
+                        </div>
+
+                        {/* Expandable Interactive Technician Map (Only shows when user clicks button) */}
+                        {showTechnicianMap && (
+                          <div style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.25s ease' }}>
+                            <TechnicianMap
+                              customerLocation={customerLocation}
+                              workers={filteredSearchWorkers}
+                              selectedRadiusKm={selectedRadius}
+                              onSelectWorker={(w) => {
+                                handleOpenBookingModalWithOptions({
+                                  worker: w,
+                                  serviceType: w.skills.split(',')[0],
+                                  suggestedCost: (w.basePrice || 300) * 2
+                                });
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        {/* Filtered Technician Cards Grid with 2-Row Maximum & Load More */}
                         <div className="dashboard-grid" style={{ padding: 0, marginBottom: '1.5rem' }}>
                           {displayedWorkers.map(w => {
                             const isSaved = (savedWorkerIds || []).map(Number).includes(Number(w.id));
@@ -3596,17 +3797,29 @@ function App() {
 
                   {locationMode === 'gps' ? (
                     <div style={{ background: 'rgba(16, 185, 129, 0.06)', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.2rem' }}>
-                        <MapPin size={13} color="var(--primary)" />
-                        <span style={{ fontSize: '0.74rem', fontWeight: 'bold', color: 'var(--primary)' }}>
-                          {isGpsLoading ? 'Detecting GPS...' : 'GPS Live Location'}
-                        </span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <MapPin size={13} color="var(--primary)" />
+                          <span style={{ fontSize: '0.74rem', fontWeight: 'bold', color: 'var(--primary)' }}>
+                            {isGpsLoading ? 'Detecting Live GPS...' : 'GPS Live Location'}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.65rem', padding: '0.1rem 0.35rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                          onClick={handleFetchGpsLocation}
+                          disabled={isGpsLoading}
+                        >
+                          <Navigation size={10} /> {isGpsLoading ? 'Detecting...' : 'Refresh GPS'}
+                        </button>
                       </div>
                       <input
                         type="text"
                         className="form-input"
                         style={{ fontSize: '0.76rem', padding: '0.3rem 0.5rem' }}
-                        value={bookingAddress || 'GPS Location: 23.8759° N, 90.3795° E (Uttara Sector 12)'}
+                        placeholder="Detecting your current location..."
+                        value={bookingAddress}
                         onChange={(e) => setBookingAddress(e.target.value)}
                       />
                     </div>
@@ -3621,21 +3834,33 @@ function App() {
                         >
                           <option value="">-- Choose Saved Address --</option>
                           {addresses.map(a => (
-                            <option key={a.id} value={a.address}>
-                              {a.label} ({a.type}) - {a.address}
+                            <option key={a.id} value={a.address || a.fullAddress}>
+                              {a.label} ({a.type}) - {a.address || a.fullAddress}
                             </option>
                           ))}
                         </select>
                       )}
-                      <input
-                        type="text"
-                        className="form-input"
-                        style={{ fontSize: '0.76rem', padding: '0.3rem 0.5rem' }}
-                        placeholder="House, Road, Area, Landmark (e.g. House 14, Road 4, Uttara)"
-                        value={bookingAddress}
-                        onChange={(e) => setBookingAddress(e.target.value)}
-                        required
-                      />
+                      <div style={{ display: 'flex', gap: '0.3rem' }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          style={{ fontSize: '0.76rem', padding: '0.3rem 0.5rem', flex: 1 }}
+                          placeholder="House, Road, Area, Landmark (e.g. House 14, Road 4, Uttara)"
+                          value={bookingAddress}
+                          onChange={(e) => setBookingAddress(e.target.value)}
+                          required
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.68rem', padding: '0.3rem 0.5rem', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '3px' }}
+                          title="Auto-detect current location"
+                          onClick={handleFetchGpsLocation}
+                          disabled={isGpsLoading}
+                        >
+                          <MapPin size={11} color="var(--primary)" /> {isGpsLoading ? '...' : 'Live GPS'}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
