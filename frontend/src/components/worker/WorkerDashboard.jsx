@@ -5,12 +5,39 @@ import {
   KeyRound, RefreshCw, Layers, ArrowDownRight, Wallet, Award, XCircle,
   Eye, CheckCheck, Star, Camera, FileText, Send, Filter, Search, RotateCcw,
   ShieldAlert, FileCheck, Check, UploadCloud, ChevronRight, HelpCircle, AlertTriangle,
-  Compass
+  Compass, Plus, Trash2, Tag
 } from 'lucide-react';
 import WorkerBookingDetailsModal from './WorkerBookingDetailsModal';
 import LocationPickerModal from '../common/LocationPickerModal';
+import {
+  BANGLADESH_DIVISIONS,
+  BANGLADESH_DISTRICTS,
+  BANGLADESH_CITIES,
+  AVAILABLE_SKILLS_LIST
+} from '../../data/bangladeshGeoData';
 
 const API_BASE = "http://localhost:8081/api";
+
+// Helpers for multi-skill parsing and formatting
+const parseSkillsString = (skillsStr) => {
+  if (!skillsStr || typeof skillsStr !== 'string') return [];
+  return skillsStr
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(s => {
+      const match = s.match(/^(.*?)\s*\((\d+)\s*(?:yrs|years|yr)?\)$/i);
+      if (match) {
+        return { skill: match[1].trim(), years: parseInt(match[2], 10) || 1 };
+      }
+      return { skill: s, years: 3 };
+    });
+};
+
+const formatSkillsList = (list) => {
+  if (!list || list.length === 0) return '';
+  return list.map(item => `${item.skill} (${item.years} yrs)`).join(', ');
+};
 
 export default function WorkerDashboard({ currentWorker, onShowToast }) {
   const [activeSubTab, setActiveSubTab] = useState('active-job'); // 'active-job', 'requests', 'problems', 'wallet', 'history', 'verification'
@@ -76,6 +103,15 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
   const [phoneOtpInput, setPhoneOtpInput] = useState('');
   const [phoneOtpVerified, setPhoneOtpVerified] = useState(false);
 
+  // Multi-skill dynamic state for Step 3
+  const [skillsItems, setSkillsItems] = useState([
+    { skill: 'AC Repair & Servicing', years: 5 },
+    { skill: 'Electrical & Wiring', years: 4 },
+    { skill: 'Plumbing & Pipe Fitting', years: 3 }
+  ]);
+  const [selectedSkillCategory, setSelectedSkillCategory] = useState(AVAILABLE_SKILLS_LIST[0]);
+  const [selectedSkillYears, setSelectedSkillYears] = useState(3);
+
   const [verifForm, setVerifForm] = useState({
     fullName: currentWorker?.name || '',
     dateOfBirth: '1995-06-15',
@@ -95,7 +131,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
     serviceArea: currentWorker?.serviceArea || currentWorker?.address || 'Sector 11, Uttara, Dhaka',
     latitude: currentWorker?.latitude || 23.8720,
     longitude: currentWorker?.longitude || 90.3810,
-    skills: 'AC Repair, Electrical, Plumbing',
+    skills: 'AC Repair & Servicing (5 yrs), Electrical & Wiring (4 yrs), Plumbing & Pipe Fitting (3 yrs)',
     experienceYears: 5,
     experienceDescription: 'Certified technician with hands-on experience in inverter split AC servicing, gas charging, and house electrical wiring.',
     previousEmployer: 'Self-Employed / Freelance Technical Contractor',
@@ -179,6 +215,12 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
         const dataV = await resV.json();
         setVerifDossier(dataV);
         if (dataV) {
+          if (dataV.skills) {
+            const parsed = parseSkillsString(dataV.skills);
+            if (parsed.length > 0) {
+              setSkillsItems(parsed);
+            }
+          }
           setVerifForm(prev => ({
             ...prev,
             fullName: dataV.fullName || prev.fullName,
@@ -309,6 +351,38 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
       setVerifForm(prev => ({ ...prev, [field]: event.target.result }));
     };
     reader.readAsDataURL(file);
+  };
+
+  // --- MULTI-SKILL HANDLERS ---
+  const handleAddSkill = () => {
+    if (!selectedSkillCategory) return;
+    const exists = skillsItems.some(item => item.skill.toLowerCase() === selectedSkillCategory.toLowerCase());
+    if (exists) {
+      if (onShowToast) onShowToast("Skill Already Added", `${selectedSkillCategory} is already listed in your dossier skills.`, "warning");
+      return;
+    }
+    const updated = [...skillsItems, { skill: selectedSkillCategory, years: Number(selectedSkillYears) || 1 }];
+    setSkillsItems(updated);
+    const formattedStr = formatSkillsList(updated);
+    const maxExp = Math.max(...updated.map(i => i.years), 1);
+    setVerifForm(prev => ({
+      ...prev,
+      skills: formattedStr,
+      experienceYears: maxExp
+    }));
+    if (onShowToast) onShowToast("Skill Added", `Added ${selectedSkillCategory} (${selectedSkillYears} yrs experience).`, "success");
+  };
+
+  const handleRemoveSkill = (indexToRemove) => {
+    const updated = skillsItems.filter((_, idx) => idx !== indexToRemove);
+    setSkillsItems(updated);
+    const formattedStr = formatSkillsList(updated);
+    const maxExp = updated.length > 0 ? Math.max(...updated.map(i => i.years), 1) : 0;
+    setVerifForm(prev => ({
+      ...prev,
+      skills: formattedStr,
+      experienceYears: maxExp
+    }));
   };
 
   const handleUseCurrentLocationForVerif = () => {
@@ -2652,9 +2726,22 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                           className="form-input"
                           style={{ width: '100%', padding: '0.35rem 0.4rem', fontSize: '0.74rem' }}
                           value={verifForm.division}
-                          onChange={(e) => setVerifForm({ ...verifForm, division: e.target.value })}
+                          onChange={(e) => {
+                            const newDiv = e.target.value;
+                            const dists = BANGLADESH_DISTRICTS[newDiv] || ['Dhaka'];
+                            const newDist = dists[0] || '';
+                            const cities = BANGLADESH_CITIES[newDist] || ['Uttara'];
+                            const newCity = cities[0] || '';
+                            setVerifForm(prev => ({
+                              ...prev,
+                              division: newDiv,
+                              district: newDist,
+                              cityArea: newCity,
+                              serviceArea: `${newCity}, ${newDist}`
+                            }));
+                          }}
                         >
-                          {['Dhaka', 'Chittagong', 'Rajshahi', 'Khulna', 'Sylhet', 'Barisal', 'Rangpur', 'Mymensingh'].map(d => (
+                          {BANGLADESH_DIVISIONS.map(d => (
                             <option key={d} value={d} style={{ background: '#111827' }}>{d}</option>
                           ))}
                         </select>
@@ -2662,26 +2749,47 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
                       <div>
                         <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '0.1rem' }}>District *</label>
-                        <input
-                          type="text"
+                        <select
                           className="form-input"
                           style={{ width: '100%', padding: '0.35rem 0.4rem', fontSize: '0.74rem' }}
                           value={verifForm.district}
-                          onChange={(e) => setVerifForm({ ...verifForm, district: e.target.value })}
-                          placeholder="Dhaka"
-                        />
+                          onChange={(e) => {
+                            const newDist = e.target.value;
+                            const cities = BANGLADESH_CITIES[newDist] || ['Sadar'];
+                            const newCity = cities[0] || '';
+                            setVerifForm(prev => ({
+                              ...prev,
+                              district: newDist,
+                              cityArea: newCity,
+                              serviceArea: `${newCity}, ${newDist}`
+                            }));
+                          }}
+                        >
+                          {(BANGLADESH_DISTRICTS[verifForm.division] || ['Dhaka']).map(dist => (
+                            <option key={dist} value={dist} style={{ background: '#111827' }}>{dist}</option>
+                          ))}
+                        </select>
                       </div>
 
                       <div>
                         <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '0.1rem' }}>City / Area *</label>
-                        <input
-                          type="text"
+                        <select
                           className="form-input"
                           style={{ width: '100%', padding: '0.35rem 0.4rem', fontSize: '0.74rem' }}
                           value={verifForm.cityArea}
-                          onChange={(e) => setVerifForm({ ...verifForm, cityArea: e.target.value })}
-                          placeholder="Uttara"
-                        />
+                          onChange={(e) => {
+                            const newCity = e.target.value;
+                            setVerifForm(prev => ({
+                              ...prev,
+                              cityArea: newCity,
+                              serviceArea: `${newCity}, ${prev.district || 'Dhaka'}`
+                            }));
+                          }}
+                        >
+                          {(BANGLADESH_CITIES[verifForm.district] || ['Uttara', 'Dhanmondi', 'Gulshan', 'Mirpur', 'Sadar']).map(city => (
+                            <option key={city} value={city} style={{ background: '#111827' }}>{city}</option>
+                          ))}
+                        </select>
                       </div>
 
                       <div>
@@ -2819,51 +2927,132 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
               </div>
             )}
 
-            {/* ================= STEP 3: PROFESSIONAL INFO ================= */}
+            {/* ================= STEP 3: PROFESSIONAL INFO (MULTI-SKILL ADDER) ================= */}
             {verifStep === 3 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <div style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '0.45rem 0.8rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.2)', fontSize: '0.74rem', color: '#fde68a' }}>
-                  💡 Certificates are optional; experienced field technicians can highlight their hands-on skills.
+                  💡 Add each service skill you provide with your experience years. Multiple skills will appear on your verified profile.
                 </div>
 
                 <div className="modal-two-col">
-                  {/* Left Column: Skills & Bio */}
+                  {/* Left Column: Multi-Skill Selector, Badges & Bio */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '0.5rem' }}>
-                      <div>
-                        <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.15rem' }}>Skills & Services Provided *</label>
-                        <input
-                          type="text"
-                          required
-                          className="form-input"
-                          style={{ width: '100%', padding: '0.38rem 0.55rem', fontSize: '0.78rem' }}
-                          value={verifForm.skills}
-                          onChange={(e) => setVerifForm({ ...verifForm, skills: e.target.value })}
-                          placeholder="AC Repair, Electrical, Plumbing"
-                        />
-                      </div>
+                    {/* Add Skill Control Row */}
+                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.55rem 0.7rem', borderRadius: '10px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <label className="form-label" style={{ fontSize: '0.74rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <Tag size={13} color="var(--primary)" /> Select Skill & Experience Years *
+                      </label>
 
-                      <div>
-                        <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.15rem' }}>Years Exp *</label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="40"
-                          required
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.7fr 1.1fr auto', gap: '0.35rem', alignItems: 'center' }}>
+                        <select
                           className="form-input"
-                          style={{ width: '100%', padding: '0.38rem 0.55rem', fontSize: '0.78rem' }}
-                          value={verifForm.experienceYears}
-                          onChange={(e) => setVerifForm({ ...verifForm, experienceYears: parseInt(e.target.value) || 0 })}
-                        />
+                          style={{ width: '100%', padding: '0.35rem 0.45rem', fontSize: '0.75rem' }}
+                          value={selectedSkillCategory}
+                          onChange={(e) => setSelectedSkillCategory(e.target.value)}
+                        >
+                          {AVAILABLE_SKILLS_LIST.map(skill => (
+                            <option key={skill} value={skill} style={{ background: '#111827' }}>{skill}</option>
+                          ))}
+                        </select>
+
+                        <select
+                          className="form-input"
+                          style={{ width: '100%', padding: '0.35rem 0.45rem', fontSize: '0.75rem' }}
+                          value={selectedSkillYears}
+                          onChange={(e) => setSelectedSkillYears(parseInt(e.target.value) || 1)}
+                        >
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20].map(yr => (
+                            <option key={yr} value={yr} style={{ background: '#111827' }}>
+                              {yr} {yr === 1 ? 'Year' : 'Years'} Exp
+                            </option>
+                          ))}
+                        </select>
+
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={handleAddSkill}
+                          style={{
+                            fontSize: '0.74rem',
+                            padding: '0.35rem 0.7rem',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            whiteSpace: 'nowrap',
+                            background: 'linear-gradient(90deg, #10b981, #059669)',
+                            fontWeight: 600
+                          }}
+                        >
+                          <Plus size={13} /> Add Skill
+                        </button>
                       </div>
                     </div>
 
+                    {/* Active Added Skills List Chips */}
+                    <div style={{
+                      background: 'rgba(5, 10, 20, 0.4)',
+                      padding: '0.45rem 0.6rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      minHeight: '44px',
+                      maxHeight: '85px',
+                      overflowY: 'auto',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '0.35rem',
+                      alignItems: 'center'
+                    }}>
+                      {skillsItems.length === 0 ? (
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          No skills added yet. Select a skill above and click "+ Add Skill".
+                        </span>
+                      ) : (
+                        skillsItems.map((item, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              background: 'rgba(16, 185, 129, 0.12)',
+                              border: '1px solid rgba(16, 185, 129, 0.3)',
+                              borderRadius: '6px',
+                              padding: '0.2rem 0.5rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.4rem',
+                              fontSize: '0.74rem',
+                              color: 'var(--text-heading)'
+                            }}
+                          >
+                            <span style={{ fontWeight: 600, color: '#34d399' }}>{item.skill}</span>
+                            <span style={{ background: 'rgba(0,0,0,0.3)', padding: '0.05rem 0.3rem', borderRadius: '4px', fontSize: '0.68rem', color: '#94a3b8' }}>
+                              {item.years} {item.years === 1 ? 'yr' : 'yrs'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSkill(idx)}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#f87171',
+                                cursor: 'pointer',
+                                padding: '0 2px',
+                                display: 'flex',
+                                alignItems: 'center'
+                              }}
+                              title="Remove skill"
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
                     <div>
-                      <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.15rem' }}>Work Experience Description *</label>
+                      <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '0.12rem' }}>Work Experience Description *</label>
                       <textarea
                         rows={2}
                         className="form-input"
-                        style={{ width: '100%', padding: '0.38rem 0.55rem', fontSize: '0.78rem', resize: 'none' }}
+                        style={{ width: '100%', padding: '0.35rem 0.55rem', fontSize: '0.76rem', resize: 'none' }}
                         value={verifForm.experienceDescription}
                         onChange={(e) => setVerifForm({ ...verifForm, experienceDescription: e.target.value })}
                         placeholder="Technical background, brands handled, major troubleshooting capabilities..."
@@ -2871,11 +3060,11 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                     </div>
 
                     <div>
-                      <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.15rem' }}>Previous Employer / Company</label>
+                      <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '0.12rem' }}>Previous Employer / Company</label>
                       <input
                         type="text"
                         className="form-input"
-                        style={{ width: '100%', padding: '0.38rem 0.55rem', fontSize: '0.78rem' }}
+                        style={{ width: '100%', padding: '0.35rem 0.55rem', fontSize: '0.76rem' }}
                         value={verifForm.previousEmployer}
                         onChange={(e) => setVerifForm({ ...verifForm, previousEmployer: e.target.value })}
                         placeholder="e.g. Walton Service Center / Self-employed"
@@ -3040,24 +3229,31 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                   </p>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', fontSize: '0.78rem' }}>
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.45rem', fontSize: '0.78rem' }}>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>LEGAL NAME & NID</span>
                     <strong style={{ color: 'var(--text-heading)' }}>{verifForm.fullName}</strong>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.72rem', marginTop: '0.15rem' }}>NID: {verifForm.nidNumber}</div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.72rem', marginTop: '0.1rem' }}>NID: {verifForm.nidNumber} | Phone: {verifForm.phone} ({phoneOtpVerified || verifForm.phoneVerified ? '✔ Verified' : '⚠️ Unverified'})</div>
                   </div>
 
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>PHONE & OTP</span>
-                    <strong style={{ color: 'var(--text-heading)' }}>{verifForm.phone}</strong>
-                    <div style={{ color: phoneOtpVerified || verifForm.phoneVerified ? '#34d399' : '#f59e0b', fontSize: '0.72rem', marginTop: '0.15rem' }}>
-                      {phoneOtpVerified || verifForm.phoneVerified ? '✔ Verified' : '⚠️ Unverified'}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>LOCATION & DISPATCH BASE</span>
+                    <strong style={{ color: '#10b981' }}>{verifForm.serviceArea || `${verifForm.cityArea}, ${verifForm.district}`}</strong>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.72rem', marginTop: '0.1rem' }}>{verifForm.cityArea}, {verifForm.district}, {verifForm.division} - {verifForm.postalCode}</div>
+                  </div>
+
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.55rem', borderRadius: '8px', border: '1px solid var(--border-color)', gridColumn: 'span 2' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>SELECTED SKILLS & EXP</span>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--primary)', fontWeight: 'bold' }}>Max Experience: {verifForm.experienceYears} Years</span>
                     </div>
-                  </div>
-
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>PUBLIC SERVICE BASE</span>
-                    <strong style={{ color: '#10b981' }}>{verifForm.serviceArea || 'Uttara, Dhaka'}</strong>
+                    <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
+                      {skillsItems.map((sk, idx) => (
+                        <span key={idx} className="badge badge-verified" style={{ fontSize: '0.72rem' }}>
+                          {sk.skill} ({sk.years} yrs)
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
