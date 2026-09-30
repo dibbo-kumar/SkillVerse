@@ -1077,6 +1077,13 @@ function App() {
   const [skillSearchQuery, setSkillSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedRadius, setSelectedRadius] = useState(999); // km (999 = All Areas)
+  const [technicianDisplayLimit, setTechnicianDisplayLimit] = useState(6); // Max 2 rows by default
+
+  // Reset display limit when filter criteria changes
+  useEffect(() => {
+    setTechnicianDisplayLimit(6);
+  }, [skillSearchQuery, selectedCategory, selectedRadius]);
+
   const RADIUS_OPTIONS = [
     { label: '500m', value: 0.5 },
     { label: '1 km', value: 1 },
@@ -2919,98 +2926,154 @@ function App() {
                     }}
                   />
 
-                  {/* Filtered Technician Cards */}
-                  <div className="dashboard-grid" style={{ padding: 0, marginBottom: '3rem' }}>
-                    {filteredSearchWorkers
-                      .filter(w => {
-                        // Radius filter (Haversine)
-                        if (selectedRadius < 900) {
-                          const dist = w.distanceKm != null ? w.distanceKm : calculateDistanceKm(customerLocation.lat, customerLocation.lon, w.latitude || 23.8720, w.longitude || 90.3810);
-                          if (dist > selectedRadius) return false;
-                        }
-                        return true;
-                      })
-                      .map(w => {
-                        const isSaved = (savedWorkerIds || []).map(Number).includes(Number(w.id));
-                        const wLat = w.latitude || w.user?.latitude || 23.8720;
-                        const wLon = w.longitude || w.user?.longitude || 90.3810;
-                        const distKm = w.distanceKm != null ? w.distanceKm : calculateDistanceKm(customerLocation.lat, customerLocation.lon, wLat, wLon);
-                        const distStr = w.distanceString || formatDistanceString(distKm);
+                  {/* Filtered Technician Cards with 2-Row Maximum & Load More */}
+                  {(() => {
+                    const matchingWorkers = filteredSearchWorkers.filter(w => {
+                      // Radius filter (Haversine)
+                      if (selectedRadius < 900) {
+                        const dist = w.distanceKm != null ? w.distanceKm : calculateDistanceKm(customerLocation.lat, customerLocation.lon, w.latitude || 23.8720, w.longitude || 90.3810);
+                        if (dist > selectedRadius) return false;
+                      }
+                      return true;
+                    });
 
-                        return (
-                          <div key={w.id} className="glass-card" style={{ cursor: 'pointer' }} onClick={() => setViewingWorker(w)}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                              <div style={{ position: 'relative' }}>
-                                <img
-                                  src={w.user?.profilePicture || 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=150'}
-                                  alt={w.user?.name}
-                                  style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(16,185,129,0.3)' }}
-                                />
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    const displayedWorkers = matchingWorkers.slice(0, technicianDisplayLimit);
+
+                    return (
+                      <>
+                        <div className="dashboard-grid" style={{ padding: 0, marginBottom: '1.5rem' }}>
+                          {displayedWorkers.map(w => {
+                            const isSaved = (savedWorkerIds || []).map(Number).includes(Number(w.id));
+                            const wLat = w.latitude || w.user?.latitude || 23.8720;
+                            const wLon = w.longitude || w.user?.longitude || 90.3810;
+                            const distKm = w.distanceKm != null ? w.distanceKm : calculateDistanceKm(customerLocation.lat, customerLocation.lon, wLat, wLon);
+                            const distStr = w.distanceString || formatDistanceString(distKm);
+
+                            return (
+                              <div key={w.id} className="glass-card" style={{ cursor: 'pointer' }} onClick={() => setViewingWorker(w)}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                                  <div style={{ position: 'relative' }}>
+                                    <img
+                                      src={w.user?.profilePicture || 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=150'}
+                                      alt={w.user?.name}
+                                      style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(16,185,129,0.3)' }}
+                                    />
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <button
+                                      className="technician-card-bookmark-btn"
+                                      title={isSaved ? "Saved • Click to unsave" : "Save Technician"}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleToggleSaveWorker(w.id);
+                                        if (!isSaved) {
+                                          showToast("Technician Saved", `⭐ ${w.user?.name || 'Technician'} added to your Saved Technicians list.`, "success");
+                                        } else {
+                                          showToast("Technician Removed", `Removed ${w.user?.name || 'Technician'} from your Saved Technicians.`, "info");
+                                        }
+                                      }}
+                                    >
+                                      {isSaved ? (
+                                        <BookmarkCheck size={16} color="var(--primary)" fill="var(--primary)" />
+                                      ) : (
+                                        <Bookmark size={16} color="var(--text-muted)" />
+                                      )}
+                                    </button>
+                                    <span className="badge badge-verified">Verified Worker</span>
+                                  </div>
+                                </div>
+                                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{w.user?.name}</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: 'var(--accent-gold)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                                  <Award size={14} />
+                                  <span>Rating: {w.user?.rating || 4.8} ({w.careerLevel || 'Gold'} Rank)</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>
+                                  <MapPin size={13} />
+                                  <span style={{ fontWeight: 'bold' }}>{distStr}</span>
+                                  <span style={{ color: 'var(--text-muted)' }}>• {w.serviceArea}</span>
+                                </div>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                  <strong>Skills:</strong> {w.skills}
+                                </p>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                                  <strong>Base Price:</strong> <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>BDT {w.basePrice || 300}</span> (Fixed Base Amount)
+                                </p>
                                 <button
-                                  className="technician-card-bookmark-btn"
-                                  title={isSaved ? "Saved • Click to unsave" : "Save Technician"}
+                                  className="btn btn-primary"
+                                  style={{ width: '100%', justifyContent: 'center' }}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleToggleSaveWorker(w.id);
-                                    if (!isSaved) {
-                                      showToast("Technician Saved", `⭐ ${w.user?.name || 'Technician'} added to your Saved Technicians list.`, "success");
-                                    } else {
-                                      showToast("Technician Removed", `Removed ${w.user?.name || 'Technician'} from your Saved Technicians.`, "info");
-                                    }
+                                    handleOpenBookingModalWithOptions({
+                                      worker: w,
+                                      serviceType: w.skills.split(',')[0],
+                                      suggestedCost: (w.basePrice || 300) * 2
+                                    });
                                   }}
                                 >
-                                  {isSaved ? (
-                                    <BookmarkCheck size={16} color="var(--primary)" fill="var(--primary)" />
-                                  ) : (
-                                    <Bookmark size={16} color="var(--text-muted)" />
-                                  )}
+                                  Select & Book Service
                                 </button>
-                                <span className="badge badge-verified">Verified Worker</span>
                               </div>
+                            );
+                          })}
+                          {matchingWorkers.length === 0 && (
+                            <div className="glass-card" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', gridColumn: '1 / -1' }}>
+                              <Search size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+                              <div>No technicians found matching "{skillSearchQuery || selectedCategory}" within {selectedRadius < 900 ? (selectedRadius < 1 ? `${selectedRadius * 1000}m` : `${selectedRadius}km`) : 'all areas'}.</div>
+                              <div style={{ fontSize: '0.8rem', marginTop: '0.3rem' }}>Try expanding your search radius or changing the skill keyword.</div>
                             </div>
-                            <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>{w.user?.name}</h3>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: 'var(--accent-gold)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
-                              <Award size={14} />
-                              <span>Rating: {w.user?.rating || 4.8} ({w.careerLevel || 'Gold'} Rank)</span>
+                          )}
+                        </div>
+
+                        {/* Load More Technicians Controls */}
+                        {matchingWorkers.length > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem', marginBottom: '3.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                              {matchingWorkers.length > technicianDisplayLimit && (
+                                <button
+                                  className="btn btn-primary"
+                                  onClick={() => setTechnicianDisplayLimit(prev => prev + 6)}
+                                  style={{
+                                    padding: '0.65rem 1.6rem',
+                                    fontSize: '0.88rem',
+                                    fontWeight: 600,
+                                    borderRadius: '12px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
+                                  }}
+                                >
+                                  <span>Load More Technicians</span>
+                                  <span style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '0.15rem 0.45rem', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                                    +{Math.min(6, matchingWorkers.length - technicianDisplayLimit)}
+                                  </span>
+                                </button>
+                              )}
+
+                              {technicianDisplayLimit > 6 && (
+                                <button
+                                  className="btn btn-secondary"
+                                  onClick={() => setTechnicianDisplayLimit(6)}
+                                  style={{
+                                    padding: '0.65rem 1.3rem',
+                                    fontSize: '0.84rem',
+                                    borderRadius: '12px',
+                                    color: 'var(--text-secondary)'
+                                  }}
+                                >
+                                  Show Less (Top 2 Rows)
+                                </button>
+                              )}
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>
-                              <MapPin size={13} />
-                              <span style={{ fontWeight: 'bold' }}>{distStr}</span>
-                              <span style={{ color: 'var(--text-muted)' }}>• {w.serviceArea}</span>
-                            </div>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                              <strong>Skills:</strong> {w.skills}
-                            </p>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                              <strong>Base Price:</strong> <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>BDT {w.basePrice || 300}</span> (Fixed Base Amount)
-                            </p>
-                            <button
-                              className="btn btn-primary"
-                              style={{ width: '100%', justifyContent: 'center' }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenBookingModalWithOptions({
-                                  worker: w,
-                                  serviceType: w.skills.split(',')[0],
-                                  suggestedCost: (w.basePrice || 300) * 2
-                                });
-                              }}
-                            >
-                              Select & Book Service
-                            </button>
+
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                              Showing {displayedWorkers.length} of {matchingWorkers.length} nearby verified technicians
+                            </span>
                           </div>
-                        );
-                      })}
-                    {filteredSearchWorkers.length === 0 && (
-                      <div className="glass-card" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', gridColumn: '1 / -1' }}>
-                        <Search size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
-                        <div>No technicians found matching "{skillSearchQuery || selectedCategory}" within {selectedRadius < 900 ? (selectedRadius < 1 ? `${selectedRadius * 1000}m` : `${selectedRadius}km`) : 'all areas'}.</div>
-                        <div style={{ fontSize: '0.8rem', marginTop: '0.3rem' }}>Try expanding your search radius or changing the skill keyword.</div>
-                      </div>
-                    )}
-                  </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </>
               );
             })()}
