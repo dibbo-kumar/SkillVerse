@@ -661,7 +661,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
 
                   <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.85rem', color: 'var(--text-primary)', marginTop: '0.4rem' }}>
                     <div>Technician: <strong>{activeBooking.worker?.name || 'Assigned Technician'}</strong></div>
-                    <div>Location: <strong>{activeBooking.address}</strong></div>
+                    <div>Location: <strong>{activeBooking.address || (activeBooking.description?.match(/\[Location:\s*(.*?)\]/)?.[1]) || 'Customer Location'}</strong></div>
                     <div>Agreed Price: <strong style={{ color: 'var(--primary)' }}>৳{activeBooking.agreedCost || activeBooking.estimatedCost}</strong></div>
                   </div>
 
@@ -754,7 +754,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.3rem', marginBottom: 0 }}>
                         Technician: <strong style={{ color: 'var(--text-heading)' }}>{b.worker?.name || 'Searching...'}</strong> •
                         Price: <strong style={{ color: 'var(--primary)' }}>৳{currentPrice}</strong> •
-                        Address: {b.address}
+                        Address: {b.address || (b.description?.match(/\[Location:\s*(.*?)\]/)?.[1]) || 'Customer Location'}
                       </p>
                     </div>
 

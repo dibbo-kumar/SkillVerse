@@ -1066,7 +1066,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                   </div>
                   <h2 style={{ fontSize: '1.8rem', color: 'var(--text-heading)', margin: '0.4rem 0 0.2rem 0' }}>{activeJob.serviceType}</h2>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
-                    Source: <strong>{activeJob.bookingSource || 'DIRECT'}</strong> • Address: <strong>{activeJob.address}</strong>
+                    Source: <strong>{activeJob.bookingSource || 'DIRECT'}</strong> • Address: <strong>{activeJob.address || (activeJob.description?.match(/\[Location:\s*(.*?)\]/)?.[1]) || activeJob.customer?.address || 'Customer Location'}</strong>
                   </p>
                 </div>
 
@@ -1132,7 +1132,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
 
                 <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>SERVICE ADDRESS & TIME</span>
-                  <strong style={{ color: 'var(--text-heading)', display: 'block' }}>{activeJob.address}</strong>
+                  <strong style={{ color: 'var(--text-heading)', display: 'block' }}>{activeJob.address || (activeJob.description?.match(/\[Location:\s*(.*?)\]/)?.[1]) || activeJob.customer?.address || 'Customer Location'}</strong>
                   <p style={{ color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
                     Schedule: {activeJob.preferredDate || 'Tomorrow'} ({activeJob.preferredTime || '10:00 AM'})
                   </p>
@@ -1303,7 +1303,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                   {/* Column 3: Customer info */}
                   <div>
                     <strong style={{ fontSize: '0.85rem', color: 'var(--text-heading)', display: 'block' }}>{b.customer?.name}</strong>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>📍 {b.address}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>📍 {b.address || (b.description?.match(/\[Location:\s*(.*?)\]/)?.[1]) || b.customer?.address || 'Customer Location'}</span>
                   </div>
 
                   {/* Column 4: Offered & Base Price */}
@@ -1695,7 +1695,7 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                     </div>
 
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem', marginBottom: 0 }}>
-                      Customer: <strong>{b.customer?.name}</strong> • Phone: <strong>{b.customer?.phone || '01711223344'}</strong> • Address: <strong>{b.address || b.customer?.address || 'Client Address'}</strong>
+                      Customer: <strong>{b.customer?.name}</strong> • Phone: <strong>{b.customer?.phone || '01711223344'}</strong> • Address: <strong>{b.address || (b.description?.match(/\[Location:\s*(.*?)\]/)?.[1]) || b.customer?.address || 'Client Address'}</strong>
                     </p>
                     <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.2rem', marginBottom: 0 }}>
                       Worked Date: <strong>{formattedWorkedDate}</strong> • Final Price: <strong>৳{b.agreedCost || b.estimatedCost}</strong> • Net Earning: <strong style={{ color: 'var(--primary)' }}>৳{b.workerNetEarning || (b.agreedCost ? Math.round(b.agreedCost * 0.95) : 0)}</strong>

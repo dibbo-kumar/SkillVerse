@@ -268,7 +268,7 @@ export default function WorkerBookingDetailsModal({
               <MapPin size={15} color="var(--primary)" style={{ flexShrink: 0 }} />
               <div>
                 <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>Service Address</span>
-                <strong style={{ color: 'var(--text-heading)' }}>{booking.address}</strong>
+                <strong style={{ color: 'var(--text-heading)' }}>{booking.address || (booking.description?.match(/\[Location:\s*(.*?)\]/)?.[1]) || booking.customer?.address || 'Customer Location'}</strong>
               </div>
             </div>
 

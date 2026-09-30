@@ -1902,6 +1902,7 @@ function App() {
           estimatedCost: finalPrice,
           basePrice: workerBasePrice,
           beforePhoto: photoToSend,
+          address: chosenAddress,
           description: `${bookingDesc || "Standard service request."} [Location: ${chosenAddress}]`
         })
       });

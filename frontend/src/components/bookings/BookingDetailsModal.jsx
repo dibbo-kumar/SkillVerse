@@ -310,7 +310,7 @@ export default function BookingDetailsModal({
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.5rem', fontSize: '0.78rem' }}>
               <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.55rem 0.7rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Service Location</span>
-                <strong style={{ color: 'var(--text-heading)', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{booking.address}</strong>
+                <strong style={{ color: 'var(--text-heading)', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{booking.address || (booking.description?.match(/\[Location:\s*(.*?)\]/)?.[1]) || 'Customer Location'}</strong>
               </div>
               <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.55rem 0.7rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Schedule</span>

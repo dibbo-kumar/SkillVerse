@@ -93,8 +93,22 @@ public class BookingController {
         booking.setServiceType(request.getServiceType());
         booking.setScheduledTime(LocalDateTime.now().plusDays(1));
         booking.setPreferredDate(request.getPreferredDate() != null ? request.getPreferredDate() : "Tomorrow");
-        booking.setPreferredTime(request.getPreferredTime() != null ? request.getPreferredTime() : "10:00 AM");
-        booking.setAddress(request.getAddress() != null ? request.getAddress() : customer.getAddress());
+        String serviceAddress = request.getAddress();
+        if (serviceAddress == null || serviceAddress.trim().isEmpty()) {
+            if (request.getDescription() != null && request.getDescription().contains("[Location:")) {
+                try {
+                    int startIdx = request.getDescription().indexOf("[Location:") + 10;
+                    int endIdx = request.getDescription().indexOf("]", startIdx);
+                    if (endIdx > startIdx) {
+                        serviceAddress = request.getDescription().substring(startIdx, endIdx).trim();
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        if (serviceAddress == null || serviceAddress.trim().isEmpty()) {
+            serviceAddress = customer.getAddress() != null ? customer.getAddress() : "Uttara Sector 12, Dhaka";
+        }
+        booking.setAddress(serviceAddress);
         booking.setDescription(request.getDescription());
         booking.setApplianceDetails(request.getApplianceDetails());
         booking.setBookingSource(request.getBookingSource() != null ? request.getBookingSource() : "DIRECT");
