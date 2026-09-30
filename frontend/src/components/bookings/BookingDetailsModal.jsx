@@ -284,9 +284,9 @@ export default function BookingDetailsModal({
 
             {/* OTP Codes */}
             {['CONFIRMED', 'ON_THE_WAY', 'ARRIVED'].includes(booking.status) && (
-              <div style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.25)', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>🔑 Arrival Start OTP:</span>
-                <span style={{ fontSize: '1.05rem', fontWeight: 'bold', fontFamily: 'monospace', color: 'var(--text-heading)', background: '#000', padding: '0.15rem 0.6rem', borderRadius: '4px' }}>
+              <div style={{ background: 'var(--primary-subtle)', padding: '0.75rem 0.95rem', borderRadius: '10px', border: '1px solid #bfdbfe', fontSize: '0.82rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>🔑 Arrival Start OTP:</span>
+                <span style={{ fontSize: '1.2rem', fontWeight: '800', fontFamily: 'monospace', color: '#1d4ed8', background: 'var(--bg-card)', padding: '0.2rem 0.8rem', borderRadius: '6px', border: '1.5px solid #2563eb', letterSpacing: '0.15rem' }}>
                   {booking.startVerificationCode || '4829'}
                 </span>
               </div>

@@ -66,7 +66,7 @@ function ArrivalCountdownTimer({ booking, onTimeoutRefund }) {
             {isExpired ? 'Arrival Time Expired — Eligible for Instant Cashback' : 'Estimated Arrival Countdown'}
           </strong>
         </div>
-        <span style={{ fontSize: '1.1rem', fontWeight: 'bold', fontFamily: 'monospace', color: isExpired ? '#ef4444' : '#38bdf8', background: 'rgba(0,0,0,0.3)', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
+        <span style={{ fontSize: '1.1rem', fontWeight: 'bold', fontFamily: 'monospace', color: isExpired ? '#dc2626' : '#2563eb', background: 'var(--bg-card)', padding: '0.25rem 0.75rem', borderRadius: '8px', border: isExpired ? '1.5px solid #fca5a5' : '1.5px solid #93c5fd', boxShadow: 'var(--shadow-sm)' }}>
           {timeLeft}
         </span>
       </div>
@@ -580,17 +580,28 @@ export default function CustomerBookings({
                       <span>On-Site Safety Arrival Verification</span>
                     </div>
 
-                    <div style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)', marginTop: '0.6rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
+                    <div style={{ background: 'var(--primary-subtle)', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid #bfdbfe', marginTop: '0.6rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
                       <div>
-                        <div style={{ fontWeight: 'bold', color: 'var(--accent-gold)', marginBottom: '0.2rem' }}>
-                          🔑 Your Arrival Start OTP
+                        <div style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.95rem' }}>
+                          🔑 Your Arrival Start OTP Code
                         </div>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          When technician arrives at your door, verify or share this 4-digit code:
+                        <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                          When technician arrives at your door, share this 4-digit code to start the service:
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <span style={{ fontSize: '1.4rem', fontWeight: 'bold', fontFamily: 'monospace', color: 'var(--text-heading)', background: '#000', padding: '0.3rem 1rem', borderRadius: '8px', border: '1px solid var(--accent-gold)' }}>
+                        <span style={{
+                          fontSize: '1.6rem',
+                          fontWeight: '800',
+                          fontFamily: 'monospace',
+                          color: '#1d4ed8',
+                          background: 'var(--bg-card)',
+                          padding: '0.4rem 1.25rem',
+                          borderRadius: '8px',
+                          border: '2px solid #2563eb',
+                          letterSpacing: '0.25rem',
+                          boxShadow: '0 2px 8px rgba(37, 99, 235, 0.15)'
+                        }}>
                           {b.startVerificationCode || '4829'}
                         </span>
                       </div>

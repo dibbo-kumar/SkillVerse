@@ -1440,8 +1440,28 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
               </button>
             </div>
 
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: 1.4 }}>
-              The technician has requested completion. Your 4-digit code is <strong>{selectedBooking.completionVerificationCode || '9143'}</strong>. Enter it here to confirm satisfaction:
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.6rem', lineHeight: 1.4 }}>
+              The technician has requested completion. Your 4-digit verification code is:
+            </p>
+            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+              <span style={{
+                display: 'inline-block',
+                fontSize: '1.6rem',
+                fontWeight: '800',
+                fontFamily: 'monospace',
+                color: '#1d4ed8',
+                background: 'var(--bg-card)',
+                padding: '0.35rem 1.25rem',
+                borderRadius: '8px',
+                border: '2px solid #2563eb',
+                letterSpacing: '0.25rem',
+                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.12)'
+              }}>
+                {selectedBooking.completionVerificationCode || '9143'}
+              </span>
+            </div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', marginBottom: '1rem' }}>
+              Enter this code below to confirm satisfaction & complete service:
             </p>
 
             <form onSubmit={handleVerifyCompletionOtp}>
