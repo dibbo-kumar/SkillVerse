@@ -19,6 +19,7 @@ public class BookingController {
     private final WalletTransactionRepository transactionRepository;
     private final PlatformSettingRepository settingRepository;
     private final NotificationRepository notificationRepository;
+    private final WorkerAvailabilitySlotRepository slotRepository;
 
     public BookingController(ServiceBookingRepository bookingRepository,
                              UserRepository userRepository,
@@ -26,7 +27,8 @@ public class BookingController {
                              WorkerWalletRepository walletRepository,
                              WalletTransactionRepository transactionRepository,
                              PlatformSettingRepository settingRepository,
-                             NotificationRepository notificationRepository) {
+                             NotificationRepository notificationRepository,
+                             WorkerAvailabilitySlotRepository slotRepository) {
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.workerProfileRepository = workerProfileRepository;
@@ -34,6 +36,7 @@ public class BookingController {
         this.transactionRepository = transactionRepository;
         this.settingRepository = settingRepository;
         this.notificationRepository = notificationRepository;
+        this.slotRepository = slotRepository;
     }
 
     private double getPlatformCommissionRate() {
@@ -137,6 +140,15 @@ public class BookingController {
                 : "23.8103, 90.4125");
 
         ServiceBooking saved = bookingRepository.save(booking);
+
+        // If slotId is provided, mark slot as booked
+        if (request.getSlotId() != null) {
+            slotRepository.findById(request.getSlotId()).ifPresent(slot -> {
+                slot.setBooked(true);
+                slot.setBookingId(saved.getId());
+                slotRepository.save(slot);
+            });
+        }
 
         // Notify Worker of incoming job booking
         sendNotification(worker, "New Booking Request",
@@ -835,6 +847,7 @@ public class BookingController {
         private String applianceDetails;
         private String bookingSource;
         private String beforePhoto;
+        private Long slotId;
 
         public Long getCustomerId() { return customerId; }
         public void setCustomerId(Long customerId) { this.customerId = customerId; }
@@ -871,5 +884,8 @@ public class BookingController {
 
         public String getBeforePhoto() { return beforePhoto; }
         public void setBeforePhoto(String beforePhoto) { this.beforePhoto = beforePhoto; }
+
+        public Long getSlotId() { return slotId; }
+        public void setSlotId(Long slotId) { this.slotId = slotId; }
     }
 }

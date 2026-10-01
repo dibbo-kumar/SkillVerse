@@ -8,6 +8,7 @@ import {
   Compass, Plus, Trash2, Tag
 } from 'lucide-react';
 import WorkerBookingDetailsModal from './WorkerBookingDetailsModal';
+import WorkerCalendar from './WorkerCalendar';
 import LocationPickerModal from '../common/LocationPickerModal';
 import {
   BANGLADESH_DIVISIONS,
@@ -1047,6 +1048,13 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
         >
           🛡️ Verification {!isWorkerApproved ? '⚠️' : '✔'}
         </button>
+        <button
+          onClick={() => setActiveSubTab('calendar')}
+          className={`btn ${activeSubTab === 'calendar' ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ padding: '0.5rem 0.6rem', fontSize: '0.8rem', justifyContent: 'center', textAlign: 'center', whiteSpace: 'normal', minHeight: '40px' }}
+        >
+          📅 Calendar Slots
+        </button>
       </div>
 
       {/* ============================================================ */}
@@ -1970,6 +1978,13 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
           </div>
 
         </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* --- SUBTAB 7: SMART AVAILABILITY CALENDAR --- */}
+      {/* ============================================================ */}
+      {activeSubTab === 'calendar' && (
+        <WorkerCalendar currentWorker={currentWorker} onShowToast={onShowToast} />
       )}
 
       {/* ============================================================ */}

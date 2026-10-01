@@ -856,6 +856,34 @@ function App() {
   const [loadingWorkerReviews, setLoadingWorkerReviews] = useState(false);
   const [toastPopup, setToastPopup] = useState(null); // { title, message, type, onDone }
 
+  // Worker Availability Slots for Booking
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [availableWorkerSlots, setAvailableWorkerSlots] = useState([]);
+  const [loadingWorkerSlots, setLoadingWorkerSlots] = useState(false);
+
+  useEffect(() => {
+    if (!selectedWorker) {
+      setAvailableWorkerSlots([]);
+      setSelectedSlot(null);
+      return;
+    }
+    const workerUserId = selectedWorker.user?.id || selectedWorker.id;
+    if (!workerUserId) return;
+    setLoadingWorkerSlots(true);
+    fetch(`${API_BASE}/availability/worker/${workerUserId}/available`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setAvailableWorkerSlots(data);
+          if (data.length > 0) {
+            setSelectedSlot(data[0]);
+          }
+        }
+      })
+      .catch(err => console.error("Error fetching worker slots:", err))
+      .finally(() => setLoadingWorkerSlots(false));
+  }, [selectedWorker]);
+
   // Fetch reviews for viewing worker dynamically
   useEffect(() => {
     if (!viewingWorker) {
@@ -1903,7 +1931,10 @@ function App() {
           basePrice: workerBasePrice,
           beforePhoto: photoToSend,
           address: chosenAddress,
-          description: `${bookingDesc || "Standard service request."} [Location: ${chosenAddress}]`
+          preferredDate: selectedSlot ? selectedSlot.slotDate : undefined,
+          preferredTime: selectedSlot ? `${selectedSlot.startTime} - ${selectedSlot.endTime}` : undefined,
+          slotId: selectedSlot ? selectedSlot.id : undefined,
+          description: `${bookingDesc || "Standard service request."} [Location: ${chosenAddress}]${selectedSlot ? ` [Slot: ${selectedSlot.slotDate} ${selectedSlot.startTime}-${selectedSlot.endTime}]` : ''}`
         })
       });
       if (res.ok) {
@@ -1916,6 +1947,7 @@ function App() {
         setBookings(prev => [created, ...prev]);
 
         setSelectedWorker(null);
+        setSelectedSlot(null);
         setBookingDesc('');
         setOfferedPrice('');
         setBookingAddress('');
@@ -3869,6 +3901,67 @@ function App() {
 
               {/* Right Column: Problem Description & Photo Attachment */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* --- SMART AVAILABILITY SLOT PICKER --- */}
+                <div style={{
+                  background: 'var(--bg-secondary, rgba(255, 255, 255, 0.03))',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '10px',
+                  padding: '0.65rem 0.8rem'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)' }}>
+                      <Clock size={13} /> Select Time Slot
+                    </label>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                      {loadingWorkerSlots ? 'Loading slots...' : availableWorkerSlots.length > 0 ? `${availableWorkerSlots.length} slot(s) open` : 'Flexible / Instant'}
+                    </span>
+                  </div>
+
+                  {loadingWorkerSlots ? (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', padding: '0.4rem 0' }}>Checking technician schedule...</div>
+                  ) : availableWorkerSlots.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
+                        {availableWorkerSlots.map((slot) => {
+                          const isSelected = selectedSlot?.id === slot.id;
+                          const dateObj = new Date(slot.slotDate + "T00:00:00");
+                          const label = `${dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (${slot.startTime}-${slot.endTime})`;
+                          return (
+                            <button
+                              key={slot.id}
+                              type="button"
+                              onClick={() => setSelectedSlot(slot)}
+                              style={{
+                                padding: '0.35rem 0.65rem',
+                                borderRadius: '8px',
+                                fontSize: '0.72rem',
+                                fontWeight: '600',
+                                whiteSpace: 'nowrap',
+                                border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                                background: isSelected ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                                color: isSelected ? 'var(--primary)' : 'var(--text-primary)',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s'
+                              }}
+                            >
+                              {isSelected ? '✔ ' : ''}{label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {selectedSlot && (
+                        <div style={{ fontSize: '0.72rem', color: '#22c55e', fontWeight: 'bold' }}>
+                          📅 Reserved Slot: {selectedSlot.slotDate} from {selectedSlot.startTime} to {selectedSlot.endTime}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                      ⚡ Technician is on active duty — arrival timer will start immediately upon booking confirmation.
+                    </div>
+                  )}
+                </div>
+
                 {/* Describe Problem */}
                 <div>
                   <label className="form-label" style={{ fontSize: '0.74rem', marginBottom: '0.2rem' }}>Describe the Problem</label>

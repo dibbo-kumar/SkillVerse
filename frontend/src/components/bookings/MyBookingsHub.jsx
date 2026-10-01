@@ -917,7 +917,7 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
                   <div>
                     <strong style={{ fontSize: '0.95rem', color: 'var(--text-heading)', display: 'block' }}>{b.serviceType}</strong>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0', lineHeight: 1.3 }}>
-                      {b.description.length > 50 ? `${b.description.slice(0, 50)}...` : b.description}
+                      {(b.description || 'Standard service request').length > 50 ? `${(b.description || 'Standard service request').slice(0, 50)}...` : (b.description || 'Standard service request')}
                     </p>
                     {isWorkerCounter && (
                       <div style={{ fontSize: '0.75rem', color: 'var(--accent-gold)', fontWeight: 'bold', marginTop: '0.3rem' }}>
