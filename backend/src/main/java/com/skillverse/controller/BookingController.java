@@ -425,6 +425,15 @@ public class BookingController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/{id}/assign-team-member")
+    public ResponseEntity<?> assignTeamMember(@PathVariable Long id, @RequestParam String assignedWorkerName) {
+        return bookingRepository.findById(id).map(booking -> {
+            booking.setAssignedWorkerName(assignedWorkerName);
+            ServiceBooking saved = bookingRepository.save(booking);
+            return ResponseEntity.ok(saved);
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     // --- DELETE BOOKING ENDPOINT ---
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
@@ -848,6 +857,7 @@ public class BookingController {
         private String bookingSource;
         private String beforePhoto;
         private Long slotId;
+        private String assignedWorkerName;
 
         public Long getCustomerId() { return customerId; }
         public void setCustomerId(Long customerId) { this.customerId = customerId; }
@@ -887,5 +897,8 @@ public class BookingController {
 
         public Long getSlotId() { return slotId; }
         public void setSlotId(Long slotId) { this.slotId = slotId; }
+
+        public String getAssignedWorkerName() { return assignedWorkerName; }
+        public void setAssignedWorkerName(String assignedWorkerName) { this.assignedWorkerName = assignedWorkerName; }
     }
 }

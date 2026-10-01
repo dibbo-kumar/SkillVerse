@@ -89,6 +89,94 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
   const [withdrawBranchName, setWithdrawBranchName] = useState('Uttara Branch');
   const [withdrawAccountHolder, setWithdrawAccountHolder] = useState(currentWorker?.name || '');
 
+  // Managed Team Members State
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberPhone, setNewMemberPhone] = useState('');
+  const [newMemberSkill, setNewMemberSkill] = useState('Plumbing');
+  const [newMemberExp, setNewMemberExp] = useState(5);
+  const [addingMember, setAddingMember] = useState(false);
+
+  const fetchTeamMembers = async () => {
+    if (!currentWorker?.id) return;
+    try {
+      const res = await fetch(`${API_BASE}/workers/${currentWorker.id}/team-members`);
+      if (res.ok) {
+        const data = await res.json();
+        setTeamMembers(data || []);
+      }
+    } catch (e) {
+      console.error("Error fetching team members:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchTeamMembers();
+  }, [currentWorker?.id]);
+
+  const handleAddTeamMember = async (e) => {
+    e.preventDefault();
+    if (!newMemberName || !currentWorker?.id) return;
+    setAddingMember(true);
+    try {
+      const res = await fetch(`${API_BASE}/workers/${currentWorker.id}/team-members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newMemberName,
+          phone: newMemberPhone,
+          skill: newMemberSkill,
+          experienceYears: Number(newMemberExp) || 3
+        })
+      });
+      if (res.ok) {
+        if (onShowToast) onShowToast("Team member added to your roster!", "success");
+        setNewMemberName('');
+        setNewMemberPhone('');
+        setShowAddMemberModal(false);
+        fetchTeamMembers();
+      }
+    } catch (err) {
+      console.error("Error adding team member:", err);
+    } finally {
+      setAddingMember(false);
+    }
+  };
+
+  const handleDeleteTeamMember = async (memberId) => {
+    if (!window.confirm("Remove this technician from your managed team roster?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/workers/team-members/${memberId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        if (onShowToast) onShowToast("Team member removed", "success");
+        fetchTeamMembers();
+      }
+    } catch (err) {
+      console.error("Error deleting team member:", err);
+    }
+  };
+
+  const handleAssignTeamMember = async (bookingId, memberName) => {
+    try {
+      const res = await fetch(`${API_BASE}/bookings/${bookingId}/assign-team-member?assignedWorkerName=${encodeURIComponent(memberName)}`, {
+        method: 'PUT'
+      });
+      if (res.ok) {
+        if (onShowToast) onShowToast("Field Specialist Assigned", `Assigned ${memberName} to booking #${bookingId}`, "success");
+        if (typeof fetchWorkerData === 'function') fetchWorkerData();
+        else if (typeof fetchWorkerBookings === 'function') fetchWorkerBookings();
+        if (detailsBooking && detailsBooking.id === bookingId) {
+          setDetailsBooking(prev => ({ ...prev, assignedWorkerName: memberName }));
+        }
+      }
+    } catch (e) {
+      console.error("Error assigning team member:", e);
+    }
+  };
+
   // Verification State
   const [verifDossier, setVerifDossier] = useState(null);
   const [showVerifModal, setShowVerifModal] = useState(false);
@@ -1055,6 +1143,13 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
         >
           📅 Calendar Slots
         </button>
+        <button
+          onClick={() => setActiveSubTab('team')}
+          className={`btn ${activeSubTab === 'team' ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ padding: '0.5rem 0.6rem', fontSize: '0.8rem', justifyContent: 'center', textAlign: 'center', whiteSpace: 'normal', minHeight: '40px' }}
+        >
+          👥 Team Roster ({teamMembers.length})
+        </button>
       </div>
 
       {/* ============================================================ */}
@@ -1992,6 +2087,150 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
       )}
 
       {/* ============================================================ */}
+      {/* --- SUBTAB 8: MANAGED TEAM ROSTER (NON-TECH WORKERS) --- */}
+      {/* ============================================================ */}
+      {activeSubTab === 'team' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.15))',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
+                <User size={24} style={{ color: 'var(--primary)' }} />
+                <h2 style={{ fontSize: '1.4rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
+                  Managed Team Roster (Contractor / Agency Mode)
+                </h2>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                Add local technicians who don't use smartphones. You manage their bookings, handle payments, and assign jobs to them!
+              </p>
+            </div>
+
+            <button
+              className="btn btn-primary"
+              onClick={() => setShowAddMemberModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', fontWeight: '600' }}
+            >
+              <Plus size={18} /> Add Team Technician
+            </button>
+          </div>
+
+          {teamMembers.length === 0 ? (
+            <div className="glass-card" style={{ padding: '3rem', textAlign: 'center' }}>
+              <User size={48} style={{ color: 'var(--text-secondary)', opacity: 0.5, marginBottom: '1rem' }} />
+              <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>No Team Members Added</h3>
+              <p style={{ margin: '0 0 1.5rem 0', color: 'var(--text-secondary)', maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto' }}>
+                You are currently operating as an individual worker. Click "Add Team Technician" to build your local team roster and manage jobs for local non-tech workers!
+              </p>
+              <button className="btn btn-primary" onClick={() => setShowAddMemberModal(true)}>
+                <Plus size={16} /> Add First Team Member
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+              {teamMembers.map(member => (
+                <div
+                  key={member.id}
+                  className="glass-card"
+                  style={{
+                    padding: '1.2rem',
+                    borderRadius: '14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '1rem',
+                    border: '1px solid var(--border-color)'
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem' }}>
+                      <strong style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>{member.name}</strong>
+                      <span className="badge badge-verified" style={{ fontSize: '0.7rem' }}>
+                        {member.experienceYears}+ yrs exp
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                      <div>🛠️ Specialty: <strong style={{ color: 'var(--primary)' }}>{member.skill}</strong></div>
+                      <div>📞 Contact: <strong>{member.phone || 'N/A'}</strong></div>
+                      <div style={{ fontSize: '0.75rem', color: '#22c55e', marginTop: '0.2rem' }}>✔ Managed by Lead: {currentWorker?.name}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.4rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <button
+                      onClick={() => handleDeleteTeamMember(member.id)}
+                      style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}
+                    >
+                      <Trash2 size={14} /> Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add Team Member Modal */}
+          {showAddMemberModal && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }}>
+              <div className="glass-card" style={{ maxWidth: '440px', width: '100%', padding: '1.8rem', borderRadius: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+                  <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.2rem' }}>Add Field Technician to Roster</h3>
+                  <button onClick={() => setShowAddMemberModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+                </div>
+
+                <form onSubmit={handleAddTeamMember} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div>
+                    <label className="form-label">Technician Full Name</label>
+                    <input type="text" className="form-input" placeholder="e.g. Karim Hossain" value={newMemberName} onChange={e => setNewMemberName(e.target.value)} required />
+                  </div>
+
+                  <div>
+                    <label className="form-label">Phone Number (Optional)</label>
+                    <input type="tel" className="form-input" placeholder="e.g. 01711223344" value={newMemberPhone} onChange={e => setNewMemberPhone(e.target.value)} />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.8rem' }}>
+                    <div>
+                      <label className="form-label">Primary Skill</label>
+                      <select className="form-select" value={newMemberSkill} onChange={e => setNewMemberSkill(e.target.value)}>
+                        <option value="Plumbing">Plumbing</option>
+                        <option value="Electrical & Wiring">Electrical & Wiring</option>
+                        <option value="AC Repair & Servicing">AC Repair & Servicing</option>
+                        <option value="Carpentry & Furniture">Carpentry & Furniture</option>
+                        <option value="Home Appliance Repair">Home Appliance Repair</option>
+                        <option value="Painting & Decorating">Painting & Decorating</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="form-label">Experience (Yrs)</label>
+                      <input type="number" min="1" max="40" className="form-input" value={newMemberExp} onChange={e => setNewMemberExp(e.target.value)} required />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowAddMemberModal(false)}>Cancel</button>
+                    <button type="submit" className="btn btn-primary" disabled={addingMember}>
+                      {addingMember ? 'Saving...' : 'Add Technician'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ============================================================ */}
       {/* --- ALL MODALS --- */}
       {/* ============================================================ */}
 
@@ -2023,6 +2262,8 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
         }}
         onUploadPhotos={handleUploadPhotos}
         hasActiveJob={hasActiveJob}
+        teamMembers={teamMembers}
+        onAssignTeamMember={handleAssignTeamMember}
       />
 
       {/* --- COUNTER OFFER MODAL --- */}

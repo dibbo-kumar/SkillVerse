@@ -17,7 +17,9 @@ export default function WorkerBookingDetailsModal({
   onRequestCompletion,
   onOpenCompletionOtpModal,
   onUploadPhotos,
-  hasActiveJob
+  hasActiveJob,
+  teamMembers = [],
+  onAssignTeamMember
 }) {
   const [photoType, setPhotoType] = useState('before'); // 'before' or 'after'
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -212,6 +214,38 @@ export default function WorkerBookingDetailsModal({
                 <strong style={{ color: 'var(--text-heading)' }}>{booking.preferredDate || 'Tomorrow'}</strong>
               </div>
             </div>
+
+            {/* Assigned Field Tech / Roster Assignment */}
+            {booking.assignedWorkerName ? (
+              <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '0.55rem 0.8rem', borderRadius: '8px', fontSize: '0.78rem', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>Assigned Field Specialist</span>
+                  <strong>👤 {booking.assignedWorkerName}</strong> (Verified Non-Tech Tech)
+                </div>
+                <span className="badge badge-verified" style={{ fontSize: '0.65rem' }}>Assigned</span>
+              </div>
+            ) : (teamMembers && teamMembers.filter(m => m.isVerified || m.status === 'VERIFIED').length > 0) ? (
+              <div style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '0.55rem 0.8rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', fontWeight: 600, display: 'block' }}>Assign Field Specialist:</span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Select from your verified non-tech team</span>
+                </div>
+                <select
+                  style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem', borderRadius: '6px', background: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', outline: 'none' }}
+                  onChange={(e) => {
+                    if (e.target.value && onAssignTeamMember) {
+                      onAssignTeamMember(booking.id, e.target.value);
+                    }
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>-- Select Verified Technician --</option>
+                  {teamMembers.filter(m => m.isVerified || m.status === 'VERIFIED').map(m => (
+                    <option key={m.id} value={m.name}>{m.name} ({m.skill})</option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
 
             {/* Financial & Commission Breakdown */}
             <div style={{ background: 'rgba(16, 185, 129, 0.06)', padding: '0.75rem 0.9rem', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.25)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', textAlign: 'center' }}>

@@ -940,7 +940,13 @@ export default function MyBookingsHub({ currentUser, rewards, initialTab = 'over
                     />
                     <div>
                       <strong style={{ fontSize: '0.85rem', color: 'var(--text-heading)', display: 'block' }}>{b.worker?.name || 'Searching...'}</strong>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>⭐ {b.worker?.rating || 4.9}</span>
+                      {b.assignedWorkerName ? (
+                        <span style={{ fontSize: '0.72rem', color: '#22c55e', fontWeight: 'bold', display: 'block' }}>
+                          👤 Field Tech: {b.assignedWorkerName}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>⭐ {b.worker?.rating || 4.9}</span>
+                      )}
                     </div>
                   </div>
 

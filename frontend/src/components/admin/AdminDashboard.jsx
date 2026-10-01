@@ -45,6 +45,7 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
   const [analyticsPeriod, setAnalyticsPeriod] = useState('30D');
   const [auditLogs, setAuditLogs] = useState([]);
   const [platformSettings, setPlatformSettings] = useState({});
+  const [pendingTeamMembers, setPendingTeamMembers] = useState([]);
 
   // Search & Filter States
   const [userSearch, setUserSearch] = useState('');
@@ -92,8 +93,12 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
   const fetchDashboardData = async () => {
     try {
       if (activeTab === 'overview') {
-        const res = await fetch(`${API_BASE}/admin/overview`);
-        if (res.ok) setOverviewData(await res.json());
+        const [oRes, tmRes] = await Promise.all([
+          fetch(`${API_BASE}/admin/overview`),
+          fetch(`${API_BASE}/workers/team-members/pending`)
+        ]);
+        if (oRes.ok) setOverviewData(await oRes.json());
+        if (tmRes.ok) setPendingTeamMembers(await tmRes.json());
       } else if (activeTab === 'users') {
         const [uRes, vRes] = await Promise.all([
           fetch(`${API_BASE}/admin/users`),
@@ -102,8 +107,12 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
         if (uRes.ok) setUsersList(await uRes.json());
         if (vRes.ok) setAllVerificationRequests(await vRes.json());
       } else if (activeTab === 'verification') {
-        const res = await fetch(`${API_BASE}/admin/verification/requests?status=ALL`);
-        if (res.ok) setAllVerificationRequests(await res.json());
+        const [vRes, tmRes] = await Promise.all([
+          fetch(`${API_BASE}/admin/verification/requests?status=ALL`),
+          fetch(`${API_BASE}/workers/team-members/pending`)
+        ]);
+        if (vRes.ok) setAllVerificationRequests(await vRes.json());
+        if (tmRes.ok) setPendingTeamMembers(await tmRes.json());
       } else if (activeTab === 'bookings') {
         const res = await fetch(`${API_BASE}/admin/bookings?status=${bookingStatusFilter}`);
         if (res.ok) setBookingsList(await res.json());
@@ -185,6 +194,32 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleApproveTeamMember = async (memberId) => {
+    try {
+      const res = await fetch(`${API_BASE}/workers/team-members/${memberId}/approve`, { method: 'PUT' });
+      if (res.ok) {
+        setPendingTeamMembers(prev => prev.filter(m => m.id !== memberId));
+        if (onShowToast) onShowToast("Technician Approved!", "Non-tech field technician is now verified and available for customer jobs.", "success");
+        fetchDashboardData();
+      }
+    } catch (e) {
+      console.error("Failed to approve team member", e);
+    }
+  };
+
+  const handleRejectTeamMember = async (memberId) => {
+    try {
+      const res = await fetch(`${API_BASE}/workers/team-members/${memberId}/reject`, { method: 'PUT' });
+      if (res.ok) {
+        setPendingTeamMembers(prev => prev.filter(m => m.id !== memberId));
+        if (onShowToast) onShowToast("Technician Rejected", "Non-tech technician request has been rejected.", "info");
+        fetchDashboardData();
+      }
+    } catch (e) {
+      console.error("Failed to reject team member", e);
     }
   };
 
@@ -964,6 +999,71 @@ export default function AdminDashboard({ currentUser, onShowToast }) {
               <button className="btn btn-secondary" onClick={fetchDashboardData} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <RefreshCw size={14} /> Refresh Queue
               </button>
+            </div>
+
+            {/* Non-Tech Technicians Roster Approval Queue */}
+            <div style={{ marginBottom: '2rem', padding: '1.4rem', borderRadius: '14px', background: 'rgba(245, 158, 11, 0.04)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.8rem' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.25rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f59e0b' }}>
+                    <Users size={22} /> Non-Tech Trained Technicians Queue
+                  </h2>
+                  <p style={{ color: 'var(--text-secondary)', margin: '0.2rem 0 0 0', fontSize: '0.82rem' }}>
+                    These non-tech field workers are added by registered Lead Workers/Managers. Admin verification is required before they can be assigned to customer jobs or displayed to customers.
+                  </p>
+                </div>
+                <span className="badge badge-pending" style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}>
+                  {pendingTeamMembers.length} Pending Approval
+                </span>
+              </div>
+
+              {pendingTeamMembers.length === 0 ? (
+                <div style={{ padding: '1.2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', background: 'rgba(0,0,0,0.15)', borderRadius: '10px' }}>
+                  ✓ All non-tech technician roster requests have been processed. No pending approvals.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+                  {pendingTeamMembers.map(member => (
+                    <div key={member.id} className="glass-card" style={{ padding: '1.2rem', borderLeft: '4px solid #f59e0b', background: 'var(--bg-secondary)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem' }}>
+                        <div>
+                          <h4 style={{ fontSize: '1.05rem', margin: 0, color: 'var(--text-heading)', fontWeight: 700 }}>
+                            {member.name}
+                          </h4>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600, marginTop: '0.15rem' }}>
+                            Skill: {member.skill} • {member.experienceYears || 1} Yrs Experience
+                          </div>
+                        </div>
+                        <span className="badge badge-pending" style={{ fontSize: '0.7rem' }}>Pending</span>
+                      </div>
+
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.2)', padding: '0.6rem 0.8rem', borderRadius: '8px', marginBottom: '0.8rem' }}>
+                        <div>📞 Phone: <strong style={{ color: 'var(--text-heading)' }}>{member.phone || 'N/A'}</strong></div>
+                        <div style={{ marginTop: '0.25rem' }}>
+                          👤 Managed by Lead Worker: <strong style={{ color: 'var(--accent-gold)' }}>{member.leadWorker?.name}</strong> ({member.leadWorker?.phone})
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          className="btn btn-primary"
+                          style={{ flex: 1, padding: '0.45rem 0.6rem', fontSize: '0.8rem', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                          onClick={() => handleApproveTeamMember(member.id)}
+                        >
+                          <CheckCircle2 size={14} /> Approve & Verify
+                        </button>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '0.45rem 0.6rem', fontSize: '0.8rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.4)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                          onClick={() => handleRejectTeamMember(member.id)}
+                        >
+                          <XCircle size={14} /> Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Filter Tabs */}

@@ -8,8 +8,10 @@ import com.skillverse.repository.WorkerProfileRepository;
 import com.skillverse.repository.VerificationRequestRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import com.skillverse.model.WorkerTeamMember;
+import com.skillverse.repository.WorkerTeamMemberRepository;
 
 @RestController
 @RequestMapping("/api/workers")
@@ -19,12 +21,15 @@ public class WorkerController {
     private final WorkerProfileRepository workerProfileRepository;
     private final UserRepository userRepository;
     private final VerificationRequestRepository verificationRequestRepository;
+    private final WorkerTeamMemberRepository teamMemberRepository;
 
     public WorkerController(WorkerProfileRepository workerProfileRepository, UserRepository userRepository,
-                            VerificationRequestRepository verificationRequestRepository) {
+                            VerificationRequestRepository verificationRequestRepository,
+                            WorkerTeamMemberRepository teamMemberRepository) {
         this.workerProfileRepository = workerProfileRepository;
         this.userRepository = userRepository;
         this.verificationRequestRepository = verificationRequestRepository;
+        this.teamMemberRepository = teamMemberRepository;
     }
 
     @GetMapping
@@ -218,5 +223,95 @@ public class WorkerController {
                     workerProfileRepository.save(profile);
                     return ResponseEntity.ok(profile);
                 }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{leadWorkerId}/team-members")
+    public ResponseEntity<List<WorkerTeamMember>> getTeamMembers(@PathVariable Long leadWorkerId) {
+        return ResponseEntity.ok(teamMemberRepository.findByLeadWorkerIdAndStatusNot(leadWorkerId, "INACTIVE"));
+    }
+
+    @GetMapping("/team-members/pending")
+    public ResponseEntity<List<WorkerTeamMember>> getPendingTeamMembers() {
+        return ResponseEntity.ok(teamMemberRepository.findByStatus("PENDING_VERIFICATION"));
+    }
+
+    @GetMapping("/team-members/verified")
+    public ResponseEntity<List<WorkerTeamMember>> getVerifiedTeamMembers() {
+        return ResponseEntity.ok(teamMemberRepository.findByIsVerifiedTrueAndStatus("VERIFIED"));
+    }
+
+    @PostMapping("/{leadWorkerId}/team-members")
+    public ResponseEntity<?> addTeamMember(@PathVariable Long leadWorkerId, @RequestBody TeamMemberRequest request) {
+        Optional<User> leadOpt = userRepository.findById(leadWorkerId);
+        if (leadOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Lead Worker not found"));
+        }
+        WorkerTeamMember member = new WorkerTeamMember(
+                leadOpt.get(),
+                request.getName(),
+                request.getPhone(),
+                request.getSkill(),
+                request.getExperienceYears()
+        );
+        WorkerTeamMember saved = teamMemberRepository.save(member);
+        return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/team-members/{memberId}/approve")
+    public ResponseEntity<?> approveTeamMember(@PathVariable Long memberId) {
+        Optional<WorkerTeamMember> memberOpt = teamMemberRepository.findById(memberId);
+        if (memberOpt.isPresent()) {
+            WorkerTeamMember m = memberOpt.get();
+            m.setStatus("VERIFIED");
+            m.setIsVerified(true);
+            m.setVerifiedAt(java.time.LocalDateTime.now());
+            WorkerTeamMember saved = teamMemberRepository.save(m);
+            return ResponseEntity.ok(saved);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/team-members/{memberId}/reject")
+    public ResponseEntity<?> rejectTeamMember(@PathVariable Long memberId) {
+        Optional<WorkerTeamMember> memberOpt = teamMemberRepository.findById(memberId);
+        if (memberOpt.isPresent()) {
+            WorkerTeamMember m = memberOpt.get();
+            m.setStatus("REJECTED");
+            m.setIsVerified(false);
+            WorkerTeamMember saved = teamMemberRepository.save(m);
+            return ResponseEntity.ok(saved);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/team-members/{memberId}")
+    public ResponseEntity<?> deleteTeamMember(@PathVariable Long memberId) {
+        Optional<WorkerTeamMember> memberOpt = teamMemberRepository.findById(memberId);
+        if (memberOpt.isPresent()) {
+            WorkerTeamMember m = memberOpt.get();
+            m.setStatus("INACTIVE");
+            teamMemberRepository.save(m);
+            return ResponseEntity.ok(Map.of("message", "Team member removed"));
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    public static class TeamMemberRequest {
+        private String name;
+        private String phone;
+        private String skill;
+        private Integer experienceYears;
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+
+        public String getPhone() { return phone; }
+        public void setPhone(String phone) { this.phone = phone; }
+
+        public String getSkill() { return skill; }
+        public void setSkill(String skill) { this.skill = skill; }
+
+        public Integer getExperienceYears() { return experienceYears; }
+        public void setExperienceYears(Integer experienceYears) { this.experienceYears = experienceYears; }
     }
 }

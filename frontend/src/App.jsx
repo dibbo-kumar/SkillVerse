@@ -853,6 +853,7 @@ function App() {
   const [selectedWorker, setSelectedWorker] = useState(null);
   const [viewingWorker, setViewingWorker] = useState(null); // Floating worker details modal
   const [viewingWorkerReviews, setViewingWorkerReviews] = useState([]);
+  const [viewingWorkerTeamMembers, setViewingWorkerTeamMembers] = useState([]);
   const [loadingWorkerReviews, setLoadingWorkerReviews] = useState(false);
   const [toastPopup, setToastPopup] = useState(null); // { title, message, type, onDone }
 
@@ -884,10 +885,11 @@ function App() {
       .finally(() => setLoadingWorkerSlots(false));
   }, [selectedWorker]);
 
-  // Fetch reviews for viewing worker dynamically
+  // Fetch reviews & verified team members for viewing worker dynamically
   useEffect(() => {
     if (!viewingWorker) {
       setViewingWorkerReviews([]);
+      setViewingWorkerTeamMembers([]);
       return;
     }
     const workerUserId = viewingWorker.user?.id || viewingWorker.id;
@@ -902,6 +904,16 @@ function App() {
         setViewingWorkerReviews([]);
         setLoadingWorkerReviews(false);
       });
+
+    // Fetch verified team members managed by this lead worker
+    fetch(`${API_BASE}/workers/${workerUserId}/team-members`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setViewingWorkerTeamMembers(data.filter(m => m.isVerified || m.status === 'VERIFIED'));
+        }
+      })
+      .catch(err => setViewingWorkerTeamMembers([]));
   }, [viewingWorker]);
 
   // Real-time backend notification fetching & polling
@@ -3648,6 +3660,34 @@ function App() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Verified Non-Tech Team Technicians Section */}
+                  {viewingWorkerTeamMembers.length > 0 && (
+                    <div style={{ marginTop: '0.5rem', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.25)', padding: '0.75rem 0.9rem', borderRadius: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <Users size={15} /> Verified Non-Tech Field Specialists
+                        </span>
+                        <span className="badge badge-verified" style={{ fontSize: '0.65rem' }}>
+                          {viewingWorkerTeamMembers.length} Admin Verified
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem 0' }}>
+                        Managed by {viewingWorker.user?.name || 'this contractor'}. These trained field technicians are verified by Admin to perform home service jobs.
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                        {viewingWorkerTeamMembers.map(tm => (
+                          <div key={tm.id} style={{ background: 'rgba(0,0,0,0.2)', padding: '0.45rem 0.65rem', borderRadius: '6px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <strong style={{ fontSize: '0.8rem', color: 'var(--text-heading)' }}>{tm.name}</strong>
+                              <span style={{ fontSize: '0.72rem', color: 'var(--primary)', marginLeft: '0.5rem' }}>• {tm.skill}</span>
+                            </div>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{tm.experienceYears || 1} Yrs Exp</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Column: Customer Reviews */}

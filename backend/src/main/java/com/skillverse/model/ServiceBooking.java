@@ -19,6 +19,8 @@ public class ServiceBooking {
     @JoinColumn(name = "worker_id")
     private User worker;
 
+    private String assignedWorkerName; // Name of non-tech team member assigned by Lead Worker
+
     private String serviceType;
     private String status; 
     // Lifecycle states:
@@ -319,4 +321,7 @@ public class ServiceBooking {
 
     public String getWarrantyProblemDescription() { return warrantyProblemDescription; }
     public void setWarrantyProblemDescription(String warrantyProblemDescription) { this.warrantyProblemDescription = warrantyProblemDescription; }
+
+    public String getAssignedWorkerName() { return assignedWorkerName; }
+    public void setAssignedWorkerName(String assignedWorkerName) { this.assignedWorkerName = assignedWorkerName; }
 }
