@@ -272,6 +272,16 @@ export default function WorkerBookingDetailsModal({
               </div>
             </div>
 
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(99, 102, 241, 0.08)', padding: '0.55rem 0.8rem', borderRadius: '8px', border: '1px solid rgba(99, 102, 241, 0.3)', fontSize: '0.78rem' }}>
+              <Clock size={15} color="var(--primary)" style={{ flexShrink: 0 }} />
+              <div>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>Customer Selected Time Slot</span>
+                <strong style={{ color: 'var(--primary)' }}>
+                  {booking.preferredDate || 'Scheduled Date'}: {booking.preferredTime || (booking.scheduledTime ? new Date(booking.scheduledTime).toLocaleString() : 'Flexible Time')}
+                </strong>
+              </div>
+            </div>
+
             {/* Evidence Photos */}
             {['IN_PROGRESS', 'COMPLETION_REQUESTED', 'COMPLETED', 'PAID'].includes(booking.status) && (
               <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>

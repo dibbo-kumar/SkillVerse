@@ -3713,7 +3713,7 @@ function App() {
       {/* --- UPGRADED BOOKING CONFIRMATION MODAL (NO SCROLLING, FIXED 2-COLUMN WIDE LAYOUT) --- */}
       {selectedWorker && (
         <div className="modal-overlay" onClick={(e) => e.target.className.includes('modal-overlay') && setSelectedWorker(null)}>
-          <div className="modal-content modal-content-wide" style={{ maxWidth: '860px', width: '92vw', padding: '1.3rem 1.6rem', maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+          <div className="modal-content modal-content-wide" style={{ maxWidth: '840px', width: '92vw', padding: '1rem 1.3rem', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             {/* Top Bar Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.7rem', marginBottom: '0.9rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
@@ -3901,64 +3901,45 @@ function App() {
 
               {/* Right Column: Problem Description & Photo Attachment */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {/* --- SMART AVAILABILITY SLOT PICKER --- */}
-                <div style={{
-                  background: 'var(--bg-secondary, rgba(255, 255, 255, 0.03))',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '10px',
-                  padding: '0.65rem 0.8rem'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                    <label className="form-label" style={{ fontSize: '0.75rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)' }}>
-                      <Clock size={13} /> Select Time Slot
+                {/* --- SMART AVAILABILITY SLOT PICKER (SELECT DROPDOWN) --- */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                    <label className="form-label" style={{ fontSize: '0.74rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--primary)' }}>
+                      <Clock size={13} /> Select Time Slot (Required Date & Time)
                     </label>
                     <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                      {loadingWorkerSlots ? 'Loading slots...' : availableWorkerSlots.length > 0 ? `${availableWorkerSlots.length} slot(s) open` : 'Flexible / Instant'}
+                      {loadingWorkerSlots ? 'Loading...' : availableWorkerSlots.length > 0 ? `${availableWorkerSlots.length} slot(s) open` : 'Flexible Schedule'}
                     </span>
                   </div>
 
                   {loadingWorkerSlots ? (
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', padding: '0.4rem 0' }}>Checking technician schedule...</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Loading schedule...</div>
                   ) : availableWorkerSlots.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
-                        {availableWorkerSlots.map((slot) => {
-                          const isSelected = selectedSlot?.id === slot.id;
-                          const dateObj = new Date(slot.slotDate + "T00:00:00");
-                          const label = `${dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (${slot.startTime}-${slot.endTime})`;
-                          return (
-                            <button
-                              key={slot.id}
-                              type="button"
-                              onClick={() => setSelectedSlot(slot)}
-                              style={{
-                                padding: '0.35rem 0.65rem',
-                                borderRadius: '8px',
-                                fontSize: '0.72rem',
-                                fontWeight: '600',
-                                whiteSpace: 'nowrap',
-                                border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border-color)',
-                                background: isSelected ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                                color: isSelected ? 'var(--primary)' : 'var(--text-primary)',
-                                cursor: 'pointer',
-                                transition: 'all 0.15s'
-                              }}
-                            >
-                              {isSelected ? '✔ ' : ''}{label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {selectedSlot && (
-                        <div style={{ fontSize: '0.72rem', color: '#22c55e', fontWeight: 'bold' }}>
-                          📅 Reserved Slot: {selectedSlot.slotDate} from {selectedSlot.startTime} to {selectedSlot.endTime}
-                        </div>
-                      )}
-                    </div>
+                    <select
+                      className="form-select"
+                      style={{ fontSize: '0.8rem', padding: '0.4rem 0.6rem', fontWeight: 'bold', color: 'var(--text-primary)', border: '1px solid var(--primary)', borderRadius: '8px', background: 'var(--bg-card)' }}
+                      value={selectedSlot?.id || ''}
+                      onChange={(e) => {
+                        const sId = Number(e.target.value);
+                        const found = availableWorkerSlots.find(s => s.id === sId);
+                        setSelectedSlot(found || null);
+                      }}
+                    >
+                      {availableWorkerSlots.map((slot) => {
+                        const dateObj = new Date(slot.slotDate + "T00:00:00");
+                        const dateFormatted = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                        const label = `${dateFormatted} — ⏰ ${slot.startTime} to ${slot.endTime}`;
+                        return (
+                          <option key={slot.id} value={slot.id}>
+                            {label}
+                          </option>
+                        );
+                      })}
+                    </select>
                   ) : (
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                      ⚡ Technician is on active duty — arrival timer will start immediately upon booking confirmation.
-                    </div>
+                    <select className="form-select" style={{ fontSize: '0.78rem', padding: '0.35rem 0.55rem', color: 'var(--text-muted)' }} disabled>
+                      <option>⚡ Immediate / Flexible Arrival (Technician on Duty)</option>
+                    </select>
                   )}
                 </div>
 

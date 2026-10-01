@@ -1308,10 +1308,14 @@ export default function WorkerDashboard({ currentWorker, onShowToast }) {
                     )}
                   </div>
 
-                  {/* Column 3: Customer info */}
+                  {/* Column 3: Customer info & Scheduled Time Slot */}
                   <div>
                     <strong style={{ fontSize: '0.85rem', color: 'var(--text-heading)', display: 'block' }}>{b.customer?.name}</strong>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>📍 {b.address || (b.description?.match(/\[Location:\s*(.*?)\]/)?.[1]) || b.customer?.address || 'Customer Location'}</span>
+                    <div style={{ marginTop: '0.3rem', fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <Clock size={12} />
+                      {b.preferredDate || 'Scheduled'}: {b.preferredTime || (b.scheduledTime ? new Date(b.scheduledTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Flexible Time')}
+                    </div>
                   </div>
 
                   {/* Column 4: Offered & Base Price */}

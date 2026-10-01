@@ -136,9 +136,11 @@ export default function WorkerCalendar({ currentWorker, onShowToast }) {
     return slot.slotDate === selectedDateFilter;
   });
 
+  const isSlotBooked = (s) => Boolean(s.booked || s.isBooked);
+
   const totalSlots = slots.length;
-  const availableSlots = slots.filter(s => !s.isBooked).length;
-  const bookedSlots = slots.filter(s => s.isBooked).length;
+  const availableSlots = slots.filter(s => !isSlotBooked(s)).length;
+  const bookedSlots = slots.filter(s => isSlotBooked(s)).length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -390,13 +392,14 @@ export default function WorkerCalendar({ currentWorker, onShowToast }) {
             const dateObj = new Date(slot.slotDate + "T00:00:00");
             const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
             const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const isBooked = isSlotBooked(slot);
 
             return (
               <div
                 key={slot.id}
                 style={{
                   background: 'var(--bg-card, #1e293b)',
-                  border: slot.isBooked
+                  border: isBooked
                     ? '1px solid rgba(239, 68, 68, 0.4)'
                     : '1px solid var(--border-color, #334155)',
                   borderRadius: '14px',
@@ -438,11 +441,11 @@ export default function WorkerCalendar({ currentWorker, onShowToast }) {
                       fontWeight: '700',
                       padding: '0.3rem 0.7rem',
                       borderRadius: '20px',
-                      background: slot.isBooked ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)',
-                      color: slot.isBooked ? '#ef4444' : '#22c55e',
-                      border: slot.isBooked ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(34, 197, 94, 0.3)'
+                      background: isBooked ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+                      color: isBooked ? '#ef4444' : '#22c55e',
+                      border: isBooked ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(34, 197, 94, 0.3)'
                     }}>
-                      {slot.isBooked ? (
+                      {isBooked ? (
                         <>
                           <XCircle size={12} /> Booked #{slot.bookingId || ''}
                         </>
@@ -472,7 +475,7 @@ export default function WorkerCalendar({ currentWorker, onShowToast }) {
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.4rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                  {!slot.isBooked ? (
+                  {!isBooked ? (
                     <button
                       onClick={() => handleDeleteSlot(slot.id)}
                       title="Delete slot"
